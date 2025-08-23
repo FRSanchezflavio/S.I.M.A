@@ -1,0 +1,17 @@
+backend/node_modules/
+backend/uploads/
+backend/.env
+backend/.env.*.local
+backend/coverage/
+backend/debug.log
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+backend/.DS_Store
+backend/*.sqlite
+
+node_modules/
+dist/
+.vscode/
+*.log
+.DS_Store
