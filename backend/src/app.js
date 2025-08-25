@@ -8,18 +8,25 @@ const rateLimit = require('express-rate-limit');
 dotenv.config();
 
 const { errorHandler, notFoundHandler } = require('./middlewares/error');
+const pinoHttp = require('pino-http');
+const logger = require('./utils/logger');
 const corsOptions = require('./middlewares/cors');
 
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/users.routes');
 const personasRoutes = require('./routes/personas.routes');
 const registrosRoutes = require('./routes/registros.routes');
+const db = require('./db/knex');
+const swaggerUi = require('swagger-ui-express');
+const apiSpec = require('../docs/openapi.json');
 
 const app = express();
 
 // Seguridad básica
 app.use(helmet());
 app.use(hpp());
+app.use(require('./middlewares/ip-allow'));
+app.use(pinoHttp({ logger }));
 
 // CORS restringido a LAN/orígenes permitidos
 app.use(cors(corsOptions));
@@ -49,7 +56,22 @@ app.use('/api/usuarios', userRoutes);
 app.use('/api/personas', personasRoutes);
 app.use('/api/registros', registrosRoutes);
 
-app.get('/api/health', (req, res) => res.json({ ok: true }));
+// API Docs (Swagger UI)
+app.use(
+  '/api/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(apiSpec, { explorer: true })
+);
+app.get('/api/openapi.json', (_req, res) => res.json(apiSpec));
+
+app.get('/api/health', async (_req, res) => {
+  try {
+    await db.raw('select 1');
+    return res.json({ ok: true, db: true });
+  } catch (e) {
+    return res.status(500).json({ ok: false, db: false });
+  }
+});
 
 // Not found y errores
 app.use(notFoundHandler);

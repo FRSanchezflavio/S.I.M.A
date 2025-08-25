@@ -27,6 +27,7 @@ exports.login = async (req, res, next) => {
       rol: user.rol,
       nombre: user.nombre,
       apellido: user.apellido,
+      token_version: user.token_version || 0,
     };
     const tokens = signTokens(payload);
     res.json(tokens);
@@ -41,12 +42,19 @@ exports.refresh = async (req, res, next) => {
     if (!refreshToken)
       return res.status(400).json({ message: 'Falta refreshToken' });
     const payload = verifyRefresh(refreshToken);
+    // Validar token_version contra DB
+    const user = await db('usuarios').where({ id: payload.id }).first();
+    if (!user) return res.status(401).json({ message: 'Token inválido' });
+    if ((payload.token_version || 0) !== (user.token_version || 0)) {
+      return res.status(401).json({ message: 'Token inválido' });
+    }
     const tokens = signTokens({
-      id: payload.id,
-      usuario: payload.usuario,
-      rol: payload.rol,
-      nombre: payload.nombre,
-      apellido: payload.apellido,
+      id: user.id,
+      usuario: user.usuario,
+      rol: user.rol,
+      nombre: user.nombre,
+      apellido: user.apellido,
+      token_version: user.token_version || 0,
     });
     res.json(tokens);
   } catch (e) {

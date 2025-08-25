@@ -4,7 +4,14 @@ function notFoundHandler(req, res, next) {
 
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
-  console.error(err);
+  try {
+    const logger = require('../utils/logger');
+    logger.error({ err }, 'Unhandled error');
+  } catch (_) {
+    // fallback
+    // eslint-disable-next-line no-console
+    console.error(err);
+  }
   const status = err.status || 500;
   const message = err.message || 'Error interno del servidor';
   res.status(status).json({ message });

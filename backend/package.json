@@ -9,7 +9,11 @@
     "dev": "nodemon src/server.js",
     "migrate": "knex migrate:latest",
     "rollback": "knex migrate:rollback",
-    "migrate:make": "knex migrate:make"
+    "migrate:make": "knex migrate:make",
+    "migrate:test": "node -e \"process.env.NODE_ENV='test'; require('child_process').spawnSync('npx', ['knex','migrate:latest','--env','test'], { stdio: 'inherit', shell: true });\"",
+    "pretest": "node scripts/create-test-db.js && npm run migrate:test",
+    "test": "jest --runInBand",
+    "backup": "node scripts/backup.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -26,9 +30,15 @@
     "jsonwebtoken": "^9.0.2",
     "knex": "^3.1.0",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.12.0"
+    "pg": "^8.12.0",
+    "exceljs": "^4.4.0",
+    "pino": "^9.3.2",
+    "pino-http": "^9.0.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
   }
 }

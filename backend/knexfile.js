@@ -1,4 +1,8 @@
+// Cargar variables de entorno: .env base y si corresponde, .env.test
 require('dotenv').config();
+if (process.env.NODE_ENV === 'test') {
+  require('dotenv').config({ path: '.env.test', override: true });
+}
 
 const base = {
   client: 'pg',
@@ -15,5 +19,6 @@ const base = {
 
 module.exports = {
   development: { ...base },
+  test: { ...base },
   production: { ...base },
 };
