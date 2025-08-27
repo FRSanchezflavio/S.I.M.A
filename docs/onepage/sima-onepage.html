@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
@@ -39,8 +39,12 @@
     <div class="page">
       <header>
         <div>
-          <h1>S.I.M.A — Sistema de Información de Mencionados y Aprehendidos</h1>
-          <div class="subtitle">Resumen ejecutivo · Fecha: <span id="today"></span></div>
+          <h1>
+            S.I.M.A — Sistema de Información de Mencionados y Aprehendidos
+          </h1>
+          <div class="subtitle">
+            Resumen ejecutivo · Fecha: <span id="today"></span>
+          </div>
         </div>
         <div>
           <span class="pill">Node/Express</span>
@@ -53,38 +57,77 @@
       <div class="grid">
         <section class="card">
           <h2>Objetivo</h2>
-          <p>Plataforma para registrar, consultar y auditar personas mencionadas/aprehendidas y sus registros delictuales. Optimizada para uso operativo, con seguridad, exportaciones y respaldos.</p>
+          <p>
+            Plataforma para registrar, consultar y auditar personas
+            mencionadas/aprehendidas y sus registros delictuales. Optimizada
+            para uso operativo, con seguridad, exportaciones y respaldos.
+          </p>
 
           <h2>Arquitectura</h2>
           <ul>
-            <li>API REST (Node.js + Express) con PostgreSQL y migraciones (Knex).</li>
-            <li>Frontend React con rutas protegidas y MUI; Axios con refresh de tokens.</li>
-            <li>Autenticación JWT (access + refresh) con rotación y revocación (<code>token_version</code>).</li>
-            <li>Auditoría: campos <code>created_by</code>, <code>updated_by</code>, <code>deleted_at</code> y tabla <code>audit_logs</code>.</li>
-            <li>Seguridad: CORS, Helmet, HPP, rate‑limit en login, validación/ sanitización.</li>
+            <li>
+              API REST (Node.js + Express) con PostgreSQL y migraciones (Knex).
+            </li>
+            <li>
+              Frontend React con rutas protegidas y MUI; Axios con refresh de
+              tokens.
+            </li>
+            <li>
+              Autenticación JWT (access + refresh) con rotación y revocación
+              (<code>token_version</code>).
+            </li>
+            <li>
+              Auditoría: campos <code>created_by</code>,
+              <code>updated_by</code>, <code>deleted_at</code> y tabla
+              <code>audit_logs</code>.
+            </li>
+            <li>
+              Seguridad: CORS, Helmet, HPP, rate‑limit en login, validación/
+              sanitización.
+            </li>
           </ul>
 
           <h2>Principales capacidades</h2>
           <ul>
-            <li>Búsqueda de personas por nombre/DNI/comisaría; exportación CSV/XLSX.</li>
+            <li>
+              Búsqueda de personas por nombre/DNI/comisaría; exportación
+              CSV/XLSX.
+            </li>
             <li>Detalle con fotos; carga/edición; soft delete.</li>
-            <li>Registros delictuales con filtros y paginación server‑side; duplicado; exportación CSV/XLSX.</li>
+            <li>
+              Registros delictuales con filtros y paginación server‑side;
+              duplicado; exportación CSV/XLSX.
+            </li>
             <li>Swagger UI: documentación viva en <code>/api/docs</code>.</li>
-            <li>Backups: script que genera dump de DB y empaqueta <code>uploads/</code>.</li>
+            <li>
+              Backups: script que genera dump de DB y empaqueta
+              <code>uploads/</code>.
+            </li>
           </ul>
 
           <h2>Operación</h2>
           <ul>
-            <li>Login inicial: <b>admin / admin123</b> (cambiar en primer uso).</li>
-            <li>Dev: Backend <code>http://localhost:4000</code> · Frontend <code>http://localhost:3000</code>.</li>
-            <li>Exportaciones a CSV/XLSX disponibles en búsqueda de personas y registros.</li>
+            <li>
+              Login inicial: <b>admin / admin123</b> (cambiar en primer uso).
+            </li>
+            <li>
+              Dev: Backend <code>http://localhost:4000</code> · Frontend
+              <code>http://localhost:3000</code>.
+            </li>
+            <li>
+              Exportaciones a CSV/XLSX disponibles en búsqueda de personas y
+              registros.
+            </li>
           </ul>
         </section>
 
         <aside class="card">
           <h2>Seguridad</h2>
           <ul>
-            <li>JWT con rotación de refresh y revocación por <code>token_version</code>.</li>
+            <li>
+              JWT con rotación de refresh y revocación por
+              <code>token_version</code>.
+            </li>
             <li>Validaciones Joi; sanitización; validación MIME de uploads.</li>
             <li>Rate‑limit en login; CORS + Helmet + HPP; IP allow en prod.</li>
             <li>Soft delete y logs de auditoría para cambios sensibles.</li>
@@ -92,12 +135,24 @@
 
           <h2>Endpoints</h2>
           <ul>
-            <li><code>GET /api/personas</code> filtros <code>q|dni|comisaria</code>, paginación y export.</li>
-            <li><code>GET /api/registros</code> filtros <code>persona_id|q</code>, paginación y export.</li>
-            <li>Swagger: <code>/api/docs</code> · Health: <code>/api/health</code>.</li>
+            <li>
+              <code>GET /api/personas</code> filtros
+              <code>q|dni|comisaria</code>, paginación y export.
+            </li>
+            <li>
+              <code>GET /api/registros</code> filtros <code>persona_id|q</code>,
+              paginación y export.
+            </li>
+            <li>
+              Swagger: <code>/api/docs</code> · Health:
+              <code>/api/health</code>.
+            </li>
           </ul>
 
-          <div class="kpi"><b>Listo para producción</b><span class="muted">(con PM2 + Nginx y backups programados)</span></div>
+          <div class="kpi">
+            <b>Listo para producción</b
+            ><span class="muted">(con PM2 + Nginx y backups programados)</span>
+          </div>
         </aside>
       </div>
 
@@ -130,4 +185,4 @@
       document.getElementById('today').textContent = new Date().toLocaleDateString('es-AR');
     </script>
   </body>
-  </html>
+</html>

@@ -1,7 +1,11 @@
 import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 
-export default function Header({ showSettings = false }) {
+export default function Header({
+  showSettings = false,
+  logoSrc = '/logo.png',
+  logoAlt = 'S.I.M.A. logo',
+}) {
   return (
     <AppBar
       position="static"
@@ -15,10 +19,21 @@ export default function Header({ showSettings = false }) {
           justifyContent: 'space-between',
         }}
       >
+        {/* Reemplazo del placeholder por imagen */}
         <Box
-          sx={{ width: 56, height: 56, bgcolor: 'white', borderRadius: '4px' }}
+          component="img"
+          src={logoSrc}
+          alt={logoAlt}
+          sx={{
+            width: 56,
+            height: 56,
+            objectFit: 'contain',
+            bgcolor: 'white',
+            borderRadius: '4px',
+            p: 0.5,
+          }}
         />
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>
+        <Typography variant="h3" sx={{ fontWeight: 800 }}>
           S.I.M.A.
         </Typography>
         {showSettings ? (
