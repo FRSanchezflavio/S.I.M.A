@@ -42,17 +42,17 @@ export default function Login() {
 
   return (
     <>
-      <Box className="header" sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="h3" sx={{ fontWeight: 600 }}>
+      <Box className="header" sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h2" sx={{ fontWeight: 800 }}>
           S.I.M.A.
         </Typography>
       </Box>
-      <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Card className="card">
+      <Container maxWidth="md" sx={{ py: 9 }}>
+        <Card className="abs-center" sx={{ maxWidth: 400, mx: 'auto' }}>
           <CardContent>
             <Typography
-              variant="h5"
-              sx={{ mb: 2, fontWeight: 600, textAlign: 'center' }}
+              variant="h4"
+              sx={{ mb: 3, mt: 2, fontWeight: 600, textAlign: 'center' }}
             >
               Iniciar sesión
             </Typography>

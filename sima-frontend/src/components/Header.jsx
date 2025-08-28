@@ -5,7 +5,7 @@ export default function Header({ showSettings = false }) {
   return (
     <AppBar
       position="static"
-      sx={{ backgroundColor: '#546e7a' }}
+      sx={{ backgroundColor: 'rgba(35, 11, 157, 1)' }}
       className="header"
     >
       <Toolbar
@@ -18,8 +18,8 @@ export default function Header({ showSettings = false }) {
         <Box
           sx={{ width: 56, height: 56, bgcolor: 'white', borderRadius: '4px' }}
         />
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          S.I.M.A.
+        <Typography variant="h3" sx={{ fontWeight: 600, color: 'yellow' }}>
+          🚀 HOT RELOAD FUNCIONA! 🚀
         </Typography>
         {showSettings ? (
           <IconButton color="inherit" aria-label="config">
