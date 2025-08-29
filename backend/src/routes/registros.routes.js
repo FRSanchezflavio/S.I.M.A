@@ -7,5 +7,6 @@ router.post('/', requireAuth, controller.create);
 router.get('/:id', requireAuth, controller.get);
 router.put('/:id', requireAuth, controller.update);
 router.delete('/:id', requireAuth, controller.remove);
+router.post('/:id/duplicate', requireAuth, controller.duplicate);
 
 module.exports = router;
