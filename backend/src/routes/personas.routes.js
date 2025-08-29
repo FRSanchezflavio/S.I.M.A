@@ -3,6 +3,7 @@ const controller = require('../controllers/personas.controller');
 const { requireAuth } = require('../security/authz');
 const upload = require('../services/upload');
 
+router.get('/stats', requireAuth, controller.getStats);
 router.get('/', requireAuth, controller.search);
 router.post('/', requireAuth, upload.array('fotos', 10), controller.create);
 router.get('/:id', requireAuth, controller.get);

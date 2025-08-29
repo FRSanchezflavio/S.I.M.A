@@ -1,154 +1,155 @@
+const AuthService = require('../services/auth.service');
 const db = require('../db/knex');
-const { hashPassword } = require('../utils/hash');
-const Joi = require('joi');
-const changeOwnPasswordSchema = Joi.object({
-  actual: Joi.string().min(8).max(100).required(),
-  nueva: Joi.string().min(8).max(100).required(),
+const { asyncErrorHandler } = require('../middlewares/error');
+const { NotFoundError } = require('../utils/errors');
+const { passwordLimiter } = require('../middlewares/rate-limit');
+
+// Initialize auth service
+const authService = new AuthService(db);
+
+/**
+ * Changes user's own password
+ */
+const changeOwnPassword = asyncErrorHandler(async (req, res) => {
+  await authService.changeOwnPassword(req.user.id, req.body);
+  res.json({ ok: true });
 });
 
-exports.changeOwnPassword = async (req, res, next) => {
-  try {
-    const { value, error } = changeOwnPasswordSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
-    const user = await db('usuarios').where({ id: req.user.id }).first();
-    if (!user) return res.status(404).json({ message: 'No encontrado' });
-    const { comparePassword } = require('../utils/hash');
-    const ok = await comparePassword(value.actual, user.password_hash);
-    if (!ok) return res.status(401).json({ message: 'Credenciales inválidas' });
-    const password_hash = await hashPassword(value.nueva);
-    await db('usuarios')
-      .where({ id: req.user.id })
-      .update({
-        password_hash,
-        token_version: user.token_version + 1,
-        updated_by: req.user.id,
-      });
-    res.json({ ok: true });
-  } catch (e) {
-    next(e);
-  }
-};
-
-const adminChangePasswordSchema = Joi.object({
-  nueva: Joi.string().min(8).max(100).required(),
+/**
+ * Admin changes another user's password
+ */
+const adminChangePassword = asyncErrorHandler(async (req, res) => {
+  await authService.adminChangePassword(req.params.id, req.user.id, req.body);
+  res.json({ ok: true });
 });
 
-exports.adminChangePassword = async (req, res, next) => {
-  try {
-    const { value, error } = adminChangePasswordSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
-    const user = await db('usuarios').where({ id: req.params.id }).first();
-    if (!user) return res.status(404).json({ message: 'No encontrado' });
-    const password_hash = await hashPassword(value.nueva);
-    await db('usuarios')
-      .where({ id: req.params.id })
-      .update({
-        password_hash,
-        token_version: user.token_version + 1,
-        updated_by: req.user.id,
-      });
-    res.json({ ok: true });
-  } catch (e) {
-    next(e);
-  }
-};
-
-const baseSchema = Joi.object({
-  usuario: Joi.string().alphanum().min(3).max(50).required(),
-  password: Joi.string().min(8).max(100).optional(),
-  nombre: Joi.string().min(2).max(100).required(),
-  apellido: Joi.string().min(2).max(100).required(),
-  rol: Joi.string().valid('admin', 'usuario').required(),
-  activo: Joi.boolean().optional(),
+/**
+ * Lists all users (admin only)
+ */
+const list = asyncErrorHandler(async (req, res) => {
+  const { page = 1, pageSize = 50 } = req.query;
+  const options = {
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+  };
+  
+  const result = await authService.list(options);
+  
+  // Remove sensitive data from response
+  result.items = result.items.map(user => {
+    const { password_hash, token_version, ...safeUser } = user;
+    return safeUser;
+  });
+  
+  res.json(result);
 });
 
-exports.list = async (_req, res, next) => {
-  try {
-    const rows = await db('usuarios').select(
-      'id',
-      'usuario',
-      'nombre',
-      'apellido',
-      'rol',
-      'activo',
-      'created_at',
-      'updated_at'
-    );
-    res.json(rows);
-  } catch (e) {
-    next(e);
-  }
-};
+/**
+ * Creates a new user (admin only)
+ */
+const create = asyncErrorHandler(async (req, res) => {
+  const result = await authService.createUser(req.body, req.user);
+  
+  res.status(201).json({
+    id: result.id,
+    tempPassword: result.tempPassword,
+    message: 'Usuario creado exitosamente. La contraseña temporal debe ser cambiada en el primer login.'
+  });
+});
 
-exports.create = async (req, res, next) => {
-  try {
-    const { value, error } = baseSchema
-      .requiredKeys('password')
-      .validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
-    const exists = await db('usuarios')
-      .where({ usuario: value.usuario })
-      .first();
-    if (exists) return res.status(409).json({ message: 'Usuario ya existe' });
-    const password_hash = await hashPassword(value.password);
-    const [id] = await db('usuarios')
-      .insert({
-        usuario: value.usuario,
-        password_hash,
-        nombre: value.nombre,
-        apellido: value.apellido,
-        rol: value.rol,
-        activo: value.activo ?? true,
-        created_by: req.user?.id || null,
-        updated_by: req.user?.id || null,
-      })
-      .returning('id');
-    res.status(201).json({ id: id?.id || id });
-  } catch (e) {
-    next(e);
+/**
+ * Gets a specific user by ID (admin only)
+ */
+const get = asyncErrorHandler(async (req, res) => {
+  const user = await authService.findById(req.params.id);
+  
+  if (!user) {
+    throw new NotFoundError('Usuario');
   }
-};
+  
+  // Remove sensitive data
+  const { password_hash, token_version, ...safeUser } = user;
+  res.json(safeUser);
+});
 
-exports.get = async (req, res, next) => {
-  try {
-    const user = await db('usuarios').where({ id: req.params.id }).first();
-    if (!user) return res.status(404).json({ message: 'No encontrado' });
-    delete user.password_hash;
-    res.json(user);
-  } catch (e) {
-    next(e);
+/**
+ * Updates a user (admin only)
+ */
+const update = asyncErrorHandler(async (req, res) => {
+  const success = await authService.update(req.params.id, req.body, req.user);
+  
+  if (!success) {
+    throw new NotFoundError('Usuario');
   }
-};
+  
+  res.json({ ok: true });
+});
 
-exports.update = async (req, res, next) => {
-  try {
-    const { value, error } = baseSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
-    const patch = {
-      usuario: value.usuario,
-      nombre: value.nombre,
-      apellido: value.apellido,
-      rol: value.rol,
-      activo: value.activo ?? true,
-    };
-    if (value.password)
-      patch.password_hash = await hashPassword(value.password);
-    const updated = await db('usuarios')
-      .where({ id: req.params.id })
-      .update({ ...patch, updated_by: req.user?.id || null });
-    if (!updated) return res.status(404).json({ message: 'No encontrado' });
-    res.json({ ok: true });
-  } catch (e) {
-    next(e);
+/**
+ * Soft deletes a user (admin only)
+ */
+const remove = asyncErrorHandler(async (req, res) => {
+  // Prevent admin from deleting themselves
+  if (req.params.id == req.user.id) {
+    const error = new Error('No puedes eliminar tu propia cuenta');
+    error.statusCode = 400;
+    throw error;
   }
-};
+  
+  const success = await authService.softDelete(req.params.id, req.user);
+  
+  if (!success) {
+    throw new NotFoundError('Usuario');
+  }
+  
+  res.json({ ok: true });
+});
 
-exports.remove = async (req, res, next) => {
-  try {
-    const del = await db('usuarios').where({ id: req.params.id }).del();
-    if (!del) return res.status(404).json({ message: 'No encontrado' });
-    res.json({ ok: true });
-  } catch (e) {
-    next(e);
+/**
+ * Revokes all tokens for a user (admin only)
+ */
+const revokeTokens = asyncErrorHandler(async (req, res) => {
+  await authService.revokeAllTokens(req.params.id);
+  res.json({ ok: true, message: 'Tokens revocados exitosamente' });
+});
+
+/**
+ * Gets current user's profile
+ */
+const getProfile = asyncErrorHandler(async (req, res) => {
+  const user = await authService.findById(req.user.id);
+  
+  if (!user) {
+    throw new NotFoundError('Usuario');
   }
+  
+  const { password_hash, token_version, ...profile } = user;
+  res.json(profile);
+});
+
+/**
+ * Updates current user's profile (name, email, etc. but not password)
+ */
+const updateProfile = asyncErrorHandler(async (req, res) => {
+  const { password, ...profileData } = req.body;
+  const success = await authService.update(req.user.id, profileData, req.user);
+  
+  if (!success) {
+    throw new NotFoundError('Usuario');
+  }
+  
+  res.json({ ok: true });
+});
+
+module.exports = {
+  changeOwnPassword,
+  adminChangePassword,
+  list,
+  create,
+  get,
+  update,
+  remove,
+  revokeTokens,
+  getProfile,
+  updateProfile,
 };
