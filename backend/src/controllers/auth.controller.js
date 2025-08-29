@@ -1,68 +1,42 @@
+const AuthService = require('../services/auth.service');
 const db = require('../db/knex');
-const { comparePassword } = require('../utils/hash');
-const { signTokens, verifyRefresh } = require('../utils/jwt');
-const Joi = require('joi');
+const { asyncErrorHandler } = require('../middlewares/error');
 
-const loginSchema = Joi.object({
-  usuario: Joi.string().min(3).max(50).required(),
-  password: Joi.string().min(6).max(100).required(),
+// Initialize auth service
+const authService = new AuthService(db);
+
+/**
+ * User login endpoint
+ * Authenticates user credentials and returns JWT tokens
+ */
+const login = asyncErrorHandler(async (req, res) => {
+  const tokens = await authService.login(req.body);
+  res.json(tokens);
 });
 
-exports.login = async (req, res, next) => {
-  try {
-    const { value, error } = loginSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
+/**
+ * Token refresh endpoint  
+ * Refreshes access token using valid refresh token
+ */
+const refresh = asyncErrorHandler(async (req, res) => {
+  const { refreshToken } = req.body || {};
+  const tokens = await authService.refreshTokens(refreshToken);
+  res.json(tokens);
+});
 
-    const user = await db('usuarios')
-      .where({ usuario: value.usuario, activo: true })
-      .first();
-    if (!user)
-      return res.status(401).json({ message: 'Credenciales inválidas' });
-    const ok = await comparePassword(value.password, user.password_hash);
-    if (!ok) return res.status(401).json({ message: 'Credenciales inválidas' });
-
-    const payload = {
-      id: user.id,
-      usuario: user.usuario,
-      rol: user.rol,
-      nombre: user.nombre,
-      apellido: user.apellido,
-      token_version: user.token_version || 0,
-    };
-    const tokens = signTokens(payload);
-    res.json(tokens);
-  } catch (e) {
-    next(e);
-  }
-};
-
-exports.refresh = async (req, res, next) => {
-  try {
-    const { refreshToken } = req.body || {};
-    if (!refreshToken)
-      return res.status(400).json({ message: 'Falta refreshToken' });
-    const payload = verifyRefresh(refreshToken);
-    // Validar token_version contra DB
-    const user = await db('usuarios').where({ id: payload.id }).first();
-    if (!user) return res.status(401).json({ message: 'Token inválido' });
-    if ((payload.token_version || 0) !== (user.token_version || 0)) {
-      return res.status(401).json({ message: 'Token inválido' });
-    }
-    const tokens = signTokens({
-      id: user.id,
-      usuario: user.usuario,
-      rol: user.rol,
-      nombre: user.nombre,
-      apellido: user.apellido,
-      token_version: user.token_version || 0,
-    });
-    res.json(tokens);
-  } catch (e) {
-    next(e);
-  }
-};
-
-exports.logout = async (_req, res) => {
-  // Stateless: el cliente borra tokens. Opcional: blacklist en DB si se requiere.
+/**
+ * User logout endpoint
+ * For stateless JWT, client handles token removal
+ * Could implement token blacklisting here if needed
+ */
+const logout = asyncErrorHandler(async (req, res) => {
+  // Optional: revoke all tokens for user
+  // await authService.revokeAllTokens(req.user.id);
   res.json({ ok: true });
+});
+
+module.exports = {
+  login,
+  refresh,
+  logout,
 };
