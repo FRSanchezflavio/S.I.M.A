@@ -22,6 +22,7 @@ const personSchema = Joi.object({
   email: Joi.string().email().optional().allow('', null),
   observaciones: Joi.string().optional().allow('', null),
   comisaria: Joi.string().optional().allow('', null),
+  comisaria_hecho: Joi.string().optional().allow('', null),
   // Campos adicionales del frontend
   tipo_delito: Joi.string().optional().allow('', null),
   modalidad: Joi.string().optional().allow('', null),
@@ -57,6 +58,7 @@ exports.search = async (req, res, next) => {
           'telefono',
           'email',
           'comisaria',
+          'comisaria_hecho',
           'observaciones'
         )
         .orderBy('apellido', 'asc');
@@ -81,6 +83,7 @@ exports.search = async (req, res, next) => {
           'Teléfono',
           'Email',
           'Comisaría',
+          'Comisaría del Hecho',
           'Observaciones',
         ];
         res.write(headers.join(';') + '\n');
@@ -97,6 +100,7 @@ exports.search = async (req, res, next) => {
             r.telefono || '',
             r.email || '',
             r.comisaria || '',
+            r.comisaria_hecho || '',
             (r.observaciones || '').replace(/[\r\n]+/g, ' '),
           ]
             .map(v => `${v}`.replace(/;/g, ','))
@@ -122,6 +126,7 @@ exports.search = async (req, res, next) => {
           { header: 'Teléfono', key: 'telefono', width: 15 },
           { header: 'Email', key: 'email', width: 25 },
           { header: 'Comisaría', key: 'comisaria', width: 15 },
+          { header: 'Comisaría del Hecho', key: 'comisaria_hecho', width: 20 },
           { header: 'Observaciones', key: 'observaciones', width: 40 },
         ];
         ws.addRows(rows);

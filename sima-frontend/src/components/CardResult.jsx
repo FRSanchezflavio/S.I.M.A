@@ -29,6 +29,11 @@ export default function CardResult({ item, onDetail }) {
         <Typography variant="body2">
           Comisaría: {item.comisaria || '-'}
         </Typography>
+        {item.comisaria_hecho && (
+          <Typography variant="body2">
+            Com. del Hecho: {item.comisaria_hecho}
+          </Typography>
+        )}
         {item.genero && (
           <Typography variant="body2">Género: {item.genero}</Typography>
         )}

@@ -76,6 +76,7 @@ export default function PersonaDetalle() {
           telefono: data.telefono || '',
           observaciones: data.observaciones || '',
           comisaria: data.comisaria || '',
+          comisaria_hecho: data.comisaria_hecho || '',
         });
       } catch (e) {
         setError('No se pudo cargar el detalle');
@@ -192,6 +193,7 @@ export default function PersonaDetalle() {
                       email: item.email || '',
                       observaciones: item.observaciones || '',
                       comisaria: item.comisaria || '',
+                      comisaria_hecho: item.comisaria_hecho || '',
                     });
                   }
                 }}
@@ -248,6 +250,9 @@ export default function PersonaDetalle() {
                       >
                         <Chip label={`DNI: ${item.dni || '-'}`} />
                         <Chip label={`Comisaría: ${item.comisaria || '-'}`} />
+                        {item.comisaria_hecho && (
+                          <Chip label={`Com. del Hecho: ${item.comisaria_hecho}`} />
+                        )}
                         {item.fecha_nacimiento && (
                           <Chip
                             label={`Nac.: ${new Date(
@@ -330,6 +335,16 @@ export default function PersonaDetalle() {
                           value={form.comisaria}
                           onChange={e =>
                             setForm({ ...form, comisaria: e.target.value })
+                          }
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Comisaría del Hecho"
+                          fullWidth
+                          value={form.comisaria_hecho}
+                          onChange={e =>
+                            setForm({ ...form, comisaria_hecho: e.target.value })
                           }
                         />
                       </Grid>
@@ -434,6 +449,14 @@ export default function PersonaDetalle() {
                           {(item.telefono || '-') + ' / ' + (item.email || '-')}
                         </Typography>
                       </Grid>
+                      {item.comisaria_hecho && (
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Comisaría del Hecho
+                          </Typography>
+                          <Typography>{item.comisaria_hecho}</Typography>
+                        </Grid>
+                      )}
                       <Grid item xs={12}>
                         <Typography variant="subtitle2" color="text.secondary">
                           Observaciones

@@ -32,6 +32,7 @@ export default function Cargar() {
     telefono: '',
     observaciones: '',
     comisaria: '',
+    comisaria_hecho: '',
     categoria: '',
     UnidadesRegionales: '',
     fecha_carga: new Date().toISOString().split('T')[0], // Fecha actual por defecto
@@ -80,6 +81,7 @@ export default function Cargar() {
         telefono: '',
         observaciones: '',
         comisaria: '',
+        comisaria_hecho: '',
         categoria: '',
         UnidadesRegionales: '',
         fecha_carga: new Date().toISOString().split('T')[0],
@@ -235,6 +237,12 @@ export default function Cargar() {
                   label="Comisaría Jurisdic. del M/A."
                   value={form.comisaria}
                   onChange={v => setForm({ ...form, comisaria: v })}
+                  InputLabelProps={{ style: { color: '#000' } }}
+                />
+                <FormInput
+                  label="Comisaría donde sucedió el hecho"
+                  value={form.comisaria_hecho}
+                  onChange={v => setForm({ ...form, comisaria_hecho: v })}
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
