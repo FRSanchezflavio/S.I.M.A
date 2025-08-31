@@ -7,7 +7,12 @@ const personSchema = Joi.object({
   dni: Joi.string()
     .pattern(/^\d{7,9}$/)
     .required(),
-  fecha_nacimiento: Joi.date().optional().allow(null),
+  fecha_nacimiento: Joi.date().optional().allow(null, ''),
+  edad: Joi.number().integer().min(0).max(120).optional().allow(null, ''),
+  genero: Joi.string()
+    .valid('masculino', 'femenino', 'otro')
+    .optional()
+    .allow('', null),
   nacionalidad: Joi.string().optional().allow('', null),
   direccion: Joi.string().optional().allow('', null),
   telefono: Joi.string()
@@ -17,6 +22,12 @@ const personSchema = Joi.object({
   email: Joi.string().email().optional().allow('', null),
   observaciones: Joi.string().optional().allow('', null),
   comisaria: Joi.string().optional().allow('', null),
+  // Campos adicionales del frontend
+  tipo_delito: Joi.string().optional().allow('', null),
+  modalidad: Joi.string().optional().allow('', null),
+  categoria: Joi.string().optional().allow('', null),
+  fecha_carga: Joi.date().optional().allow('', null),
+  unidades_regionales: Joi.string().optional().allow('', null),
 });
 
 exports.search = async (req, res, next) => {
@@ -40,6 +51,7 @@ exports.search = async (req, res, next) => {
           'nombre',
           'dni',
           'fecha_nacimiento',
+          'genero',
           'nacionalidad',
           'direccion',
           'telefono',
@@ -63,6 +75,7 @@ exports.search = async (req, res, next) => {
           'Nombre',
           'DNI',
           'Fecha de nacimiento',
+          'Género',
           'Nacionalidad',
           'Dirección',
           'Teléfono',
@@ -78,6 +91,7 @@ exports.search = async (req, res, next) => {
             r.nombre || '',
             r.dni || '',
             r.fecha_nacimiento || '',
+            r.genero || '',
             r.nacionalidad || '',
             r.direccion || '',
             r.telefono || '',
@@ -102,6 +116,7 @@ exports.search = async (req, res, next) => {
           { header: 'Nombre', key: 'nombre', width: 20 },
           { header: 'DNI', key: 'dni', width: 15 },
           { header: 'Fecha de nacimiento', key: 'fecha_nacimiento', width: 18 },
+          { header: 'Género', key: 'genero', width: 12 },
           { header: 'Nacionalidad', key: 'nacionalidad', width: 15 },
           { header: 'Dirección', key: 'direccion', width: 25 },
           { header: 'Teléfono', key: 'telefono', width: 15 },

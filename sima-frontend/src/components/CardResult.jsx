@@ -29,6 +29,9 @@ export default function CardResult({ item, onDetail }) {
         <Typography variant="body2">
           Comisaría: {item.comisaria || '-'}
         </Typography>
+        {item.genero && (
+          <Typography variant="body2">Género: {item.genero}</Typography>
+        )}
         <Stack direction="row" mt={1}>
           <Button
             variant="contained"

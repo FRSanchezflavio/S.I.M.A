@@ -1,11 +1,32 @@
-import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Box,
+  keyframes,
+} from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 
 export default function Header({ showSettings = false }) {
+  const slideDown = keyframes`
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  `;
+
   return (
     <AppBar
       position="static"
-      sx={{ backgroundColor: 'rgba(35, 11, 157, 1)' }}
+      sx={{
+        backgroundColor: 'rgb(21, 77, 113)',
+        animation: `${slideDown} 0.8s ease-out`,
+      }}
       className="header"
     >
       <Toolbar
@@ -16,10 +37,21 @@ export default function Header({ showSettings = false }) {
         }}
       >
         <Box
-          sx={{ width: 56, height: 56, bgcolor: 'white', borderRadius: '4px' }}
+          component="img"
+          src="/img/oficina2.jpeg"
+          alt="Logo"
+          sx={{
+            width: '130px',
+            height: 'auto',
+            bgcolor: 'white',
+            borderRadius: '800px',
+          }}
         />
-        <Typography variant="h3" sx={{ fontWeight: 600, color: 'yellow' }}>
-          🚀 HOT RELOAD FUNCIONA! 🚀
+        <Typography
+          variant="h2"
+          sx={{ fontWeight: 600, color: 'beige', mr: 9 }}
+        >
+          S.I.M.A.
         </Typography>
         {showSettings ? (
           <IconButton color="inherit" aria-label="config">

@@ -61,6 +61,7 @@ describe('SIMA API integración', () => {
       nombre: 'Juan',
       apellido: 'Pérez',
       dni: '30123456',
+      genero: 'masculino',
       nacionalidad: 'Argentina',
       telefono: '+54 381 5555555',
       email: 'juan@example.com',
@@ -79,6 +80,13 @@ describe('SIMA API integración', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(search.statusCode).toBe(200);
     expect(Array.isArray(search.body.items)).toBe(true);
+
+    // Verificar que el género se guardó correctamente
+    const detail = await request(app)
+      .get(`/api/personas/${id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(detail.statusCode).toBe(200);
+    expect(detail.body.genero).toBe('masculino');
   });
 
   test('export CSV', async () => {
@@ -94,6 +102,20 @@ describe('SIMA API integración', () => {
       nombre: 'Ana',
       apellido: 'Prueba',
       dni: 'ABC123', // inválido
+    };
+    const res = await request(app)
+      .post('/api/personas')
+      .set('Authorization', `Bearer ${token}`)
+      .send(bad);
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('rechaza crear persona con género inválido (400)', async () => {
+    const bad = {
+      nombre: 'Ana',
+      apellido: 'Prueba',
+      dni: '12345678',
+      genero: 'invalido', // género inválido
     };
     const res = await request(app)
       .post('/api/personas')

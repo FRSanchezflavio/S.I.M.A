@@ -7,6 +7,7 @@ import {
   Typography,
   Button,
   Alert,
+  keyframes,
 } from '@mui/material';
 import FormInput from '../components/FormInput';
 import Footer from '../components/Footer';
@@ -40,19 +41,68 @@ export default function Login() {
     }
   };
 
+  const slideDown = keyframes`
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  `;
+
+  const scaleUp = keyframes`
+    from {
+      transform: scale(0.3);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  `;
+
   return (
     <>
-      <Box className="header" sx={{ p: 4, textAlign: 'center' }}>
+      <Box
+        className="header"
+        sx={{
+          p: 2,
+          display: 'flex',
+          height: '115px',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'rgb(21, 77, 113)',
+          animation: `${slideDown} 0.8s ease-out`,
+        }}
+      >
+        <Box sx={{ position: 'absolute', left: 16 }}>
+          <img
+            src="/img/oficina2.jpeg"
+            alt="Logo"
+            style={{ height: '115px', width: 'auto', borderRadius: '800px' }}
+          />
+        </Box>
         <Typography variant="h2" sx={{ fontWeight: 800 }}>
           S.I.M.A.
         </Typography>
       </Box>
       <Container maxWidth="md" sx={{ py: 9 }}>
-        <Card className="abs-center" sx={{ maxWidth: 400, mx: 'auto' }}>
+        <Card
+          className="abs-center"
+          sx={{
+            maxWidth: 400,
+            mx: 'auto',
+            p: 2,
+            boxShadow: '10px 40px 24px rgba(0, 0, 0, 0.15)',
+            animation: `${scaleUp} 0.6s ease-out 0.3s both`,
+          }}
+        >
           <CardContent>
             <Typography
               variant="h4"
-              sx={{ mb: 3, mt: 2, fontWeight: 600, textAlign: 'center' }}
+              sx={{ mb: 3, mt: 2, fontWeight: 800, textAlign: 'center' }}
             >
               Iniciar sesión
             </Typography>
@@ -79,7 +129,11 @@ export default function Login() {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 2, bgcolor: '#000', '&:hover': { bgcolor: '#111' } }}
+                sx={{
+                  mt: 4,
+                  bgcolor: '#000 : rgba(112, 159, 202, 1)',
+                  '&:hover': { bgcolor: 'rgb(0, 27, 183)' },
+                }}
               >
                 INICIAR SESIÓN
               </Button>

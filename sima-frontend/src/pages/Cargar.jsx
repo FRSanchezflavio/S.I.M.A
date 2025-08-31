@@ -8,6 +8,7 @@ import {
   Button,
   Alert,
   Box,
+  MenuItem,
 } from '@mui/material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -18,16 +19,22 @@ import { useToast } from '../components/ToastProvider';
 
 export default function Cargar() {
   const [form, setForm] = useState({
+    tipo_delito: '',
+    modalidad: '',
     nombre: '',
     apellido: '',
     dni: '',
     fecha_nacimiento: '',
+    edad: '',
+    genero: '',
     nacionalidad: '',
     direccion: '',
     telefono: '',
-    email: '',
     observaciones: '',
     comisaria: '',
+    categoria: '',
+    UnidadesRegionales: '',
+    fecha_carga: new Date().toISOString().split('T')[0], // Fecha actual por defecto
   });
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
@@ -46,7 +53,13 @@ export default function Cargar() {
     setOk('');
     try {
       const data = new FormData();
-      Object.entries(form).forEach(([k, v]) => data.append(k, v || ''));
+      const formData = { ...form };
+      // Mapear UnidadesRegionales a unidades_regionales para el backend
+      if (formData.UnidadesRegionales) {
+        formData.unidades_regionales = formData.UnidadesRegionales;
+        delete formData.UnidadesRegionales;
+      }
+      Object.entries(formData).forEach(([k, v]) => data.append(k, v || ''));
       files.forEach(f => data.append('fotos', f));
       await api.post('/personas', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -54,16 +67,22 @@ export default function Cargar() {
       setOk('Guardado correctamente');
       showToast('Persona guardada', 'success');
       setForm({
+        tipo_delito: '',
+        modalidad: '',
         nombre: '',
         apellido: '',
         dni: '',
         fecha_nacimiento: '',
+        edad: '',
+        genero: '',
         nacionalidad: '',
         direccion: '',
         telefono: '',
-        email: '',
         observaciones: '',
         comisaria: '',
+        categoria: '',
+        UnidadesRegionales: '',
+        fecha_carga: new Date().toISOString().split('T')[0],
       });
       setFiles([]);
     } catch (err) {
@@ -72,98 +91,212 @@ export default function Cargar() {
     }
   };
 
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDrag = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+    if (e.type === 'dragleave') setDragActive(false);
+  };
+
+  const handleDrop = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    const dropped = Array.from(e.dataTransfer?.files || []);
+    if (dropped.length) setFiles(prev => [...prev, ...dropped]);
+  };
+
+  const removeFile = idx => {
+    setFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
   return (
     <>
       <Header showSettings />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Card className="card">
           <CardContent>
-            <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: 900, mb: 4, color: '#000' }}
+            >
               Cargar mencionado/aprehendido
             </Typography>
-            <Alert severity="info" sx={{ mb: 2 }}>
+            <Alert severity="info" sx={{ mb: 2, color: '#000' }}>
               Complete todos los campos y seleccione al menos una fotografía
               para guardar los datos.
             </Alert>
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert severity="error" sx={{ mb: 2, color: '#000' }}>
                 {error}
               </Alert>
             )}
             {ok && (
-              <Alert severity="success" sx={{ mb: 2 }}>
+              <Alert severity="success" sx={{ mb: 2, color: '#000' }}>
                 {ok}
               </Alert>
             )}
-            <Grid container spacing={3}>
+            <Grid container spacing={4}>
               <Grid item xs={12} md={6}>
                 <FormInput
-                  label="Comisaría"
-                  value={form.comisaria}
-                  onChange={v => setForm({ ...form, comisaria: v })}
+                  label="Tipo de delito"
+                  value={form.tipo_delito}
+                  onChange={v => setForm({ ...form, tipo_delito: v })}
+                  select
+                  InputLabelProps={{ style: { color: '#000' } }}
+                >
+                  <MenuItem value="">Seleccionar tipo</MenuItem>
+                  <MenuItem value="robo">Robo</MenuItem>
+                  <MenuItem value="hurto">Hurto</MenuItem>
+                </FormInput>
+                <FormInput
+                  label="Modalidad"
+                  value={form.modalidad}
+                  onChange={v => setForm({ ...form, modalidad: v })}
+                  select
+                  InputLabelProps={{ style: { color: '#000' } }}
+                >
+                  <MenuItem value="">Seleccionar modalidad</MenuItem>
+                  <MenuItem value="arrebato">Arrebato</MenuItem>
+                  <MenuItem value="descuido">Descuido</MenuItem>
+                  <MenuItem value="destreza">Destreza</MenuItem>
+                  <MenuItem value="escalamiento">Escalamiento</MenuItem>
+                  <MenuItem value="fuerza_puerta">Fuerza en puerta</MenuItem>
+                  <MenuItem value="fuerza_ventana">Fuerza en ventana</MenuItem>
+                  <MenuItem value="intimidacion">Intimidación</MenuItem>
+                  <MenuItem value="llave_falsa">Llave falsa</MenuItem>
+                  <MenuItem value="motochorro">Motochorro</MenuItem>
+                  <MenuItem value="violencia">Violencia</MenuItem>
+                  <MenuItem value="otro">Otro</MenuItem>
+                </FormInput>
+                <FormInput
+                  label="Apellido"
+                  value={form.apellido}
+                  onChange={v => setForm({ ...form, apellido: v })}
+                  required
+                  InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
                   label="Nombre"
                   value={form.nombre}
                   onChange={v => setForm({ ...form, nombre: v })}
                   required
-                />
-                <FormInput
-                  label="Apellido"
-                  value={form.apellido}
-                  onChange={v => setForm({ ...form, apellido: v })}
-                  required
+                  InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
                   label="DNI"
                   value={form.dni}
                   onChange={v => setForm({ ...form, dni: v })}
                   required
+                  InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
                   label="Fecha de nacimiento"
                   type="date"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{ shrink: true, style: { color: '#000' } }}
                   value={form.fecha_nacimiento}
                   onChange={v => setForm({ ...form, fecha_nacimiento: v })}
                 />
                 <FormInput
+                  label="Edad"
+                  value={form.edad}
+                  onChange={v => setForm({ ...form, edad: v })}
+                  type="number"
+                  inputProps={{ min: 0, max: 120 }}
+                  InputLabelProps={{ style: { color: '#000' } }}
+                />
+                <FormInput
+                  label="Género"
+                  value={form.genero}
+                  onChange={v => setForm({ ...form, genero: v })}
+                  select
+                  InputLabelProps={{ style: { color: '#000' } }}
+                >
+                  <MenuItem value="">Seleccionar género</MenuItem>
+                  <MenuItem value="masculino">Masculino</MenuItem>
+                  <MenuItem value="femenino">Femenino</MenuItem>
+                  <MenuItem value="otro">Otro</MenuItem>
+                </FormInput>
+                <FormInput
                   label="Nacionalidad"
                   value={form.nacionalidad}
                   onChange={v => setForm({ ...form, nacionalidad: v })}
+                  InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
                   label="Dirección"
                   value={form.direccion}
                   onChange={v => setForm({ ...form, direccion: v })}
+                  InputLabelProps={{ style: { color: '#000' } }}
+                />
+                <FormInput
+                  label="Comisaría Jurisdic. del M/A."
+                  value={form.comisaria}
+                  onChange={v => setForm({ ...form, comisaria: v })}
+                  InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
                   label="Teléfono"
                   value={form.telefono}
                   onChange={v => setForm({ ...form, telefono: v })}
+                  InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
-                  label="Email"
-                  type="email"
-                  value={form.email}
-                  onChange={v => setForm({ ...form, email: v })}
+                  label="Unidades Regionales"
+                  value={form.UnidadesRegionales}
+                  onChange={v => setForm({ ...form, UnidadesRegionales: v })}
+                  select
+                  InputLabelProps={{ style: { color: '#000' } }}
+                >
+                  <MenuItem value="">Seleccionar categoría</MenuItem>
+                  <MenuItem value="opcion1">U.R.C.</MenuItem>
+                  <MenuItem value="opcion2">U.R.N.</MenuItem>
+                  <MenuItem value="opcion3">U.R.S.</MenuItem>
+                  <MenuItem value="opcion4">U.R.O.</MenuItem>
+                  <MenuItem value="opcion5">U.R.E.</MenuItem>
+                </FormInput>
+                <FormInput
+                  label="Fecha de carga"
+                  type="date"
+                  InputLabelProps={{ shrink: true, style: { color: '#000' } }}
+                  value={form.fecha_carga}
+                  onChange={v => setForm({ ...form, fecha_carga: v })}
                 />
                 <FormInput
                   label="Observaciones"
                   value={form.observaciones}
                   onChange={v => setForm({ ...form, observaciones: v })}
                   multiline
-                  rows={3}
+                  rows={5}
+                  InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                  <Button variant="outlined" onClick={() => nav('/dashboard')}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => nav('/dashboard')}
+                    sx={{
+                      bgcolor: '#f1f1f1ff',
+                      color: '#000',
+                      '&:hover': {
+                        bgcolor: 'rgb(21, 77, 113)',
+                        color: '#fff',
+                        transition: 'all 0.3s ease',
+                      },
+                    }}
+                  >
                     ← VOLVER AL INICIO
                   </Button>
                   <Button
                     variant="contained"
                     onClick={onSubmit}
                     disabled={!canSave}
-                    sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#111' } }}
+                    sx={{
+                      bgcolor: '#000',
+                      color: '#fff',
+                      '&:hover': { bgcolor: 'rgb(21, 77, 113)' },
+                    }}
                   >
                     GUARDAR
                   </Button>
@@ -171,40 +304,224 @@ export default function Cargar() {
               </Grid>
               <Grid item xs={12} md={6}>
                 <Box
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
                   sx={{
-                    p: 2,
-                    border: '2px dashed #90a4ae',
+                    p: 3,
+                    border: `2px dashed ${dragActive ? '#15616f' : '#90a4ae'}`,
                     borderRadius: 2,
                     textAlign: 'center',
+                    color: '#000',
+                    position: 'relative',
+                    bgcolor: dragActive
+                      ? 'rgba(21,77,113,0.06)'
+                      : 'transparent',
+                    transition: 'all 0.15s ease',
+                    minHeight: 300,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                   }}
                 >
-                  <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                    Arrastre y suelte imágenes aquí o haga clic para seleccionar
-                  </Typography>
+                  {files.length === 0 ? (
+                    <>
+                      {/* Imagen de ejemplo */}
+                      <Box
+                        sx={{
+                          width: 120,
+                          height: 120,
+                          bgcolor: '#f0f0f0',
+                          borderRadius: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mb: 2,
+                          border: '1px solid #ddd',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            fontSize: 48,
+                            color: '#999',
+                          }}
+                        >
+                          📷
+                        </Box>
+                      </Box>
+
+                      <Typography variant="h6" sx={{ mb: 1, color: '#000' }}>
+                        {dragActive
+                          ? 'Suelte las imágenes aquí'
+                          : 'Cargar fotografías'}
+                      </Typography>
+
+                      <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
+                        Arrastre y suelte imágenes aquí o use el botón
+                      </Typography>
+
+                      <Button
+                        variant="contained"
+                        sx={{
+                          bgcolor: '#15616f',
+                          color: '#fff',
+                          '&:hover': { bgcolor: 'rgb(21, 77, 113)' },
+                          mb: 1,
+                        }}
+                        onClick={() =>
+                          document.getElementById('file-input').click()
+                        }
+                      >
+                        📁 SELECCIONAR IMÁGENES
+                      </Button>
+
+                      <input
+                        id="file-input"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={onFile}
+                        style={{ display: 'none' }}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Typography variant="h6" sx={{ mb: 2, color: '#000' }}>
+                        Imágenes seleccionadas: {files.length}
+                      </Typography>
+
+                      <Button
+                        variant="outlined"
+                        onClick={() =>
+                          document.getElementById('file-input-add').click()
+                        }
+                        sx={{
+                          mb: 2,
+                          borderColor: '#15616f',
+                          color: '#15616f',
+                          '&:hover': {
+                            bgcolor: '#15616f',
+                            color: '#fff',
+                          },
+                        }}
+                      >
+                        + AGREGAR MÁS IMÁGENES
+                      </Button>
+
+                      <input
+                        id="file-input-add"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={onFile}
+                        style={{ display: 'none' }}
+                      />
+                    </>
+                  )}
+
+                  {/* Invisible full-cover input for drag and drop */}
                   <input
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={onFile}
-                    style={{ display: 'block', margin: '8px auto' }}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      opacity: 0,
+                      cursor: 'pointer',
+                      zIndex: files.length > 0 ? -1 : 1,
+                    }}
                   />
-                  <Box
-                    sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}
-                  >
-                    {files.map((f, idx) => (
-                      <img
-                        key={idx}
-                        src={URL.createObjectURL(f)}
-                        alt="preview"
-                        style={{
-                          width: 96,
-                          height: 96,
-                          objectFit: 'cover',
-                          borderRadius: 8,
-                        }}
-                      />
-                    ))}
-                  </Box>
+
+                  {files.length > 0 && (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                        mt: 2,
+                        justifyContent: 'center',
+                        maxHeight: 200,
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {files.map((f, idx) => (
+                        <Box
+                          key={idx}
+                          sx={{
+                            width: 96,
+                            height: 96,
+                            position: 'relative',
+                            borderRadius: 1,
+                            overflow: 'hidden',
+                            boxShadow: 1,
+                            bgcolor: '#f7f7f7',
+                          }}
+                        >
+                          <img
+                            src={URL.createObjectURL(f)}
+                            alt={f.name}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              bgcolor: 'rgba(0,0,0,0.45)',
+                              color: '#fff',
+                              fontSize: 11,
+                              py: '2px',
+                              px: '4px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span
+                              style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                maxWidth: 64,
+                              }}
+                            >
+                              {f.name}
+                            </span>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              onClick={e => {
+                                e.stopPropagation();
+                                removeFile(idx);
+                              }}
+                              sx={{
+                                minWidth: 26,
+                                height: 22,
+                                bgcolor: 'rgba(255,255,255,0.12)',
+                                color: '#fff',
+                                '&:hover': {
+                                  bgcolor: 'rgba(255,255,255,0.18)',
+                                },
+                              }}
+                            >
+                              ×
+                            </Button>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
                 </Box>
               </Grid>
             </Grid>

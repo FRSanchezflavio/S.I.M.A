@@ -13,12 +13,13 @@ import {
   Divider,
   Box,
   Alert,
+  TextField,
+  MenuItem,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
-import TextField from '@mui/material/TextField';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import api from '../services/api';
@@ -69,10 +70,10 @@ export default function PersonaDetalle() {
           apellido: data.apellido || '',
           dni: data.dni || '',
           fecha_nacimiento: data.fecha_nacimiento?.slice(0, 10) || '',
+          genero: data.genero || '',
           nacionalidad: data.nacionalidad || '',
           direccion: data.direccion || '',
           telefono: data.telefono || '',
-          email: data.email || '',
           observaciones: data.observaciones || '',
           comisaria: data.comisaria || '',
         });
@@ -184,6 +185,7 @@ export default function PersonaDetalle() {
                       dni: item.dni || '',
                       fecha_nacimiento:
                         item.fecha_nacimiento?.slice(0, 10) || '',
+                      genero: item.genero || '',
                       nacionalidad: item.nacionalidad || '',
                       direccion: item.direccion || '',
                       telefono: item.telefono || '',
@@ -253,6 +255,9 @@ export default function PersonaDetalle() {
                             ).toLocaleDateString()}`}
                           />
                         )}
+                        {item.genero && (
+                          <Chip label={`Género: ${item.genero}`} />
+                        )}
                       </Stack>
                     </>
                   ) : (
@@ -304,6 +309,22 @@ export default function PersonaDetalle() {
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField
+                          select
+                          label="Género"
+                          fullWidth
+                          value={form.genero}
+                          onChange={e =>
+                            setForm({ ...form, genero: e.target.value })
+                          }
+                        >
+                          <MenuItem value="">Seleccionar género</MenuItem>
+                          <MenuItem value="masculino">Masculino</MenuItem>
+                          <MenuItem value="femenino">Femenino</MenuItem>
+                          <MenuItem value="otro">Otro</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
                           label="Comisaría"
                           fullWidth
                           value={form.comisaria}
@@ -339,17 +360,6 @@ export default function PersonaDetalle() {
                           value={form.telefono}
                           onChange={e =>
                             setForm({ ...form, telefono: e.target.value })
-                          }
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          label="Email"
-                          type="email"
-                          fullWidth
-                          value={form.email}
-                          onChange={e =>
-                            setForm({ ...form, email: e.target.value })
                           }
                         />
                       </Grid>

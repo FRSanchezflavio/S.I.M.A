@@ -155,6 +155,11 @@
           "apellido": { "type": "string" },
           "dni": { "type": "string" },
           "fecha_nacimiento": { "type": "string", "format": "date" },
+          "genero": {
+            "type": "string",
+            "enum": ["masculino", "femenino", "otro"],
+            "description": "Género de la persona"
+          },
           "nacionalidad": { "type": "string" },
           "direccion": { "type": "string" },
           "telefono": { "type": "string" },

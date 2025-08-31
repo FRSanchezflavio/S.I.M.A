@@ -1,48 +1,61 @@
-import { Container, Grid, Button, Box } from '@mui/material';
+import { Container, Grid, Button, Box, keyframes } from '@mui/material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const nav = useNavigate();
+
+  const fadeInUp = keyframes`
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  `;
+
+  const buttonStyle = {
+    bgcolor: '#000',
+    color: '#fff',
+    width: '100%',
+    py: 3,
+    fontWeight: 1000,
+    transition: 'all 0.3s ease',
+    transform: 'translateY(0)',
+    '&:hover': {
+      bgcolor: 'rgb(21, 77, 113)',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)',
+    },
+    '&:active': {
+      transform: 'translateY(0)',
+    },
+  };
+
   return (
     <>
       <Header showSettings />
-      <Container maxWidth="md" sx={{ py: 6 }}>
-        <Grid container spacing={4} justifyContent="center">
+      <Container maxWidth="lg" sx={{ py: 10, minHeight: '65vh' }}>
+        <Grid container spacing={6} justifyContent="center">
           <Grid item xs={12} md={8}>
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 3,
+                gap: 4,
                 alignItems: 'center',
               }}
             >
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => nav('/buscar')}
-                sx={{
-                  bgcolor: '#000',
-                  color: '#fff',
-                  width: '100%',
-                  py: 3,
-                  fontWeight: 600,
-                }}
-              >
-                🔍 BUSCAR MENCIONADO/APREHENDIDO
-              </Button>
-              <Button
-                variant="contained"
-                size="large"
                 onClick={() => nav('/cargar')}
                 sx={{
-                  bgcolor: '#000',
-                  color: '#fff',
-                  width: '100%',
-                  py: 3,
-                  fontWeight: 600,
+                  ...buttonStyle,
+                  animation: `${fadeInUp} 0.6s ease-out 0.1s both`,
                 }}
               >
                 📄 CARGAR MENCIONADO/APREHENDIDO
@@ -50,13 +63,21 @@ export default function Dashboard() {
               <Button
                 variant="contained"
                 size="large"
+                onClick={() => nav('/buscar')}
+                sx={{
+                  ...buttonStyle,
+                  animation: `${fadeInUp} 0.6s ease-out 0.3s both`,
+                }}
+              >
+                🔍 BUSCAR MENCIONADO/APREHENDIDO
+              </Button>
+              <Button
+                variant="contained"
+                size="large"
                 onClick={() => nav('/registros')}
                 sx={{
-                  bgcolor: '#000',
-                  color: '#fff',
-                  width: '100%',
-                  py: 3,
-                  fontWeight: 600,
+                  ...buttonStyle,
+                  animation: `${fadeInUp} 0.6s ease-out 0.5s both`,
                 }}
               >
                 🗂️ REGISTROS DELICTUALES
