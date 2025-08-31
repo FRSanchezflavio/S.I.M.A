@@ -96,7 +96,7 @@ export default function Buscar() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Card className="card">
           <CardContent>
-            <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography variant="h4" sx={{ fontWeight: 900, mb: 3, mt: 1 }}>
               Buscar mencionado/aprehendido
             </Typography>
             {error && (

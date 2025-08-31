@@ -174,6 +174,12 @@ export default function Cargar() {
                   <MenuItem value="otro">Otro</MenuItem>
                 </FormInput>
                 <FormInput
+                  label="Comisaría donde sucedió el hecho"
+                  value={form.comisaria_hecho}
+                  onChange={v => setForm({ ...form, comisaria_hecho: v })}
+                  InputLabelProps={{ style: { color: '#000' } }}
+                />
+                <FormInput
                   label="Apellido"
                   value={form.apellido}
                   onChange={v => setForm({ ...form, apellido: v })}
@@ -239,12 +245,7 @@ export default function Cargar() {
                   onChange={v => setForm({ ...form, comisaria: v })}
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
-                <FormInput
-                  label="Comisaría donde sucedió el hecho"
-                  value={form.comisaria_hecho}
-                  onChange={v => setForm({ ...form, comisaria_hecho: v })}
-                  InputLabelProps={{ style: { color: '#000' } }}
-                />
+
                 <FormInput
                   label="Teléfono"
                   value={form.telefono}
@@ -339,20 +340,20 @@ export default function Cargar() {
                       {/* Imagen de ejemplo */}
                       <Box
                         sx={{
-                          width: 120,
-                          height: 120,
-                          bgcolor: '#f0f0f0',
+                          width: 180,
+                          height: 180,
+                          bgcolor: 'rgb(255, 249, 175)',
                           borderRadius: 2,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           mb: 2,
-                          border: '1px solid #ddd',
+                          border: '6px solid #ddd',
                         }}
                       >
                         <Box
                           sx={{
-                            fontSize: 48,
+                            fontSize: 80,
                             color: '#999',
                           }}
                         >
@@ -360,7 +361,7 @@ export default function Cargar() {
                         </Box>
                       </Box>
 
-                      <Typography variant="h6" sx={{ mb: 1, color: '#000' }}>
+                      <Typography variant="h4" sx={{ mb: 1, color: '#000' }}>
                         {dragActive
                           ? 'Suelte las imágenes aquí'
                           : 'Cargar fotografías'}
@@ -373,9 +374,9 @@ export default function Cargar() {
                       <Button
                         variant="contained"
                         sx={{
-                          bgcolor: '#15616f',
-                          color: '#fff',
+                          bgcolor: 'rgb(13, 17, 100)',
                           '&:hover': { bgcolor: 'rgb(21, 77, 113)' },
+                          color: '#fff',
                           mb: 1,
                         }}
                         onClick={() =>
