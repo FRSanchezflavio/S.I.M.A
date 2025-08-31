@@ -251,7 +251,9 @@ export default function PersonaDetalle() {
                         <Chip label={`DNI: ${item.dni || '-'}`} />
                         <Chip label={`Comisaría: ${item.comisaria || '-'}`} />
                         {item.comisaria_hecho && (
-                          <Chip label={`Com. del Hecho: ${item.comisaria_hecho}`} />
+                          <Chip
+                            label={`Com. del Hecho: ${item.comisaria_hecho}`}
+                          />
                         )}
                         {item.fecha_nacimiento && (
                           <Chip
@@ -344,7 +346,10 @@ export default function PersonaDetalle() {
                           fullWidth
                           value={form.comisaria_hecho}
                           onChange={e =>
-                            setForm({ ...form, comisaria_hecho: e.target.value })
+                            setForm({
+                              ...form,
+                              comisaria_hecho: e.target.value,
+                            })
                           }
                         />
                       </Grid>
@@ -451,7 +456,10 @@ export default function PersonaDetalle() {
                       </Grid>
                       {item.comisaria_hecho && (
                         <Grid item xs={12} sm={6}>
-                          <Typography variant="subtitle2" color="text.secondary">
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
                             Comisaría del Hecho
                           </Typography>
                           <Typography>{item.comisaria_hecho}</Typography>

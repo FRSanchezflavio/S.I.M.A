@@ -4,7 +4,9 @@
  */
 exports.up = function (knex) {
   return knex.schema.alterTable('personas_registradas', t => {
-    t.string('comisaria_hecho').nullable().comment('Comisaría donde sucedió el hecho');
+    t.string('comisaria_hecho')
+      .nullable()
+      .comment('Comisaría donde sucedió el hecho');
   });
 };
 
