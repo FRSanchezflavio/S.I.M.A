@@ -36,20 +36,34 @@ export default function Header({ showSettings = false }) {
           justifyContent: 'space-between',
         }}
       >
-        <Box
-          component="img"
-          src="/img/oficina2.jpeg"
-          alt="Logo"
-          sx={{
-            width: '130px',
-            height: 'auto',
-            bgcolor: 'white',
-            borderRadius: '800px',
-          }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box
+            component="img"
+            src="/img/oficina2.jpeg"
+            alt="Logo"
+            sx={{
+              width: '130px',
+              height: 'auto',
+              bgcolor: 'white',
+              borderRadius: '800px',
+            }}
+          />
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 500,
+              color: 'beige',
+              ml: 2,
+              fontSize: '20px',
+            }}
+          >
+            Análisis Delictual
+          </Typography>
+        </Box>
+
         <Typography
           variant="h2"
-          sx={{ fontWeight: 600, color: 'beige', mr: 9 }}
+          sx={{ fontWeight: 600, color: 'beige', mr: 26 }}
         >
           S.I.M.A.
         </Typography>
