@@ -328,12 +328,24 @@ export default function Cargar() {
                       ? 'rgba(21,77,113,0.06)'
                       : 'transparent',
                     transition: 'all 0.15s ease',
-                    minHeight: 300,
+                    minHeight: 500,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: 'center',
+                    cursor: files.length === 0 ? 'pointer' : 'default',
+                    '&:hover':
+                      files.length === 0
+                        ? {
+                            borderColor: '#15616f',
+                            bgcolor: 'rgba(21,77,113,0.03)',
+                          }
+                        : {},
                   }}
+                  onClick={() =>
+                    files.length === 0 &&
+                    document.getElementById('file-input').click()
+                  }
                 >
                   {files.length === 0 ? (
                     <>
@@ -379,9 +391,10 @@ export default function Cargar() {
                           color: '#fff',
                           mb: 1,
                         }}
-                        onClick={() =>
-                          document.getElementById('file-input').click()
-                        }
+                        onClick={e => {
+                          e.stopPropagation();
+                          document.getElementById('file-input').click();
+                        }}
                       >
                         📁 SELECCIONAR IMÁGENES
                       </Button>
@@ -397,7 +410,7 @@ export default function Cargar() {
                     </>
                   ) : (
                     <>
-                      <Typography variant="h6" sx={{ mb: 2, color: '#000' }}>
+                      <Typography variant="h5" sx={{ mb: 2, color: '#000' }}>
                         Imágenes seleccionadas: {files.length}
                       </Typography>
 
@@ -430,32 +443,16 @@ export default function Cargar() {
                     </>
                   )}
 
-                  {/* Invisible full-cover input for drag and drop */}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={onFile}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      width: '100%',
-                      height: '100%',
-                      opacity: 0,
-                      cursor: 'pointer',
-                      zIndex: files.length > 0 ? -1 : 1,
-                    }}
-                  />
-
                   {files.length > 0 && (
                     <Box
                       sx={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 1,
+                        display: 'grid',
+                        gridTemplateColumns:
+                          'repeat(auto-fill, minmax(150px, 1fr))',
+                        gap: 2,
                         mt: 2,
-                        justifyContent: 'center',
-                        maxHeight: 200,
+                        width: '100%',
+                        maxHeight: 300,
                         overflowY: 'auto',
                       }}
                     >
@@ -463,12 +460,14 @@ export default function Cargar() {
                         <Box
                           key={idx}
                           sx={{
-                            width: 96,
-                            height: 96,
+                            width: 300,
+                            height: 300,
                             position: 'relative',
-                            borderRadius: 1,
+                            ml: 12,
+                            border: '1px solid rgb(51, 161, 224)',
+                            borderRadius: 2,
                             overflow: 'hidden',
-                            boxShadow: 1,
+                            boxShadow: 2,
                             bgcolor: '#f7f7f7',
                           }}
                         >
@@ -487,11 +486,11 @@ export default function Cargar() {
                               bottom: 0,
                               left: 0,
                               right: 0,
-                              bgcolor: 'rgba(0,0,0,0.45)',
+                              bgcolor: 'rgba(0,0,0,0.7)',
                               color: '#fff',
-                              fontSize: 11,
-                              py: '2px',
-                              px: '4px',
+                              fontSize: 12,
+                              py: 1,
+                              px: 1,
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'center',
@@ -502,7 +501,8 @@ export default function Cargar() {
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
-                                maxWidth: 64,
+                                flex: 1,
+                                marginRight: 8,
                               }}
                             >
                               {f.name}
@@ -515,12 +515,14 @@ export default function Cargar() {
                                 removeFile(idx);
                               }}
                               sx={{
-                                minWidth: 26,
-                                height: 22,
-                                bgcolor: 'rgba(255,255,255,0.12)',
+                                minWidth: 28,
+                                height: 28,
+                                bgcolor: 'rgba(255,0,0,0.8)',
                                 color: '#fff',
+                                fontSize: 16,
+                                fontWeight: 'bold',
                                 '&:hover': {
-                                  bgcolor: 'rgba(255,255,255,0.18)',
+                                  bgcolor: 'rgba(255,0,0,1)',
                                 },
                               }}
                             >
