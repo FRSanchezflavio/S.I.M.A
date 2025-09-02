@@ -13,6 +13,10 @@ import {
   Stack,
   Alert,
   Box,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -25,11 +29,30 @@ import { useToast } from '../components/ToastProvider';
 
 export default function Buscar() {
   const [modo, setModo] = useState('nombre');
+  const [campoBusqueda, setCampoBusqueda] = useState('');
   const [texto, setTexto] = useState('');
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
   const nav = useNavigate();
   const { showToast } = useToast();
+
+  const opcionesCampos = [
+    { value: 'tipo_delito', label: 'Tipo de delito' },
+    { value: 'modalidad', label: 'Modalidad' },
+    { value: 'nombre', label: 'Nombre' },
+    { value: 'apellido', label: 'Apellido' },
+    { value: 'dni', label: 'DNI' },
+    { value: 'edad', label: 'Edad' },
+    { value: 'genero', label: 'Género' },
+    { value: 'nacionalidad', label: 'Nacionalidad' },
+    { value: 'direccion', label: 'Dirección' },
+    { value: 'telefono', label: 'Teléfono' },
+    { value: 'comisaria', label: 'Comisaría Jurisdic. del M/A' },
+    { value: 'comisaria_hecho', label: 'Comisaría donde sucedió el hecho' },
+    { value: 'unidades_regionales', label: 'Unidades Regionales' },
+    { value: 'fecha_carga', label: 'Fecha de carga' },
+    { value: 'observaciones', label: 'Observaciones' },
+  ];
 
   const fetchAll = async () => {
     try {
@@ -43,12 +66,18 @@ export default function Buscar() {
   const onBuscar = async () => {
     setError('');
     try {
-      const params =
-        modo === 'dni'
-          ? { dni: texto }
-          : modo === 'comisaria'
-          ? { comisaria: texto }
-          : { q: texto };
+      let params = {};
+
+      if (modo === 'campo_especifico' && campoBusqueda) {
+        params[campoBusqueda] = texto;
+      } else if (modo === 'dni') {
+        params = { dni: texto };
+      } else if (modo === 'comisaria') {
+        params = { comisaria: texto };
+      } else {
+        params = { q: texto };
+      }
+
       const { data } = await api.get('/personas', { params });
       setItems(data.items || []);
     } catch (e) {
@@ -58,12 +87,18 @@ export default function Buscar() {
 
   const onExport = async type => {
     try {
-      const params =
-        modo === 'dni'
-          ? { dni: texto }
-          : modo === 'comisaria'
-          ? { comisaria: texto }
-          : { q: texto };
+      let params = {};
+
+      if (modo === 'campo_especifico' && campoBusqueda) {
+        params[campoBusqueda] = texto;
+      } else if (modo === 'dni') {
+        params = { dni: texto };
+      } else if (modo === 'comisaria') {
+        params = { comisaria: texto };
+      } else {
+        params = { q: texto };
+      }
+
       const res = await api.get('/personas', {
         params: { ...params, format: type },
         responseType: 'blob',
@@ -93,19 +128,19 @@ export default function Buscar() {
   return (
     <>
       <Header showSettings />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
         <Card className="card">
           <CardContent>
             <Typography variant="h4" sx={{ fontWeight: 900, mb: 3, mt: 1 }}>
-              Buscar mencionado/aprehendido
+              Buscar Mencionado/Aprehendido
             </Typography>
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert severity="error" sx={{ mb: 4 }}>
                 {error}
               </Alert>
             )}
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={8}>
+            <Grid container spacing={4} alignItems="center">
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   placeholder="Ingrese su búsqueda"
@@ -113,7 +148,33 @@ export default function Buscar() {
                   onChange={e => setTexto(e.target.value)}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={6}>
+                <Stack direction="row" spacing={2}>
+                  <Button
+                    variant="contained"
+                    onClick={onBuscar}
+                    sx={{
+                      bgcolor: '#000',
+                      '&:hover': { bgcolor: 'rgb(21, 77, 113)' },
+                    }}
+                  >
+                    BUSCAR
+                  </Button>
+                  <Button variant="outlined" onClick={fetchAll}>
+                    MOSTRAR TODAS
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    sx={{ ml: 1 }}
+                    onClick={() => nav('/dashboard')}
+                  >
+                    ← VOLVER AL INICIO
+                  </Button>
+                </Stack>
+              </Grid>
+            </Grid>
+            <Grid container spacing={4} alignItems="center" sx={{ mt: 2 }}>
+              <Grid item xs={12}>
                 <RadioGroup
                   row
                   value={modo}
@@ -134,38 +195,30 @@ export default function Buscar() {
                     control={<Radio />}
                     label="Comisaría"
                   />
+                  <FormControlLabel
+                    value="campo_especifico"
+                    control={<Radio />}
+                    label="Campo específico"
+                  />
                 </RadioGroup>
+                {modo === 'campo_especifico' && (
+                  <FormControl fullWidth sx={{ mt: 2 }}>
+                    <InputLabel>Seleccionar campo</InputLabel>
+                    <Select
+                      value={campoBusqueda}
+                      onChange={e => setCampoBusqueda(e.target.value)}
+                      label="Seleccionar campo"
+                    >
+                      {opcionesCampos.map(opcion => (
+                        <MenuItem key={opcion.value} value={opcion.value}>
+                          {opcion.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
               </Grid>
             </Grid>
-            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-              <Button
-                variant="contained"
-                onClick={onBuscar}
-                sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#111' } }}
-              >
-                BUSCAR
-              </Button>
-              <Button variant="outlined" onClick={fetchAll}>
-                MOSTRAR TODAS
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => onExport('csv')}
-                startIcon={<InsertDriveFileIcon />}
-              >
-                CSV
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => onExport('xlsx')}
-                startIcon={<DownloadIcon />}
-              >
-                XLSX
-              </Button>
-              <Button variant="outlined" onClick={() => nav('/dashboard')}>
-                ← VOLVER AL INICIO
-              </Button>
-            </Stack>
             <Box
               sx={{
                 mt: 3,
@@ -188,7 +241,6 @@ export default function Buscar() {
           </CardContent>
         </Card>
       </Container>
-      <Footer />
     </>
   );
 }
