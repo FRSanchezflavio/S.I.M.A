@@ -24,7 +24,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
   const { showToast } = useToast();
-  
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -33,13 +33,13 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     if (!usuario || !password) {
       setError('Complete usuario y contraseña');
       setLoading(false);
       return;
     }
-    
+
     try {
       const { data } = await api.post('/auth/login', { usuario, password });
       localStorage.setItem('accessToken', data.accessToken);
@@ -88,12 +88,14 @@ export default function Login() {
   `;
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      bgcolor: 'var(--bg)',
-    }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: 'var(--bg)',
+      }}
+    >
       {/* Header responsive */}
       <Box
         className="header"
@@ -110,9 +112,9 @@ export default function Login() {
         }}
       >
         {/* Logo - responsive positioning */}
-        <Box 
-          sx={{ 
-            position: { xs: 'static', sm: 'absolute' }, 
+        <Box
+          sx={{
+            position: { xs: 'static', sm: 'absolute' },
             left: { xs: 'auto', sm: 16 },
             mb: { xs: 1, sm: 0 },
             mr: { xs: 2, sm: 0 },
@@ -130,11 +132,11 @@ export default function Login() {
             }}
           />
         </Box>
-        
+
         {/* Título principal - responsive */}
-        <Typography 
-          variant={isMobile ? 'h4' : isTablet ? 'h3' : 'h2'} 
-          sx={{ 
+        <Typography
+          variant={isMobile ? 'h4' : isTablet ? 'h3' : 'h2'}
+          sx={{
             fontWeight: 800,
             color: 'white',
             textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
@@ -142,7 +144,7 @@ export default function Login() {
               xs: '2rem',
               sm: '2.5rem',
               md: '3rem',
-              lg: '3.5rem'
+              lg: '3.5rem',
             },
             animation: `${fadeInUp} 0.6s ease-out 0.2s both`,
           }}
@@ -152,9 +154,9 @@ export default function Login() {
       </Box>
 
       {/* Main content - responsive container */}
-      <Container 
-        maxWidth="sm" 
-        sx={{ 
+      <Container
+        maxWidth="sm"
+        sx={{
           flex: 1,
           display: 'flex',
           alignItems: 'center',
@@ -181,17 +183,17 @@ export default function Login() {
             {/* Título del formulario - responsive */}
             <Typography
               variant={isMobile ? 'h5' : 'h4'}
-              sx={{ 
+              sx={{
                 mb: { xs: 2, sm: 3 },
                 mt: { xs: 1, sm: 2 },
-                fontWeight: 800, 
+                fontWeight: 800,
                 textAlign: 'center',
                 color: 'var(--primary)',
                 fontSize: {
                   xs: '1.5rem',
                   sm: '1.8rem',
-                  md: '2rem'
-                }
+                  md: '2rem',
+                },
               }}
             >
               Iniciar sesión
@@ -199,9 +201,9 @@ export default function Login() {
 
             {/* Alert de error - responsive */}
             {error && (
-              <Alert 
-                severity="error" 
-                sx={{ 
+              <Alert
+                severity="error"
+                sx={{
                   mb: { xs: 2, sm: 3 },
                   fontSize: { xs: '0.875rem', sm: '1rem' },
                   animation: `${fadeInUp} 0.3s ease-out`,
@@ -222,7 +224,7 @@ export default function Login() {
                 fullWidth
                 sx={{ mb: { xs: 2, sm: 3 } }}
               />
-              
+
               <FormInput
                 label="Contraseña"
                 value={password}
@@ -233,7 +235,7 @@ export default function Login() {
                 fullWidth
                 sx={{ mb: { xs: 3, sm: 4 } }}
               />
-              
+
               {/* Botón de submit - responsive */}
               <Button
                 type="submit"
@@ -249,7 +251,7 @@ export default function Login() {
                   borderRadius: { xs: '8px', sm: '12px' },
                   textTransform: 'none',
                   boxShadow: '0 4px 12px rgba(21, 77, 113, 0.3)',
-                  '&:hover': { 
+                  '&:hover': {
                     bgcolor: 'var(--accent)',
                     transform: 'translateY(-2px)',
                     boxShadow: '0 6px 16px rgba(21, 77, 113, 0.4)',
@@ -263,13 +265,16 @@ export default function Login() {
               >
                 {loading ? (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box className="spinner" sx={{ 
-                      width: '20px', 
-                      height: '20px', 
-                      border: '2px solid #f3f3f3',
-                      borderTop: '2px solid white',
-                      margin: 0,
-                    }} />
+                    <Box
+                      className="spinner"
+                      sx={{
+                        width: '20px',
+                        height: '20px',
+                        border: '2px solid #f3f3f3',
+                        borderTop: '2px solid white',
+                        margin: 0,
+                      }}
+                    />
                     Iniciando...
                   </Box>
                 ) : (

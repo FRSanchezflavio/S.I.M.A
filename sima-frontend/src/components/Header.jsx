@@ -71,9 +71,9 @@ export default function Header({ showSettings = false }) {
           }}
         >
           {/* Logo y título - responsive */}
-          <Box 
-            sx={{ 
-              display: 'flex', 
+          <Box
+            sx={{
+              display: 'flex',
               alignItems: 'center',
               flex: isMobile ? '1' : 'none',
             }}
@@ -108,8 +108,8 @@ export default function Header({ showSettings = false }) {
           {/* Título central - responsive */}
           <Typography
             variant={isMobile ? 'h5' : isTablet ? 'h4' : 'h2'}
-            sx={{ 
-              fontWeight: 600, 
+            sx={{
+              fontWeight: 600,
               color: 'beige',
               position: isMobile ? 'static' : 'absolute',
               left: isMobile ? 'auto' : '50%',
@@ -119,7 +119,7 @@ export default function Header({ showSettings = false }) {
                 sm: '1.8rem',
                 md: '2.2rem',
                 lg: '2.5rem',
-                xl: '3rem'
+                xl: '3rem',
               },
             }}
           >
@@ -137,13 +137,13 @@ export default function Header({ showSettings = false }) {
                 <MenuIcon />
               </IconButton>
             )}
-            
+
             {showSettings && (
-              <IconButton 
-                color="inherit" 
-                sx={{ 
+              <IconButton
+                color="inherit"
+                sx={{
                   ml: 1,
-                  display: { xs: 'none', sm: 'inline-flex' }
+                  display: { xs: 'none', sm: 'inline-flex' },
                 }}
               >
                 <SettingsIcon />
@@ -180,9 +180,9 @@ export default function Header({ showSettings = false }) {
             S.I.M.A.
           </Typography>
           <List>
-            {menuItems.map((item) => (
-              <ListItem 
-                button 
+            {menuItems.map(item => (
+              <ListItem
+                button
                 key={item.text}
                 onClick={() => {
                   setMobileMenuOpen(false);
@@ -200,9 +200,9 @@ export default function Header({ showSettings = false }) {
                 <ListItemText primary={item.text} />
               </ListItem>
             ))}
-            
+
             {showSettings && (
-              <ListItem 
+              <ListItem
                 button
                 sx={{
                   '&:hover': {

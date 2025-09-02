@@ -1,6 +1,6 @@
-import { 
-  Typography, 
-  keyframes, 
+import {
+  Typography,
+  keyframes,
   Box,
   useMediaQuery,
   useTheme,
@@ -78,36 +78,35 @@ export default function Footer() {
               pr: { xs: 0, sm: 2, md: 8 },
             }}
           >
-            <Typography 
+            <Typography
               variant={isMobile ? 'body2' : isTablet ? 'h6' : 'h6'}
-              sx={{ 
-                color: 'beige', 
+              sx={{
+                color: 'beige',
                 fontWeight: 600,
                 fontSize: {
                   xs: '0.75rem',
                   sm: '0.9rem',
                   md: '1rem',
-                  lg: '1.1rem'
+                  lg: '1.1rem',
                 },
                 lineHeight: 1.2,
                 mb: { xs: 0.5, sm: 0.5, md: 1 },
               }}
             >
-              {isMobile 
-                ? '· S.I.M.A. ·' 
-                : '· SISTEMA DE IDENTIFICACIÓN DE MENCIONADOS Y APREHENDIDOS ·'
-              }
+              {isMobile
+                ? '· S.I.M.A. ·'
+                : '· SISTEMA DE IDENTIFICACIÓN DE MENCIONADOS Y APREHENDIDOS ·'}
             </Typography>
-            
-            <Typography 
+
+            <Typography
               variant={isMobile ? 'caption' : 'body1'}
-              sx={{ 
+              sx={{
                 color: 'beige',
                 fontSize: {
                   xs: '0.65rem',
                   sm: '0.8rem',
                   md: '0.9rem',
-                  lg: '1rem'
+                  lg: '1rem',
                 },
                 fontWeight: 500,
                 mb: { xs: 0.5, sm: 0.5, md: 1 },
@@ -116,16 +115,16 @@ export default function Footer() {
             >
               DEPARTAMENTO INTELIGENCIA CRIMINAL - D-2
             </Typography>
-            
-            <Typography 
+
+            <Typography
               variant="caption"
-              sx={{ 
+              sx={{
                 color: 'beige',
                 fontSize: {
                   xs: '0.6rem',
                   sm: '0.7rem',
                   md: '0.75rem',
-                  lg: '0.8rem'
+                  lg: '0.8rem',
                 },
                 fontWeight: 400,
                 opacity: 0.9,
@@ -146,14 +145,14 @@ export default function Footer() {
                 xs: '60px',
                 sm: '70px',
                 md: '80px',
-                lg: '90px'
+                lg: '90px',
               },
               width: 'auto',
               maxWidth: {
                 xs: '60px',
                 sm: '70px',
                 md: '80px',
-                lg: '100px'
+                lg: '100px',
               },
               position: { xs: 'static', sm: 'absolute' },
               right: { xs: 'auto', sm: '10px', md: '20px' },
@@ -164,11 +163,11 @@ export default function Footer() {
               transition: 'all 0.3s ease',
               '&:hover': {
                 opacity: 1,
-                transform: { 
-                  xs: 'scale(1.05)', 
-                  sm: 'translateY(-50%) scale(1.05)' 
+                transform: {
+                  xs: 'scale(1.05)',
+                  sm: 'translateY(-50%) scale(1.05)',
                 },
-              }
+              },
             }}
           />
         </Box>

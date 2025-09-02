@@ -1,8 +1,8 @@
-import { 
-  Container, 
-  Grid, 
-  Button, 
-  Box, 
+import {
+  Container,
+  Grid,
+  Button,
+  Box,
   keyframes,
   Card,
   CardContent,
@@ -33,7 +33,7 @@ export default function Dashboard() {
   // Animación escalonada de las tarjetas
   useEffect(() => {
     const timer = setTimeout(() => {
-      [0, 1, 2].forEach((index) => {
+      [0, 1, 2].forEach(index => {
         setTimeout(() => {
           setVisibleCards(prev => [...prev, index]);
         }, index * 200);
@@ -71,7 +71,11 @@ export default function Dashboard() {
       title: 'CARGAR',
       subtitle: 'Nuevo registro',
       description: 'Cargar mencionado/aprehendido',
-      icon: <PersonAdd sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } }} />,
+      icon: (
+        <PersonAdd
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } }}
+        />
+      ),
       path: '/cargar',
       color: 'var(--primary)',
       hoverColor: 'var(--secondary)',
@@ -81,7 +85,9 @@ export default function Dashboard() {
       title: 'BUSCAR',
       subtitle: 'Consultar datos',
       description: 'Buscar mencionado/aprehendido',
-      icon: <Search sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } }} />,
+      icon: (
+        <Search sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } }} />
+      ),
       path: '/buscar',
       color: 'var(--secondary)',
       hoverColor: 'var(--accent)',
@@ -91,7 +97,11 @@ export default function Dashboard() {
       title: 'REGISTROS',
       subtitle: 'Ver historial',
       description: 'Registros delictuales',
-      icon: <Assignment sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } }} />,
+      icon: (
+        <Assignment
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } }}
+        />
+      ),
       path: '/registros',
       color: 'var(--accent)',
       hoverColor: 'var(--primary)',
@@ -99,14 +109,16 @@ export default function Dashboard() {
   ];
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      bgcolor: 'var(--bg)',
-    }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: 'var(--bg)',
+      }}
+    >
       <Header showSettings />
-      
+
       {/* Título principal responsive */}
       <Container maxWidth="lg" sx={{ py: { xs: 4, sm: 6, md: 8 } }}>
         <Box sx={{ textAlign: 'center', mb: { xs: 4, sm: 6, md: 8 } }}>
@@ -121,20 +133,20 @@ export default function Dashboard() {
                 xs: '2rem',
                 sm: '2.5rem',
                 md: '3rem',
-                lg: '3.5rem'
-              }
+                lg: '3.5rem',
+              },
             }}
           >
-            <DashboardIcon 
-              sx={{ 
-                fontSize: 'inherit', 
-                mr: 1, 
-                verticalAlign: 'middle' 
-              }} 
+            <DashboardIcon
+              sx={{
+                fontSize: 'inherit',
+                mr: 1,
+                verticalAlign: 'middle',
+              }}
             />
             Panel Principal
           </Typography>
-          
+
           <Typography
             variant={isMobile ? 'body1' : 'h6'}
             sx={{
@@ -145,8 +157,8 @@ export default function Dashboard() {
               fontSize: {
                 xs: '1rem',
                 sm: '1.1rem',
-                md: '1.2rem'
-              }
+                md: '1.2rem',
+              },
             }}
           >
             Sistema de Identificación de Mencionados y/o Aprehendidos
@@ -154,29 +166,31 @@ export default function Dashboard() {
         </Box>
 
         {/* Grid responsive de tarjetas */}
-        <Grid 
-          container 
-          spacing={{ xs: 3, sm: 4, md: 6 }} 
+        <Grid
+          container
+          spacing={{ xs: 3, sm: 4, md: 6 }}
           justifyContent="center"
           sx={{ mb: { xs: 4, sm: 6, md: 8 } }}
         >
-          {menuItems.map((item) => (
-            <Grid 
-              item 
-              xs={12} 
-              sm={6} 
-              md={4} 
+          {menuItems.map(item => (
+            <Grid
+              item
+              xs={12}
+              sm={6}
+              md={4}
               key={item.id}
               sx={{
                 display: 'flex',
                 justifyContent: 'center',
               }}
             >
-              <Zoom 
-                in={visibleCards.includes(item.id)} 
+              <Zoom
+                in={visibleCards.includes(item.id)}
                 timeout={600}
-                style={{ 
-                  transitionDelay: visibleCards.includes(item.id) ? '0ms' : '300ms' 
+                style={{
+                  transitionDelay: visibleCards.includes(item.id)
+                    ? '0ms'
+                    : '300ms',
                 }}
               >
                 <Card
@@ -197,13 +211,13 @@ export default function Dashboard() {
                       '& .card-button': {
                         bgcolor: item.hoverColor,
                         transform: 'translateY(-2px)',
-                      }
+                      },
                     },
                   }}
                   onClick={() => nav(item.path)}
                 >
-                  <CardContent 
-                    sx={{ 
+                  <CardContent
+                    sx={{
                       p: { xs: 3, sm: 4 },
                       textAlign: 'center',
                       minHeight: { xs: '200px', sm: '220px', md: '240px' },
@@ -237,13 +251,13 @@ export default function Dashboard() {
                           fontSize: {
                             xs: '1.1rem',
                             sm: '1.3rem',
-                            md: '1.5rem'
-                          }
+                            md: '1.5rem',
+                          },
                         }}
                       >
                         {item.title}
                       </Typography>
-                      
+
                       <Typography
                         variant="body2"
                         sx={{
@@ -252,21 +266,21 @@ export default function Dashboard() {
                           mb: 1,
                           fontSize: {
                             xs: '0.8rem',
-                            sm: '0.9rem'
-                          }
+                            sm: '0.9rem',
+                          },
                         }}
                       >
                         {item.subtitle}
                       </Typography>
-                      
+
                       <Typography
                         variant="body2"
                         sx={{
                           color: 'text.secondary',
                           fontSize: {
                             xs: '0.85rem',
-                            sm: '0.95rem'
-                          }
+                            sm: '0.95rem',
+                          },
                         }}
                       >
                         {item.description}
@@ -287,7 +301,7 @@ export default function Dashboard() {
                         fontSize: {
                           xs: '0.8rem',
                           sm: '0.9rem',
-                          md: '1rem'
+                          md: '1rem',
                         },
                         textTransform: 'none',
                         transition: 'all 0.3s ease',
@@ -322,7 +336,8 @@ export default function Dashboard() {
                     fontStyle: 'italic',
                   }}
                 >
-                  Desliza horizontalmente para acceder rápidamente a las funciones principales
+                  Desliza horizontalmente para acceder rápidamente a las
+                  funciones principales
                 </Typography>
               </CardContent>
             </Card>

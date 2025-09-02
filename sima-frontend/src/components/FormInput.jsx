@@ -1,6 +1,6 @@
-import { 
-  TextField, 
-  useMediaQuery, 
+import {
+  TextField,
+  useMediaQuery,
   useTheme,
   FormHelperText,
   InputAdornment,
@@ -36,14 +36,14 @@ export default function FormInput({
     setShowPassword(!showPassword);
   };
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const newValue = e.target.value;
-    
+
     // Aplicar límite de caracteres si se especifica
     if (maxLength && newValue.length > maxLength) {
       return;
     }
-    
+
     onChange(newValue);
   };
 
@@ -68,7 +68,7 @@ export default function FormInput({
           style: {
             fontSize: isMobile ? '0.9rem' : '1rem',
             fontWeight: 500,
-          }
+          },
         }}
         InputProps={{
           style: {
@@ -76,9 +76,7 @@ export default function FormInput({
             borderRadius: isMobile ? '8px' : '12px',
           },
           startAdornment: startIcon ? (
-            <InputAdornment position="start">
-              {startIcon}
-            </InputAdornment>
+            <InputAdornment position="start">{startIcon}</InputAdornment>
           ) : null,
           endAdornment: (
             <>
@@ -88,16 +86,16 @@ export default function FormInput({
                     onClick={handlePasswordToggle}
                     edge="end"
                     size={isMobile ? 'small' : 'medium'}
-                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    aria-label={
+                      showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                    }
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
               )}
               {endIcon && !isPasswordField && (
-                <InputAdornment position="end">
-                  {endIcon}
-                </InputAdornment>
+                <InputAdornment position="end">{endIcon}</InputAdornment>
               )}
             </>
           ),
@@ -137,10 +135,10 @@ export default function FormInput({
         }}
         {...rest}
       />
-      
+
       {/* Helper text personalizado con contador de caracteres */}
       {(helperText || error || maxLength) && (
-        <FormHelperText 
+        <FormHelperText
           error={!!error}
           sx={{
             mx: 0,
@@ -154,12 +152,15 @@ export default function FormInput({
         >
           <span>{error || helperText}</span>
           {maxLength && (
-            <span style={{ 
-              color: value.length > maxLength * 0.9 ? 
-                theme.palette.warning.main : 
-                'rgba(0, 0, 0, 0.6)',
-              fontWeight: value.length > maxLength * 0.9 ? 600 : 400,
-            }}>
+            <span
+              style={{
+                color:
+                  value.length > maxLength * 0.9
+                    ? theme.palette.warning.main
+                    : 'rgba(0, 0, 0, 0.6)',
+                fontWeight: value.length > maxLength * 0.9 ? 600 : 400,
+              }}
+            >
               {value.length}/{maxLength}
             </span>
           )}
