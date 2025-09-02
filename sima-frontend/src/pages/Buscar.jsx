@@ -128,7 +128,10 @@ export default function Buscar() {
   return (
     <>
       <Header showSettings />
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container
+        maxWidth="lg"
+        sx={{ py: 4, height: '400px', width: '10000px' }}
+      >
         <Card className="card">
           <CardContent>
             <Typography variant="h4" sx={{ fontWeight: 900, mb: 3, mt: 1 }}>
@@ -139,34 +142,75 @@ export default function Buscar() {
                 {error}
               </Alert>
             )}
-            <Grid container spacing={4} alignItems="center">
+            <Grid container spacing={0} alignItems="center">
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
+                  size="xl"
                   placeholder="Ingrese su búsqueda"
                   value={texto}
                   onChange={e => setTexto(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
-                <Stack direction="row" spacing={2}>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{ justifyContent: 'flex-end' }}
+                >
                   <Button
                     variant="contained"
                     onClick={onBuscar}
                     sx={{
+                      height: '56px',
+                      width: '160px',
+                      fontSize: '1.125rem',
                       bgcolor: '#000',
-                      '&:hover': { bgcolor: 'rgb(21, 77, 113)' },
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                      '&:hover': {
+                        bgcolor: 'rgb(21, 77, 113)',
+                        boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
+                      },
                     }}
                   >
                     BUSCAR
                   </Button>
-                  <Button variant="outlined" onClick={fetchAll}>
+                  <Button
+                    variant="outlined"
+                    onClick={fetchAll}
+                    sx={{
+                      height: '56px',
+                      width: '160px',
+                      fontSize: '1rem',
+                      fontWeight: 'bold',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                      '&:hover': {
+                        boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+                        bgcolor: 'rgb(21, 77, 113)',
+                        color: 'white',
+                      },
+                    }}
+                  >
                     MOSTRAR TODAS
                   </Button>
                   <Button
                     variant="outlined"
-                    sx={{ ml: 1 }}
                     onClick={() => nav('/dashboard')}
+                    sx={{
+                      height: '56px',
+                      width: '180px',
+                      fontSize: '17px',
+                      fontWeight: 'bold',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                      '&:hover': {
+                        boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+                        bgcolor: 'rgb(21, 77, 113) ',
+                        color: 'white',
+                      },
+                    }}
                   >
                     ← VOLVER AL INICIO
                   </Button>
