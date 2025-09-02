@@ -16,6 +16,7 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/users.routes');
 const personasRoutes = require('./routes/personas.routes');
 const registrosRoutes = require('./routes/registros.routes');
+const geoRoutes = require('./routes/geo.routes');
 const db = require('./db/knex');
 const swaggerUi = require('swagger-ui-express');
 const apiSpec = require('../docs/openapi.json');
@@ -55,6 +56,7 @@ app.use('/api/auth', loginLimiter, authRoutes);
 app.use('/api/usuarios', userRoutes);
 app.use('/api/personas', personasRoutes);
 app.use('/api/registros', registrosRoutes);
+app.use('/api/geo', geoRoutes);
 
 // API Docs (Swagger UI)
 app.use(

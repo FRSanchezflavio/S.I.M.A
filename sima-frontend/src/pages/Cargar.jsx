@@ -9,11 +9,24 @@ import {
   Alert,
   Box,
   MenuItem,
+  IconButton,
+  Chip,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
+import {
+  LocationOn as LocationOnIcon,
+  MyLocation as MyLocationIcon,
+  Map as MapIcon,
+} from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import FormInput from '../components/FormInput';
+import LocationSelector from '../components/LocationSelector';
+import SimpleLocationSelector from '../components/SimpleLocationSelector';
+import MapComponent from '../components/MapComponent';
 import api from '../services/api';
+import geoService from '../services/geoService';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ToastProvider';
 
@@ -36,10 +49,21 @@ export default function Cargar() {
     categoria: '',
     UnidadesRegionales: '',
     fecha_carga: new Date().toISOString().split('T')[0], // Fecha actual por defecto
+    // Campos de geolocalización
+    direccion_completa: '',
+    domicilio_latitud: null,
+    domicilio_longitud: null,
+    barrio: '',
+    localidad: '',
+    codigo_postal: '',
+    direccion_verificada: false,
   });
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  const [locationSelectorOpen, setLocationSelectorOpen] = useState(false);
+  const [showPreviewMap, setShowPreviewMap] = useState(false);
+  const [geocodingLoading, setGeocodingLoading] = useState(false);
   const nav = useNavigate();
   const { showToast } = useToast();
 
@@ -62,11 +86,19 @@ export default function Cargar() {
       }
       Object.entries(formData).forEach(([k, v]) => data.append(k, v || ''));
       files.forEach(f => data.append('fotos', f));
-      await api.post('/personas', data, {
+
+      const response = await api.post('/personas', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
       setOk('Guardado correctamente');
-      showToast('Persona guardada', 'success');
+      showToast('Persona guardada exitosamente', 'success');
+
+      // Mostrar información de geocodificación si está disponible
+      if (response.data?.geocoding_success) {
+        showToast('Dirección geocodificada correctamente', 'info');
+      }
+
       setForm({
         tipo_delito: '',
         modalidad: '',
@@ -85,12 +117,97 @@ export default function Cargar() {
         categoria: '',
         UnidadesRegionales: '',
         fecha_carga: new Date().toISOString().split('T')[0],
+        // Resetear campos de geolocalización
+        direccion_completa: '',
+        domicilio_latitud: null,
+        domicilio_longitud: null,
+        barrio: '',
+        localidad: '',
+        codigo_postal: '',
+        direccion_verificada: false,
       });
       setFiles([]);
     } catch (err) {
       setError(err?.response?.data?.message || 'Error al guardar');
       showToast('Error al guardar', 'error');
     }
+  };
+
+  // Funciones de geolocalización
+  const handleGeocode = async () => {
+    if (!form.direccion || form.direccion.trim() === '') {
+      showToast('Ingrese una dirección para geolocalizar', 'warning');
+      return;
+    }
+
+    setGeocodingLoading(true);
+    try {
+      const result = await geoService.geocodeAddress(form.direccion, {
+        localidad: form.localidad,
+        codigo_postal: form.codigo_postal,
+      });
+
+      if (result.success && result.data) {
+        setForm(prev => ({
+          ...prev,
+          direccion_completa: result.data.formatted_address,
+          domicilio_latitud: result.data.latitude,
+          domicilio_longitud: result.data.longitude,
+          barrio: result.data.neighborhood || prev.barrio,
+          localidad: result.data.city || prev.localidad,
+          codigo_postal: result.data.zipcode || prev.codigo_postal,
+          direccion_verificada: true,
+        }));
+
+        showToast('Dirección geocodificada exitosamente', 'success');
+        setShowPreviewMap(true);
+      } else {
+        showToast('No se pudo geocodificar la dirección', 'error');
+      }
+    } catch (error) {
+      showToast(error.message || 'Error en geocodificación', 'error');
+    } finally {
+      setGeocodingLoading(false);
+    }
+  };
+
+  const handleLocationSelected = location => {
+    setForm(prev => ({
+      ...prev,
+      direccion_completa: location.address || location.formatted_address || '',
+      domicilio_latitud: location.latitude,
+      domicilio_longitud: location.longitude,
+      barrio: location.neighborhood || prev.barrio,
+      localidad: location.city || prev.localidad,
+      codigo_postal: location.zipcode || prev.codigo_postal,
+      direccion_verificada: true,
+    }));
+
+    // Si no había dirección, usar la geocodificada
+    if (!form.direccion) {
+      setForm(prev => ({
+        ...prev,
+        direccion: location.address || location.formatted_address || '',
+      }));
+    }
+
+    showToast('Ubicación seleccionada correctamente', 'success');
+    setShowPreviewMap(true);
+  };
+
+  const clearLocation = () => {
+    setForm(prev => ({
+      ...prev,
+      direccion_completa: '',
+      domicilio_latitud: null,
+      domicilio_longitud: null,
+      barrio: '',
+      localidad: '',
+      codigo_postal: '',
+      direccion_verificada: false,
+    }));
+    setShowPreviewMap(false);
+    showToast('Ubicación limpiada', 'info');
   };
 
   const [dragActive, setDragActive] = useState(false);
@@ -233,12 +350,155 @@ export default function Cargar() {
                   onChange={v => setForm({ ...form, nacionalidad: v })}
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
-                <FormInput
-                  label="Dirección"
-                  value={form.direccion}
-                  onChange={v => setForm({ ...form, direccion: v })}
-                  InputLabelProps={{ style: { color: '#000' } }}
-                />
+                <Box>
+                  <FormInput
+                    label="Dirección"
+                    value={form.direccion}
+                    onChange={v => setForm({ ...form, direccion: v })}
+                    InputLabelProps={{ style: { color: '#000' } }}
+                    InputProps={{
+                      endAdornment: (
+                        <Box display="flex" gap={1}>
+                          <Tooltip title="Geolocalizar dirección">
+                            <IconButton
+                              onClick={handleGeocode}
+                              disabled={geocodingLoading || !form.direccion}
+                              size="small"
+                              color="primary"
+                            >
+                              {geocodingLoading ? (
+                                <CircularProgress size={16} />
+                              ) : (
+                                <LocationOnIcon />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Seleccionar en mapa">
+                            <IconButton
+                              onClick={() => setLocationSelectorOpen(true)}
+                              size="small"
+                              color="secondary"
+                            >
+                              <MapIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      ),
+                    }}
+                  />
+
+                  {/* Información de geolocalización */}
+                  {form.direccion_verificada && (
+                    <Box
+                      mt={1}
+                      display="flex"
+                      flexWrap="wrap"
+                      gap={1}
+                      alignItems="center"
+                    >
+                      <Chip
+                        size="small"
+                        color="success"
+                        icon={<LocationOnIcon />}
+                        label="Dirección verificada"
+                      />
+                      {form.localidad && (
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={form.localidad}
+                        />
+                      )}
+                      {form.barrio && (
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={form.barrio}
+                        />
+                      )}
+                      <Tooltip title="Ver ubicación">
+                        <IconButton
+                          size="small"
+                          onClick={() => setShowPreviewMap(!showPreviewMap)}
+                        >
+                          <MapIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Limpiar ubicación">
+                        <Button
+                          size="small"
+                          onClick={clearLocation}
+                          color="warning"
+                          variant="text"
+                        >
+                          Limpiar
+                        </Button>
+                      </Tooltip>
+                    </Box>
+                  )}
+
+                  {form.direccion_completa &&
+                    form.direccion_completa !== form.direccion && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 1 }}
+                      >
+                        📍 {form.direccion_completa}
+                      </Typography>
+                    )}
+
+                  {/* Vista previa del mapa */}
+                  {showPreviewMap &&
+                    form.domicilio_latitud &&
+                    form.domicilio_longitud && (
+                      <Box mt={2}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Vista previa de ubicación
+                        </Typography>
+                        <MapComponent
+                          center={{
+                            latitude: parseFloat(form.domicilio_latitud),
+                            longitude: parseFloat(form.domicilio_longitud),
+                          }}
+                          zoom={16}
+                          height={200}
+                          showLegend={false}
+                          personas={[]}
+                          registros={[]}
+                          interactive={false}
+                        />
+                      </Box>
+                    )}
+                </Box>
+
+                {/* Campos adicionales de geolocalización */}
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <FormInput
+                      label="Localidad"
+                      value={form.localidad}
+                      onChange={v => setForm({ ...form, localidad: v })}
+                      InputLabelProps={{ style: { color: '#000' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormInput
+                      label="Barrio"
+                      value={form.barrio}
+                      onChange={v => setForm({ ...form, barrio: v })}
+                      InputLabelProps={{ style: { color: '#000' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormInput
+                      label="Código Postal"
+                      value={form.codigo_postal}
+                      onChange={v => setForm({ ...form, codigo_postal: v })}
+                      InputLabelProps={{ style: { color: '#000' } }}
+                    />
+                  </Grid>
+                </Grid>
                 <FormInput
                   label="Comisaría Jurisdic. del M/A."
                   value={form.comisaria}
@@ -540,6 +800,61 @@ export default function Cargar() {
         </Card>
       </Container>
       <Footer />
+
+      {/* Selector de ubicación MEJORADO */}
+      <LocationSelector
+        open={locationSelectorOpen}
+        onClose={() => setLocationSelectorOpen(false)}
+        onLocationSelected={handleLocationSelected}
+        title="Seleccionar Ubicación del Domicilio"
+        initialLocation={
+          form.domicilio_latitud && form.domicilio_longitud
+            ? {
+                latitude: parseFloat(form.domicilio_latitud),
+                longitude: parseFloat(form.domicilio_longitud),
+                address: form.direccion_completa || form.direccion,
+              }
+            : null
+        }
+      />
+
+      {/* SimpleLocationSelector como fallback (comentado) */}
+      {false && (
+        <SimpleLocationSelector
+          open={locationSelectorOpen}
+          onClose={() => setLocationSelectorOpen(false)}
+          onLocationSelected={handleLocationSelected}
+          title="Seleccionar Ubicación del Domicilio"
+          initialLocation={
+            form.domicilio_latitud && form.domicilio_longitud
+              ? {
+                  latitude: parseFloat(form.domicilio_latitud),
+                  longitude: parseFloat(form.domicilio_longitud),
+                  address: form.direccion_completa || form.direccion,
+                }
+              : null
+          }
+        />
+      )}
+
+      {/* LocationSelector original (comentado por ahora) */}
+      {false && (
+        <LocationSelector
+          open={locationSelectorOpen}
+          onClose={() => setLocationSelectorOpen(false)}
+          onLocationSelected={handleLocationSelected}
+          title="Seleccionar Ubicación del Domicilio"
+          initialLocation={
+            form.domicilio_latitud && form.domicilio_longitud
+              ? {
+                  latitude: parseFloat(form.domicilio_latitud),
+                  longitude: parseFloat(form.domicilio_longitud),
+                  address: form.direccion_completa || form.direccion,
+                }
+              : null
+          }
+        />
+      )}
     </>
   );
 }

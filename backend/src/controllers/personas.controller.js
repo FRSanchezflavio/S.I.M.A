@@ -1,5 +1,6 @@
 const db = require('../db/knex');
 const Joi = require('joi');
+const geocodingService = require('../services/geocoding');
 
 const personSchema = Joi.object({
   nombre: Joi.string().min(2).max(100).required(),
@@ -15,6 +16,7 @@ const personSchema = Joi.object({
     .allow('', null),
   nacionalidad: Joi.string().optional().allow('', null),
   direccion: Joi.string().optional().allow('', null),
+  direccion_completa: Joi.string().optional().allow('', null),
   telefono: Joi.string()
     .pattern(/^[+\d][\d\s\-()]{6,20}$/)
     .optional()
@@ -29,6 +31,13 @@ const personSchema = Joi.object({
   categoria: Joi.string().optional().allow('', null),
   fecha_carga: Joi.date().optional().allow('', null),
   unidades_regionales: Joi.string().optional().allow('', null),
+  // Campos de geolocalización
+  domicilio_latitud: Joi.number().min(-90).max(90).optional().allow(null),
+  domicilio_longitud: Joi.number().min(-180).max(180).optional().allow(null),
+  barrio: Joi.string().optional().allow('', null),
+  localidad: Joi.string().optional().allow('', null),
+  codigo_postal: Joi.string().optional().allow('', null),
+  direccion_verificada: Joi.boolean().optional().default(false),
 });
 
 exports.search = async (req, res, next) => {
@@ -158,27 +167,102 @@ exports.create = async (req, res, next) => {
   try {
     const { value, error } = personSchema.validate(req.body);
     if (error) return res.status(400).json({ message: error.message });
+
     const fotos = (req.files || []).map(f => `/uploads/${f.filename}`);
+
+    // Procesar geolocalización si se proporciona dirección
+    let geoData = {};
+    const direccionParaGeolocalizar =
+      value.direccion_completa || value.direccion;
+
+    if (direccionParaGeolocalizar && direccionParaGeolocalizar.trim() !== '') {
+      try {
+        const geoResult = await geocodingService.geocodeAddress(
+          direccionParaGeolocalizar,
+          {
+            localidad: value.localidad,
+            codigo_postal: value.codigo_postal,
+          }
+        );
+
+        if (geoResult.success) {
+          geoData = {
+            domicilio_latitud: geoResult.latitude,
+            domicilio_longitud: geoResult.longitude,
+            direccion_completa: geoResult.formatted_address,
+            barrio: geoResult.neighborhood || value.barrio,
+            localidad: geoResult.city || value.localidad,
+            codigo_postal: geoResult.zipcode || value.codigo_postal,
+            direccion_verificada: true,
+          };
+        }
+      } catch (geoError) {
+        // Si falla la geocodificación, continuar sin coordenadas pero registrar el error
+        console.warn(
+          'Error en geocodificación al crear persona:',
+          geoError.message
+        );
+        geoData = {
+          direccion_completa: direccionParaGeolocalizar,
+          direccion_verificada: false,
+        };
+      }
+    }
+
+    const personData = {
+      ...value,
+      ...geoData,
+      foto_principal: fotos[0] || null,
+      fotos_adicionales: JSON.stringify(fotos),
+      created_by: req.user?.id || null,
+      updated_by: req.user?.id || null,
+    };
+
     const [id] = await db('personas_registradas')
-      .insert({
-        ...value,
-        foto_principal: fotos[0] || null,
-        fotos_adicionales: JSON.stringify(fotos),
-        created_by: req.user?.id || null,
-        updated_by: req.user?.id || null,
-      })
+      .insert(personData)
       .returning('id');
+
     const newId = id?.id || id;
+
+    // Actualizar geometría PostGIS si se tienen coordenadas
+    if (geoData.domicilio_latitud && geoData.domicilio_longitud) {
+      try {
+        await geocodingService.updatePostGISGeometry(
+          db,
+          'personas_registradas',
+          'domicilio_geoposicion',
+          'domicilio_latitud',
+          'domicilio_longitud',
+          newId
+        );
+      } catch (postgisError) {
+        console.warn(
+          'Error actualizando geometría PostGIS:',
+          postgisError.message
+        );
+      }
+    }
+
     try {
       await db('audit_logs').insert({
         user_id: req.user?.id || null,
         action: 'create',
         entity: 'persona',
         entity_id: newId,
-        payload: value,
+        payload: { ...value, geocoding_applied: !!geoData.domicilio_latitud },
       });
     } catch (_) {}
-    res.status(201).json({ id: newId });
+
+    res.status(201).json({
+      id: newId,
+      geocoding_success: !!geoData.domicilio_latitud,
+      coordinates: geoData.domicilio_latitud
+        ? {
+            latitude: geoData.domicilio_latitud,
+            longitude: geoData.domicilio_longitud,
+          }
+        : null,
+    });
   } catch (e) {
     next(e);
   }
@@ -200,26 +284,109 @@ exports.update = async (req, res, next) => {
   try {
     const { value, error } = personSchema.validate(req.body);
     if (error) return res.status(400).json({ message: error.message });
+
     const fotos = (req.files || []).map(f => `/uploads/${f.filename}`);
     const patch = { ...value };
+
     if (fotos.length) {
       patch.foto_principal = fotos[0];
       patch.fotos_adicionales = JSON.stringify(fotos);
     }
+
+    // Procesar geolocalización si hay cambios en la dirección
+    const direccionParaGeolocalizar =
+      value.direccion_completa || value.direccion;
+
+    if (direccionParaGeolocalizar && direccionParaGeolocalizar.trim() !== '') {
+      // Verificar si la dirección cambió comparando con la BD
+      const current = await db('personas_registradas')
+        .select('direccion_completa', 'domicilio_latitud', 'domicilio_longitud')
+        .where({ id: req.params.id })
+        .first();
+
+      const direccionCambio =
+        current && current.direccion_completa !== direccionParaGeolocalizar;
+
+      // Solo geocodificar si la dirección es nueva o cambió
+      if (
+        !current ||
+        direccionCambio ||
+        (!current.domicilio_latitud && !current.domicilio_longitud)
+      ) {
+        try {
+          const geoResult = await geocodingService.geocodeAddress(
+            direccionParaGeolocalizar,
+            {
+              localidad: value.localidad,
+              codigo_postal: value.codigo_postal,
+            }
+          );
+
+          if (geoResult.success) {
+            patch.domicilio_latitud = geoResult.latitude;
+            patch.domicilio_longitud = geoResult.longitude;
+            patch.direccion_completa = geoResult.formatted_address;
+            patch.barrio = geoResult.neighborhood || value.barrio;
+            patch.localidad = geoResult.city || value.localidad;
+            patch.codigo_postal = geoResult.zipcode || value.codigo_postal;
+            patch.direccion_verificada = true;
+          }
+        } catch (geoError) {
+          console.warn(
+            'Error en geocodificación al actualizar persona:',
+            geoError.message
+          );
+          patch.direccion_completa = direccionParaGeolocalizar;
+          patch.direccion_verificada = false;
+        }
+      }
+    }
+
     const updated = await db('personas_registradas')
       .where({ id: req.params.id })
       .update({ ...patch, updated_by: req.user?.id || null });
+
     if (!updated) return res.status(404).json({ message: 'No encontrado' });
+
+    // Actualizar geometría PostGIS si hay nuevas coordenadas
+    if (patch.domicilio_latitud && patch.domicilio_longitud) {
+      try {
+        await geocodingService.updatePostGISGeometry(
+          db,
+          'personas_registradas',
+          'domicilio_geoposicion',
+          'domicilio_latitud',
+          'domicilio_longitud',
+          req.params.id
+        );
+      } catch (postgisError) {
+        console.warn(
+          'Error actualizando geometría PostGIS:',
+          postgisError.message
+        );
+      }
+    }
+
     try {
       await db('audit_logs').insert({
         user_id: req.user?.id || null,
         action: 'update',
         entity: 'persona',
         entity_id: Number(req.params.id),
-        payload: patch,
+        payload: { ...patch, geocoding_applied: !!patch.domicilio_latitud },
       });
     } catch (_) {}
-    res.json({ ok: true });
+
+    res.json({
+      ok: true,
+      geocoding_success: !!patch.domicilio_latitud,
+      coordinates: patch.domicilio_latitud
+        ? {
+            latitude: patch.domicilio_latitud,
+            longitude: patch.domicilio_longitud,
+          }
+        : null,
+    });
   } catch (e) {
     next(e);
   }

@@ -1,9 +1,55 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+/* Importar estilos de Leaflet */
+@import 'leaflet/dist/leaflet.css';
+
 :root {
   --header: #546e7a;
   --black: #000000;
   --bg: #f8f9fa;
   --card: #ffffff;
+}
+
+/* Estilos específicos para mapas */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px;
+  line-height: 1.4;
+}
+
+/* Marcadores personalizados */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Fix para íconos de Leaflet en modales */
+.leaflet-container .leaflet-control-zoom {
+  margin-left: 10px;
+  margin-top: 10px;
+}
+
+.leaflet-container .leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Mejorar visibilidad de controles */
+.leaflet-bar a {
+  color: #333 !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: #f0f0f0 !important;
 }
 * {
   box-sizing: border-box;

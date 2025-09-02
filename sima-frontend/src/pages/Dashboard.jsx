@@ -82,6 +82,23 @@ export default function Dashboard() {
               >
                 🗂️ REGISTROS DELICTUALES
               </Button>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => nav('/mapas')}
+                sx={{
+                  ...buttonStyle,
+                  bgcolor: '#1976d2',
+                  '&:hover': {
+                    bgcolor: '#1565c0',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 20px rgba(25, 118, 210, 0.4)',
+                  },
+                  animation: `${fadeInUp} 0.6s ease-out 0.7s both`,
+                }}
+              >
+                🗺️ VISUALIZACIÓN GEOGRÁFICA
+              </Button>
             </Box>
           </Grid>
         </Grid>

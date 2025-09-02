@@ -7,6 +7,7 @@ import PersonaDetalle from './pages/PersonaDetalle';
 import Registros from './pages/Registros';
 import RegistroDetalle from './pages/RegistroDetalle';
 import RegistroNuevo from './pages/RegistroNuevo';
+import MapasPage from './pages/MapasPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 export default function RoutesApp() {
@@ -21,6 +22,7 @@ export default function RoutesApp() {
         <Route path="/registros/nuevo" element={<RegistroNuevo />} />
         <Route path="/registros/:id" element={<RegistroDetalle />} />
         <Route path="/personas/:id" element={<PersonaDetalle />} />
+        <Route path="/mapas" element={<MapasPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
