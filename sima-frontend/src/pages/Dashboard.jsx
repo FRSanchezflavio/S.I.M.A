@@ -345,7 +345,9 @@ export default function Dashboard() {
         )}
       </Container>
 
-      <Footer />
+      <Box sx={{ mt: 'auto' }}>
+        <Footer />
+      </Box>
     </Box>
   );
 }

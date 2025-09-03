@@ -126,12 +126,16 @@ export default function Buscar() {
   }, []);
 
   return (
-    <>
+    <Box
+      sx={{
+        minHeight: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: 'var(--bg)',
+      }}
+    >
       <Header showSettings />
-      <Container
-        maxWidth="lg"
-        sx={{ py: 4, height: '400px', width: '10000px' }}
-      >
+      <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
         <Card className="card">
           <CardContent>
             <Typography variant="h4" sx={{ fontWeight: 900, mb: 3, mt: 1 }}>
@@ -217,7 +221,7 @@ export default function Buscar() {
                 </Stack>
               </Grid>
             </Grid>
-            <Grid container spacing={4} alignItems="center" sx={{ mt: 2 }}>
+            <Grid container spacing={4} alignItems="center" sx={{ mt: 0 }}>
               <Grid item xs={12}>
                 <RadioGroup
                   row
@@ -267,8 +271,9 @@ export default function Buscar() {
               sx={{
                 mt: 3,
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                gap: 2,
+                height: '860px',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 2fr))',
+                gap: 3,
               }}
             >
               {items.length === 0 && (
@@ -285,6 +290,10 @@ export default function Buscar() {
           </CardContent>
         </Card>
       </Container>
-    </>
+
+      <Box sx={{ mt: 'auto' }}>
+        <Footer />
+      </Box>
+    </Box>
   );
 }

@@ -7,23 +7,15 @@ import {
   Container,
   Stack,
 } from '@mui/material';
-import { useState } from 'react';
 
 export default function Footer() {
-  const [isHidden, setIsHidden] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
-  const slideUp = keyframes`
-    from {
-      transform: translateY(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
+  const fadeIn = keyframes`
+    from { opacity: 0; }
+    to { opacity: 1; }
   `;
 
   const footerHeight = isMobile ? '140px' : isTablet ? '120px' : '115px';
@@ -31,8 +23,6 @@ export default function Footer() {
   return (
     <Box
       className="footer"
-      onMouseEnter={() => setIsHidden(true)}
-      onMouseLeave={() => setIsHidden(false)}
       sx={{
         position: 'relative',
         height: footerHeight,
@@ -43,15 +33,14 @@ export default function Footer() {
         py: { xs: 1, sm: 1.5, md: 2 },
         px: { xs: 1, sm: 2, md: 3 },
         textAlign: 'center',
-        zIndex: 1000,
-        animation: `${slideUp} 0.8s ease-out`,
-        transform: isHidden ? 'translateY(70%)' : 'translateY(0)',
-        transition: 'transform 0.3s ease-in-out',
-        cursor: 'pointer',
+        zIndex: 10,
+        animation: `${fadeIn} 0.4s ease-out`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
+        width: '100%',
+        borderTop: '1px solid rgba(255,255,255,0.25)',
       }}
     >
       <Container maxWidth="lg" sx={{ position: 'relative', height: '100%' }}>
@@ -135,39 +124,20 @@ export default function Footer() {
             </Typography>
           </Box>
 
-          {/* Logo - responsive positioning */}
+          {/* Logo sin posición absoluta para evitar superposición en dashboard */}
           <Box
             component="img"
             src="/img/escDepto.png"
             alt="Logo Departamento"
             sx={{
-              height: {
-                xs: '60px',
-                sm: '70px',
-                md: '80px',
-                lg: '90px',
-              },
+              height: { xs: '60px', sm: '70px', md: '80px', lg: '90px' },
               width: 'auto',
-              maxWidth: {
-                xs: '60px',
-                sm: '70px',
-                md: '80px',
-                lg: '100px',
-              },
-              position: { xs: 'static', sm: 'absolute' },
-              right: { xs: 'auto', sm: '10px', md: '20px' },
-              top: { xs: 'auto', sm: '50%' },
-              transform: { xs: 'none', sm: 'translateY(-50%)' },
+              maxWidth: { xs: '60px', sm: '70px', md: '80px', lg: '100px' },
+              position: 'static', // antes: absolute en sm+
               mt: { xs: 1, sm: 0 },
               opacity: 0.95,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                opacity: 1,
-                transform: {
-                  xs: 'scale(1.05)',
-                  sm: 'translateY(-50%) scale(1.05)',
-                },
-              },
+              transition: 'transform 0.2s ease, opacity 0.2s ease',
+              '&:hover': { opacity: 1, transform: 'scale(1.03)' },
             }}
           />
         </Box>
