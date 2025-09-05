@@ -716,16 +716,6 @@ export default function PersonaDetalle() {
                             <MenuItem value="">Seleccionar tipo</MenuItem>
                             <MenuItem value="robo">Robo</MenuItem>
                             <MenuItem value="hurto">Hurto</MenuItem>
-                            <MenuItem value="estafa">Estafa</MenuItem>
-                            <MenuItem value="lesiones">Lesiones</MenuItem>
-                            <MenuItem value="amenazas">Amenazas</MenuItem>
-                            <MenuItem value="daños">Daños</MenuItem>
-                            <MenuItem value="violencia_familiar">
-                              Violencia Familiar
-                            </MenuItem>
-                            <MenuItem value="drogas">Drogas</MenuItem>
-                            <MenuItem value="homicidio">Homicidio</MenuItem>
-                            <MenuItem value="otro">Otro</MenuItem>
                           </TextField>
 
                           <TextField
