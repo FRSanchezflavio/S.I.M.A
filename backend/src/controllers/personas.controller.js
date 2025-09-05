@@ -33,13 +33,66 @@ const personSchema = Joi.object({
 
 exports.search = async (req, res, next) => {
   try {
-    const { q, dni, comisaria, page = 1, pageSize = 10, format } = req.query;
+    const {
+      q,
+      dni,
+      comisaria,
+      comisaria_hecho,
+      page = 1,
+      pageSize = 10,
+      format,
+    } = req.query;
     const p = Math.max(1, parseInt(page));
     const ps = Math.min(100, Math.max(1, parseInt(pageSize)));
     const qb = db('personas_registradas').whereNull('deleted_at');
+
+    // Búsqueda general por nombre/apellido
     if (q) qb.whereILike('nombre', `%${q}%`).orWhereILike('apellido', `%${q}%`);
+
+    // Búsquedas específicas por campo
     if (dni) qb.where('dni', dni);
     if (comisaria) qb.where('comisaria', comisaria);
+    if (comisaria_hecho) qb.where('comisaria_hecho', comisaria_hecho);
+
+    // Soporte para búsquedas por campos específicos del frontend
+    const allowedFields = [
+      'tipo_delito',
+      'modalidad',
+      'nombre',
+      'apellido',
+      'dni',
+      'edad',
+      'genero',
+      'nacionalidad',
+      'direccion',
+      'telefono',
+      'comisaria',
+      'comisaria_hecho',
+      'unidades_regionales',
+      'fecha_carga',
+      'observaciones',
+    ];
+
+    for (const field of allowedFields) {
+      if (
+        req.query[field] &&
+        field !== 'q' &&
+        field !== 'page' &&
+        field !== 'pageSize' &&
+        field !== 'format'
+      ) {
+        if (
+          field === 'nombre' ||
+          field === 'apellido' ||
+          field === 'observaciones'
+        ) {
+          qb.whereILike(field, `%${req.query[field]}%`);
+        } else {
+          qb.where(field, req.query[field]);
+        }
+      }
+    }
+
     const total = await qb.clone().count('* as c').first();
 
     // Exportación: si se pide format=csv|xlsx, devolver archivo completo (sin paginación)
