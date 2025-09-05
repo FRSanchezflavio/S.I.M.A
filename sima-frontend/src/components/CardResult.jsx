@@ -100,25 +100,25 @@ export default function CardResult({ item, onDetail }) {
             fontSize: '1rem',
           }}
         >
-          Comisaría: {item.comisaria || '-'}
+          Jurisdicción: {item.comisaria || '-'}
         </Typography>
-        {item.comisaria_hecho && (
-          <Typography
-            variant="body1"
-            sx={{
-              color: '#d32f2f',
-              fontWeight: 800,
-              backgroundColor: '#ffebee',
-              padding: '2px 6px',
-              borderRadius: '3px',
-              display: 'inline-block',
-              mb: 0.5,
-              fontSize: '1rem',
-            }}
-          >
-            Com. del Hecho: {item.comisaria_hecho}
-          </Typography>
-        )}
+        {/* {item.comisaria_hecho && (
+          // <Typography
+          //   variant="body1"
+          //   sx={{
+          //     color: '#d32f2f',
+          //     fontWeight: 800,
+          //     backgroundColor: '#ffebee',
+          //     padding: '2px 6px',
+          //     borderRadius: '3px',
+          //     display: 'inline-block',
+          //     mb: 0.5,
+          //     fontSize: '1rem',
+          //   }}
+          // >
+          //   Com. del Hecho: {item.comisaria_hecho}
+          // </Typography>
+        )} */}
         {item.genero && (
           <Typography
             variant="body1"

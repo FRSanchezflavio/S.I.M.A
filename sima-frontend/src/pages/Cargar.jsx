@@ -351,8 +351,8 @@ export default function Cargar() {
 
                 <FormInput
                   label="Comisaría del Hecho"
-                  value={form.comisaria}
-                  onChange={v => setForm({ ...form, comisaria: v })}
+                  value={form.comisaria_hecho}
+                  onChange={v => setForm({ ...form, comisaria_hecho: v })}
                   select
                   disabled={!form.UnidadesRegionales}
                   InputLabelProps={{
@@ -451,8 +451,8 @@ export default function Cargar() {
                 />
                 <FormInput
                   label="Comisaría Jurisdic. del M/A"
-                  value={form.comisaria_hecho}
-                  onChange={v => setForm({ ...form, comisaria_hecho: v })}
+                  value={form.comisaria}
+                  onChange={v => setForm({ ...form, comisaria: v })}
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
