@@ -20,10 +20,12 @@ import { useToast } from '../components/ToastProvider';
 export default function Cargar() {
   // Estructura jerárquica de regionales y comisarías
   const regionalesData = {
-    "URC": ["Comisaría URC 1", "Comisaría URC 2", "Comisaría URC 3"],
-    "Norte": ["Comisaría Norte 1", "Comisaría Norte 2"],
-    "Sur": ["Comisaría Sur 1", "Comisaría Sur 2", "Comisaría Sur 3"],
-    "Centro": ["Comisaría Centro 1", "Comisaría Centro 2"]
+    URC: ['Comisaría URC 1', 'Comisaría URC 2', 'Comisaría URC 3'],
+    URN: ['Comisaría URN 1', 'Comisaría URN 2'],
+    URS: ['Comisaría URS 1', 'Comisaría URS 2', 'Comisaría URS 3'],
+    URO: ['Comisaría URO 1', 'Comisaría URO 2'],
+    URE: ['Comisaría URE 1', 'Comisaría URE 2'],
+    Centro: ['Comisaría Centro 1', 'Comisaría Centro 2'],
   };
 
   const [form, setForm] = useState({
@@ -55,13 +57,13 @@ export default function Cargar() {
   const canSave = form.nombre && form.apellido && form.dni && files.length > 0;
 
   // Función para manejar el cambio de regional
-  const handleRegionalChange = (regional) => {
+  const handleRegionalChange = regional => {
     setForm(prev => ({
       ...prev,
       UnidadesRegionales: regional,
-      comisaria: '' // Reset comisaría cuando cambia la regional
+      comisaria: '', // Reset comisaría cuando cambia la regional
     }));
-    
+
     // Actualizar comisarías disponibles según la regional seleccionada
     if (regional && regionalesData[regional]) {
       setComisariasDisponibles(regionalesData[regional]);
@@ -278,23 +280,23 @@ export default function Cargar() {
                   InputLabelProps={{ style: { color: '#000' } }}
                 >
                   <MenuItem value="">Seleccionar regional</MenuItem>
-                  {Object.keys(regionalesData).map((regional) => (
+                  {Object.keys(regionalesData).map(regional => (
                     <MenuItem key={regional} value={regional}>
                       {regional}
                     </MenuItem>
                   ))}
                 </FormInput>
-                
+
                 <FormInput
                   label="Comisaría Jurisdic. del M/A."
                   value={form.comisaria}
                   onChange={v => setForm({ ...form, comisaria: v })}
                   select
                   disabled={!form.UnidadesRegionales}
-                  InputLabelProps={{ 
-                    style: { 
-                      color: form.UnidadesRegionales ? '#000' : '#999' 
-                    } 
+                  InputLabelProps={{
+                    style: {
+                      color: form.UnidadesRegionales ? '#000' : '#999',
+                    },
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -308,12 +310,11 @@ export default function Cargar() {
                   }}
                 >
                   <MenuItem value="">
-                    {form.UnidadesRegionales 
-                      ? "Seleccionar comisaría" 
-                      : "Primero seleccione una regional"
-                    }
+                    {form.UnidadesRegionales
+                      ? 'Seleccionar comisaría'
+                      : 'Primero seleccione una regional'}
                   </MenuItem>
-                  {comisariasDisponibles.map((comisaria) => (
+                  {comisariasDisponibles.map(comisaria => (
                     <MenuItem key={comisaria} value={comisaria}>
                       {comisaria}
                     </MenuItem>
