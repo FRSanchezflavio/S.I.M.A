@@ -20,12 +20,146 @@ import { useToast } from '../components/ToastProvider';
 export default function Cargar() {
   // Estructura jerárquica de regionales y comisarías
   const regionalesData = {
-    URC: ['Comisaría URC 1', 'Comisaría URC 2', 'Comisaría URC 3'],
-    URN: ['Comisaría URN 1', 'Comisaría URN 2'],
-    URS: ['Comisaría URS 1', 'Comisaría URS 2', 'Comisaría URS 3'],
-    URO: ['Comisaría URO 1', 'Comisaría URO 2'],
-    URE: ['Comisaría URE 1', 'Comisaría URE 2'],
-    Centro: ['Comisaría Centro 1', 'Comisaría Centro 2'],
+    URC: [
+      'Comisaria 1a',
+      'Comisaria 2a',
+      'Comisaria 3a',
+      'Comisaria 4a',
+      'Comisaria 5a',
+      'Comisaria 6a',
+      'Comisaria 7a',
+      'Comisaria 8a',
+      'Comisaria 9a',
+      'Comisaria 10a',
+      'Comisaria 11a',
+      'Comisaria 12a',
+      'Comisaria 13a',
+      'Comisaria 14a',
+      'Comisaria 15a',
+    ],
+    URN: [
+      'Cria. de Trancas',
+      'Cria. Chuscha',
+      'Cria. Choromoro',
+      'Cria. Vipos',
+      'Sub Cria. de Tapia',
+      'Cria. San Pedro de Colalao',
+      'Cria. Yerba Buena',
+      'Cria. Marti Coll',
+      'Cria. San José',
+      'Cria. El Corte',
+      'Cria. San Javier',
+      'Cria. Villa Carmela',
+      'Cria. Raco',
+      'Cria. Los Nogales',
+      'Cria. El Cadillal',
+      'Cria. Las Talitas',
+      'Cria. V. Mariano Moreno',
+      'Cria. El Colmenar',
+      'Cria. Los Pocitos',
+      'Cria. Lomas de Tafi',
+      'Cria. Villa Obrera',
+      'Cria. Tafi Viejo',
+    ],
+    URS: [
+      'Cria. de Concepción',
+      'Sub. Cria. Alto Verde',
+      'Cria. Arcadia',
+      'Cria. Alpachiri',
+      'Cria. Medinas',
+      'Cria. La Trinidad',
+      'Cria. Aguilares',
+      'Sub. Cria. El Polear',
+      'Cria. Sta. Ana',
+      'Cria. Los Sarmientos',
+      'Cria. Sta. Cruz',
+      'Cria. Monteagudo',
+      'Cria. Villa Chicligasta',
+      'Cria. Graneros',
+      'Cria. Atahona',
+      'Cria. Simoca',
+      'Cria. Manuela Pedraza',
+      'Cria. Taco Ralo',
+      'Cria. Villa Belgrano',
+      'Cria. Lamadrid',
+      'Cria. J. B. Alberdi',
+      'Cria. Escaba',
+      'Cria. La Invernada',
+      'Cria. Los Juarez',
+      'Cria. Juan Posse',
+      'Cria. Rio Chico',
+      'Cria. Pampa Mayo',
+    ],
+    URO: [
+      'Cria. Tafi del Valle',
+      'Cria. El Mollar',
+      'Cria. Amaicha del Valle',
+      'Cria. Colalao del Valle',
+      'Cria. Lules',
+      'Cria. La Reducción',
+      'Cria. El Manantial',
+      'Cria. San Pablo',
+      'Cria. V. Nougues',
+      'Cria. Los Aguirre',
+      'Cria. Famailla',
+      'Cria. Tte. Berdina',
+      'Cria. Monteros',
+      'Cria. Santa Lucía',
+      'Cria. Acheral',
+      'Cria. Río Seco',
+      'Cria. Villa Quinteros',
+      'Cria. León Rouges',
+      'Cria. Capitán Cáceres',
+      'Cria. Los Sosa y Soldado Maldonado',
+      'Cria. Amberes',
+      'Cria. Sargento Moya',
+    ],
+    URE: [
+      'Cria. Burruyacu',
+      'Cria. El Cajon',
+      'Cria. Villa B. Araoz',
+      'Cria. El Puestito',
+      'Cria. Chilcas',
+      'Cria. 7 de Abril',
+      'Cria. El Chañar',
+      'Cria. La Ramada',
+      'Cria. Garmendia',
+      'Cria. El Timbo',
+      'Cria. El Naranjo',
+      'Cria. Piedrabuena',
+      'Cria. Villa P. Monti',
+      'Cria. Banda del Rio Sali',
+      'Cria. Lastenia',
+      'Cria. Guemes',
+      'Cria. Alderetes',
+      'Cria. Pozo del Alto',
+      'Cria. Ranchillos',
+      'Cria. Los Ralos',
+      'Cria. Delfin Gallo',
+      'Cria. Colombres',
+      'Cria. La Florida',
+      'Cria. San Andres',
+      'Cria. El Bracho',
+      'Cria. Las Cejas',
+      'Cria. Los Bulacios',
+      'Cria. Bella Vista',
+      'Cria. Romera Pozo',
+      'Cria. Santa Rosa de Leales',
+      'Cria. Quilmes',
+      'Cria. Ingenio Leales',
+      'Cria. Los Sueldos',
+      'Cria. Estacion Araoz',
+      'Cria. Villa de Leales',
+      'Cria. Rio Colorado',
+      'Cria. Esquina',
+      'Cria. Mancopa',
+      'Cria. Agua Dulce',
+      'Cria. Los Gomez',
+      'Cria. Los Puestos',
+      'Cria. Los Herrera',
+      'Cria. El Mojon',
+      'Cria. Campo El Quimil',
+    ],
   };
 
   const [form, setForm] = useState({
@@ -201,11 +335,54 @@ export default function Cargar() {
                   <MenuItem value="otro">Otro</MenuItem>
                 </FormInput>
                 <FormInput
-                  label="Comisaría donde sucedió el hecho"
-                  value={form.comisaria_hecho}
-                  onChange={v => setForm({ ...form, comisaria_hecho: v })}
+                  label="Unidades Regionales"
+                  value={form.UnidadesRegionales}
+                  onChange={handleRegionalChange}
+                  select
                   InputLabelProps={{ style: { color: '#000' } }}
-                />
+                >
+                  <MenuItem value="">Seleccionar regional</MenuItem>
+                  {Object.keys(regionalesData).map(regional => (
+                    <MenuItem key={regional} value={regional}>
+                      {regional}
+                    </MenuItem>
+                  ))}
+                </FormInput>
+
+                <FormInput
+                  label="Comisaría del Hecho"
+                  value={form.comisaria}
+                  onChange={v => setForm({ ...form, comisaria: v })}
+                  select
+                  disabled={!form.UnidadesRegionales}
+                  InputLabelProps={{
+                    style: {
+                      color: form.UnidadesRegionales ? '#000' : '#999',
+                    },
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-disabled': {
+                        backgroundColor: '#f5f5f5',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#e0e0e0',
+                        },
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    {form.UnidadesRegionales
+                      ? 'Seleccionar comisaría'
+                      : 'Primero seleccione una regional'}
+                  </MenuItem>
+                  {comisariasDisponibles.map(comisaria => (
+                    <MenuItem key={comisaria} value={comisaria}>
+                      {comisaria}
+                    </MenuItem>
+                  ))}
+                </FormInput>
+
                 <FormInput
                   label="Apellido"
                   value={form.apellido}
@@ -273,53 +450,11 @@ export default function Cargar() {
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
-                  label="Unidades Regionales"
-                  value={form.UnidadesRegionales}
-                  onChange={handleRegionalChange}
-                  select
+                  label="Comisaría Jurisdic. del M/A"
+                  value={form.comisaria_hecho}
+                  onChange={v => setForm({ ...form, comisaria_hecho: v })}
                   InputLabelProps={{ style: { color: '#000' } }}
-                >
-                  <MenuItem value="">Seleccionar regional</MenuItem>
-                  {Object.keys(regionalesData).map(regional => (
-                    <MenuItem key={regional} value={regional}>
-                      {regional}
-                    </MenuItem>
-                  ))}
-                </FormInput>
-
-                <FormInput
-                  label="Comisaría Jurisdic. del M/A."
-                  value={form.comisaria}
-                  onChange={v => setForm({ ...form, comisaria: v })}
-                  select
-                  disabled={!form.UnidadesRegionales}
-                  InputLabelProps={{
-                    style: {
-                      color: form.UnidadesRegionales ? '#000' : '#999',
-                    },
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-disabled': {
-                        backgroundColor: '#f5f5f5',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#e0e0e0',
-                        },
-                      },
-                    },
-                  }}
-                >
-                  <MenuItem value="">
-                    {form.UnidadesRegionales
-                      ? 'Seleccionar comisaría'
-                      : 'Primero seleccione una regional'}
-                  </MenuItem>
-                  {comisariasDisponibles.map(comisaria => (
-                    <MenuItem key={comisaria} value={comisaria}>
-                      {comisaria}
-                    </MenuItem>
-                  ))}
-                </FormInput>
+                />
                 <FormInput
                   label="Fecha de carga"
                   type="date"
