@@ -15,12 +15,15 @@ const storage = multer.diskStorage({
 });
 
 function fileFilter(_, file, cb) {
-  const allowedExt = ['.jpg', '.jpeg', '.png', '.webp'];
+  const allowedExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.jfif'];
   const ext = path.extname(file.originalname || '').toLowerCase();
   const type = (file.mimetype || '').toLowerCase();
-  const allowedMime = ['image/jpeg', 'image/png', 'image/webp'];
-  if (allowedExt.includes(ext) && allowedMime.includes(type)) cb(null, true);
-  else cb(new Error('Tipo de archivo no permitido'));
+  const allowedMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (allowedExt.includes(ext) && allowedMime.includes(type))
+    return cb(null, true);
+  const err = new Error('Tipo de archivo no permitido');
+  err.status = 400; // evitar 500 en errores de validación de archivo
+  return cb(err);
 }
 
 module.exports = multer({
