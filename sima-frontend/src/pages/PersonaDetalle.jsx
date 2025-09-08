@@ -71,16 +71,16 @@ export default function PersonaDetalle() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
-  // Estados para delitos específicos
-  const [showDelitoEspecificoDialog, setShowDelitoEspecificoDialog] =
+  // Estados para antecedentes personales
+  const [showAntecedentePersonalDialog, setShowAntecedentePersonalDialog] =
     useState(false);
-  const [tabValue, setTabValue] = useState(0); // 0: Antecedentes oficiales, 1: Delitos específicos
+  const [tabValue, setTabValue] = useState(0); // 0: Antecedentes oficiales, 1: Antecedentes personales
 
-  // Hook para gestión de delitos específicos
+  // Hook para gestión de antecedentes personales
   const {
-    delitos: delitosEspecificos,
-    loading: loadingDelitosEspecificos,
-    error: errorDelitosEspecificos,
+    delitos: antecedentesPersonales,
+    loading: loadingAntecedentesPersonales,
+    error: errorAntecedentesPersonales,
     agregarDelito,
     actualizarDelito,
     eliminarDelito,
@@ -300,8 +300,8 @@ export default function PersonaDetalle() {
 
   const canSaveDelito = delitoForm.tipo_delito && delitoFiles.length > 0;
 
-  // Handlers para delitos específicos
-  const handleAgregarDelitoEspecifico = async delitoData => {
+  // Handlers para antecedentes personales
+  const handleAgregarAntecedentePersonal = async delitoData => {
     try {
       await agregarDelito(delitoData);
     } catch (error) {
@@ -311,7 +311,7 @@ export default function PersonaDetalle() {
 
   // Función unificada para manejar el botón AGREGAR DELITO
   // Detecta el contexto (pestaña activa) para determinar qué acción realizar
-  // UNIFICACIÓN: Combina funcionalidades de "AGREGAR DELITO" y "AGREGAR DELITO ESPECÍFICO"
+  // UNIFICACIÓN: Combina funcionalidades de "AGREGAR DELITO" y "AGREGAR ANTECEDENTE PERSONAL"
   const handleAgregarDelitoUnificado = () => {
     if (tabValue === 0) {
       // Pestaña "Antecedentes Oficiales" - Ejecutar funciones originales del botón AGREGAR DELITO
@@ -334,12 +334,12 @@ export default function PersonaDetalle() {
         },
       });
     } else if (tabValue === 1) {
-      // Pestaña "Delitos Específicos" - Ejecutar funciones del botón eliminado AGREGAR DELITO ESPECÍFICO
-      setShowDelitoEspecificoDialog(true);
+      // Pestaña "Antecedentes Personales" - Ejecutar funciones del botón eliminado AGREGAR ANTECEDENTE PERSONAL
+      setShowAntecedentePersonalDialog(true);
     }
   };
 
-  const handleActualizarDelitoEspecifico = async (
+  const handleActualizarAntecedentePersonal = async (
     delitoId,
     datosActualizados
   ) => {
@@ -350,7 +350,7 @@ export default function PersonaDetalle() {
     }
   };
 
-  const handleEliminarDelitoEspecifico = async delitoId => {
+  const handleEliminarAntecedentePersonal = async delitoId => {
     try {
       await eliminarDelito(delitoId);
     } catch (error) {
@@ -358,8 +358,8 @@ export default function PersonaDetalle() {
     }
   };
 
-  // Obtener estadísticas de delitos específicos
-  const estadisticasDelitos = useMemo(() => {
+  // Obtener estadísticas de antecedentes personales
+  const estadisticasAntecedentesPersonales = useMemo(() => {
     return getEstadisticas();
   }, [getEstadisticas]);
 
@@ -780,11 +780,11 @@ export default function PersonaDetalle() {
                         title={
                           tabValue === 0
                             ? 'Agregar delito oficial (aparece en búsquedas)'
-                            : 'Agregar delito específico (no aparece en búsquedas generales)'
+                            : 'Agregar antecedente personal (no aparece en búsquedas generales)'
                         }
                       >
                         + AGREGAR DELITO
-                        {tabValue === 1 && ' ESPECÍFICO'}
+                        {tabValue === 1 && ' PERSONAL'}
                       </Button>
                     )}
                   </Box>
@@ -1059,7 +1059,7 @@ export default function PersonaDetalle() {
                         aria-controls="tabpanel-0"
                       />
                       <Tab
-                        label={`Delitos Específicos (${estadisticasDelitos.total})`}
+                        label={`Antecedentes Personales (${estadisticasAntecedentesPersonales.total})`}
                         id="tab-1"
                         aria-controls="tabpanel-1"
                       />
@@ -1220,7 +1220,7 @@ export default function PersonaDetalle() {
                     )}
                   </Box>
 
-                  {/* Panel de Delitos Específicos */}
+                  {/* Panel de Antecedentes Personales */}
                   <Box
                     role="tabpanel"
                     hidden={tabValue !== 1}
@@ -1239,10 +1239,10 @@ export default function PersonaDetalle() {
                         >
                           <Box>
                             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                              Delitos Específicos del Sujeto
+                              Antecedentes Personales del Sujeto
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              Estos delitos no aparecen en las búsquedas
+                              Estos antecedentes no aparecen en las búsquedas
                               generales del sistema
                             </Typography>
                           </Box>
@@ -1252,7 +1252,7 @@ export default function PersonaDetalle() {
                               size="small"
                               startIcon={<AddIcon />}
                               onClick={() =>
-                                setShowDelitoEspecificoDialog(true)
+                                setShowAntecedentePersonalDialog(true)
                               }
                               sx={{
                                 display: 'none', // UNIFICACIÓN: Botón oculto - funcionalidad movida al botón principal unificado
@@ -1260,31 +1260,31 @@ export default function PersonaDetalle() {
                                 '&:hover': { bgcolor: '#333' },
                               }}
                             >
-                              Agregar Delito Específico{' '}
+                              Agregar Antecedente Personal{' '}
                               {/* Funcionalidad preservada en handleAgregarDelitoUnificado */}
                             </Button>
                           )}
                         </Box>
 
                         {/* Estadísticas rápidas */}
-                        {estadisticasDelitos.total > 0 && (
+                        {estadisticasAntecedentesPersonales.total > 0 && (
                           <EstadisticasDelitos
-                            estadisticas={estadisticasDelitos}
-                            loading={loadingDelitosEspecificos}
+                            estadisticas={estadisticasAntecedentesPersonales}
+                            loading={loadingAntecedentesPersonales}
                           />
                         )}
 
-                        {errorDelitosEspecificos && (
+                        {errorAntecedentesPersonales && (
                           <Alert severity="error" sx={{ mb: 2 }}>
-                            {errorDelitosEspecificos}
+                            {errorAntecedentesPersonales}
                           </Alert>
                         )}
 
                         <ListaDelitosEspecificos
-                          delitos={delitosEspecificos}
-                          onActualizar={handleActualizarDelitoEspecifico}
-                          onEliminar={handleEliminarDelitoEspecifico}
-                          loading={loadingDelitosEspecificos}
+                          delitos={antecedentesPersonales}
+                          onActualizar={handleActualizarAntecedentePersonal}
+                          onEliminar={handleEliminarAntecedentePersonal}
+                          loading={loadingAntecedentesPersonales}
                         />
                       </Box>
                     )}
@@ -1314,11 +1314,11 @@ export default function PersonaDetalle() {
         </Card>
       </Container>
 
-      {/* Dialog para agregar delito específico */}
+      {/* Dialog para agregar antecedente personal */}
       <AgregarDelitoEspecifico
-        open={showDelitoEspecificoDialog}
-        onClose={() => setShowDelitoEspecificoDialog(false)}
-        onAgregar={handleAgregarDelitoEspecifico}
+        open={showAntecedentePersonalDialog}
+        onClose={() => setShowAntecedentePersonalDialog(false)}
+        onAgregar={handleAgregarAntecedentePersonal}
         sujetoInfo={
           item
             ? {
@@ -1328,7 +1328,7 @@ export default function PersonaDetalle() {
               }
             : null
         }
-        loading={loadingDelitosEspecificos}
+        loading={loadingAntecedentesPersonales}
       />
 
       <Footer />
