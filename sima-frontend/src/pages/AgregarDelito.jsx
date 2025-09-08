@@ -23,7 +23,7 @@ export default function AgregarDelito() {
   const location = useLocation();
   const nav = useNavigate();
   const { showToast } = useToast();
-  
+
   // Obtener datos pre-rellenados desde la navegación
   const prefilledData = location.state?.prefilledData || {};
   const sujetoId = location.state?.sujetoId;
@@ -47,7 +47,7 @@ export default function AgregarDelito() {
     UnidadesRegionales: '',
     fecha_carga: new Date().toISOString().split('T')[0],
   });
-  
+
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
@@ -64,10 +64,10 @@ export default function AgregarDelito() {
     setOk('');
     try {
       const data = new FormData();
-      
+
       // Usar los datos existentes del sujeto con nueva información del delito
       const formData = { ...form };
-      
+
       if (formData.UnidadesRegionales) {
         formData.unidades_regionales = formData.UnidadesRegionales;
         delete formData.UnidadesRegionales;
@@ -85,12 +85,11 @@ export default function AgregarDelito() {
 
       setOk('Delito agregado exitosamente');
       showToast('Delito agregado exitosamente', 'success');
-      
+
       // Redirigir de vuelta al detalle de la persona
       setTimeout(() => {
         nav(`/personas/${sujetoId}`);
       }, 2000);
-      
     } catch (err) {
       setError(err?.response?.data?.message || 'Error al agregar el delito');
       showToast('Error al agregar el delito', 'error');
@@ -139,11 +138,19 @@ export default function AgregarDelito() {
             </Typography>
 
             {/* Información del sujeto */}
-            <Paper 
-              elevation={1} 
-              sx={{ p: 3, mb: 4, bgcolor: '#f8f9fa', border: '1px solid #e3f2fd' }}
+            <Paper
+              elevation={1}
+              sx={{
+                p: 3,
+                mb: 4,
+                bgcolor: '#f8f9fa',
+                border: '1px solid #e3f2fd',
+              }}
             >
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#1976d2' }}>
+              <Typography
+                variant="h6"
+                sx={{ mb: 2, fontWeight: 600, color: '#1976d2' }}
+              >
                 Información del Sujeto
               </Typography>
               <Grid container spacing={2}>
@@ -166,7 +173,8 @@ export default function AgregarDelito() {
             </Paper>
 
             <Alert severity="info" sx={{ mb: 3, color: '#000' }}>
-              Complete la información del nuevo delito cometido por este sujeto y seleccione las fotografías correspondientes.
+              Complete la información del nuevo delito cometido por este sujeto
+              y seleccione las fotografías correspondientes.
             </Alert>
 
             {error && (
@@ -396,7 +404,8 @@ export default function AgregarDelito() {
                       <Box
                         sx={{
                           display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                          gridTemplateColumns:
+                            'repeat(auto-fill, minmax(120px, 1fr))',
                           gap: 1,
                           mt: 2,
                           width: '100%',

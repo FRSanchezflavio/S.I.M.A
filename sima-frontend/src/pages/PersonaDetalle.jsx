@@ -659,7 +659,14 @@ export default function PersonaDetalle() {
                 {/* Acciones */}
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                       Acciones
                     </Typography>
@@ -667,24 +674,26 @@ export default function PersonaDetalle() {
                       <Button
                         variant="contained"
                         size="small"
-                        onClick={() => nav('/agregar-delito', { 
-                          state: { 
-                            sujetoId: item.id,
-                            prefilledData: {
-                              apellido: item.apellido,
-                              nombre: item.nombre,
-                              dni: item.dni,
-                              fecha_nacimiento: item.fecha_nacimiento,
-                              edad: item.edad,
-                              genero: item.genero,
-                              nacionalidad: item.nacionalidad,
-                              direccion: item.direccion,
-                              telefono: item.telefono,
-                              comisaria: item.comisaria,
-                              comisaria_hecho: item.comisaria_hecho
-                            }
-                          }
-                        })}
+                        onClick={() =>
+                          nav('/agregar-delito', {
+                            state: {
+                              sujetoId: item.id,
+                              prefilledData: {
+                                apellido: item.apellido,
+                                nombre: item.nombre,
+                                dni: item.dni,
+                                fecha_nacimiento: item.fecha_nacimiento,
+                                edad: item.edad,
+                                genero: item.genero,
+                                nacionalidad: item.nacionalidad,
+                                direccion: item.direccion,
+                                telefono: item.telefono,
+                                comisaria: item.comisaria,
+                                comisaria_hecho: item.comisaria_hecho,
+                              },
+                            },
+                          })
+                        }
                         sx={{
                           bgcolor: '#000',
                           color: '#fff',
