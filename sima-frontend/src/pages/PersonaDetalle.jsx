@@ -280,7 +280,37 @@ export default function PersonaDetalle() {
   return (
     <>
       <Header showSettings />
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="md" sx={{ py: 4, position: 'relative' }}>
+        {/* Botón AGREGAR DELITO reposicionado */}
+        {canEdit && (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => nav('/cargar')}
+            sx={{
+              position: 'absolute',
+              top: { xs: 16, md: 24 },
+              right: { xs: 16, md: 24 },
+              zIndex: 1000,
+              bgcolor: '#000',
+              color: '#fff',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              '&:hover': {
+                bgcolor: 'rgb(21, 77, 113)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                transform: 'translateY(-1px)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            + AGREGAR DELITO
+          </Button>
+        )}
         <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
           <Button variant="outlined" onClick={() => nav(-1)}>
             ← Volver
@@ -672,7 +702,7 @@ export default function PersonaDetalle() {
                       >
                         {showDelitoForm
                           ? 'Ocultar formulario'
-                          : 'Agregar delito'}
+                          : 'Agregar delito (formulario interno)'}
                       </Button>
                     </ListItem>
                   </List>
