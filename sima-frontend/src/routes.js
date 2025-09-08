@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Cargar from './pages/Cargar';
+import AgregarDelito from './pages/AgregarDelito';
 import Buscar from './pages/Buscar';
 import PersonaDetalle from './pages/PersonaDetalle';
 import Registros from './pages/Registros';
@@ -16,6 +17,7 @@ export default function RoutesApp() {
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/cargar" element={<Cargar />} />
+        <Route path="/agregar-delito" element={<AgregarDelito />} />
         <Route path="/buscar" element={<Buscar />} />
         <Route path="/registros" element={<Registros />} />
         <Route path="/registros/nuevo" element={<RegistroNuevo />} />

@@ -280,37 +280,7 @@ export default function PersonaDetalle() {
   return (
     <>
       <Header showSettings />
-      <Container maxWidth="md" sx={{ py: 4, position: 'relative' }}>
-        {/* Botón AGREGAR DELITO reposicionado */}
-        {canEdit && (
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => nav('/cargar')}
-            sx={{
-              position: 'absolute',
-              top: { xs: 16, md: 24 },
-              right: { xs: 16, md: 24 },
-              zIndex: 1000,
-              bgcolor: '#000',
-              color: '#fff',
-              fontSize: '0.75rem',
-              fontWeight: 'bold',
-              px: 2,
-              py: 1,
-              borderRadius: 2,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              '&:hover': {
-                bgcolor: 'rgb(21, 77, 113)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                transform: 'translateY(-1px)',
-              },
-              transition: 'all 0.2s ease',
-            }}
-          >
-            + AGREGAR DELITO
-          </Button>
-        )}
+      <Container maxWidth="md" sx={{ py: 4 }}>
         <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
           <Button variant="outlined" onClick={() => nav(-1)}>
             ← Volver
@@ -689,9 +659,53 @@ export default function PersonaDetalle() {
                 {/* Acciones */}
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
-                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                    Acciones
-                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      Acciones
+                    </Typography>
+                    {canEdit && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => nav('/agregar-delito', { 
+                          state: { 
+                            sujetoId: item.id,
+                            prefilledData: {
+                              apellido: item.apellido,
+                              nombre: item.nombre,
+                              dni: item.dni,
+                              fecha_nacimiento: item.fecha_nacimiento,
+                              edad: item.edad,
+                              genero: item.genero,
+                              nacionalidad: item.nacionalidad,
+                              direccion: item.direccion,
+                              telefono: item.telefono,
+                              comisaria: item.comisaria,
+                              comisaria_hecho: item.comisaria_hecho
+                            }
+                          }
+                        })}
+                        sx={{
+                          bgcolor: '#000',
+                          color: '#fff',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: 2,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                          '&:hover': {
+                            bgcolor: 'rgb(21, 77, 113)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            transform: 'translateY(-1px)',
+                          },
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        + AGREGAR DELITO
+                      </Button>
+                    )}
+                  </Box>
                   <List>
                     <ListItem disableGutters>
                       <Button
