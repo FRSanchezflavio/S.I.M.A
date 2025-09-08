@@ -53,7 +53,7 @@ export default function AgregarDelito() {
   const [ok, setOk] = useState('');
 
   // Validación: solo requerir tipo de delito y modalidad para agregar nuevo delito
-  const canSave = form.tipo_delito && form.modalidad && files.length > 0;
+  const canSave = form.tipo_delito && form.modalidad;
 
   const onFile = e => {
     setFiles(Array.from(e.target.files || []));
@@ -62,6 +62,21 @@ export default function AgregarDelito() {
   const onSubmit = async () => {
     setError('');
     setOk('');
+
+    // Validación adicional
+    if (!localStorage.getItem('accessToken')) {
+      setError('Sesión expirada. Por favor, inicie sesión nuevamente.');
+      showToast('Sesión expirada', 'error');
+      nav('/login');
+      return;
+    }
+
+    if (files.length === 0) {
+      setError('Debe seleccionar al menos una imagen para agregar el delito.');
+      showToast('Debe seleccionar al menos una imagen', 'warning');
+      return;
+    }
+
     try {
       const data = new FormData();
 
@@ -77,7 +92,7 @@ export default function AgregarDelito() {
         if (formData[k]) data.append(k, formData[k]);
       });
 
-      files.forEach(f => data.append('files', f));
+      files.forEach(f => data.append('fotos', f));
 
       await api.post('/personas', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -91,8 +106,16 @@ export default function AgregarDelito() {
         nav(`/personas/${sujetoId}`);
       }, 2000);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Error al agregar el delito');
-      showToast('Error al agregar el delito', 'error');
+      console.error('Error al agregar delito:', err);
+      const errorMessage =
+        err?.response?.data?.message || 'Error al agregar el delito';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+
+      // Si es error 401, redirigir al login
+      if (err?.response?.status === 401) {
+        setTimeout(() => nav('/login'), 2000);
+      }
     }
   };
 
@@ -120,6 +143,7 @@ export default function AgregarDelito() {
   // Redirigir si no hay datos pre-rellenados
   useEffect(() => {
     if (!prefilledData.dni || !sujetoId) {
+      console.warn('No hay datos pre-rellenados, redirigiendo...');
       nav('/buscar');
     }
   }, [prefilledData, sujetoId, nav]);
