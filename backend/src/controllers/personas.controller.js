@@ -23,6 +23,9 @@ const personSchema = Joi.object({
   observaciones: Joi.string().optional().allow('', null),
   comisaria: Joi.string().optional().allow('', null),
   comisaria_hecho: Joi.string().optional().allow('', null),
+  // Campos nuevos agregados
+  alias: Joi.string().optional().allow('', null),
+  provincia: Joi.string().optional().allow('', null),
   // Campos adicionales del frontend
   tipo_delito: Joi.string().optional().allow('', null),
   modalidad: Joi.string().optional().allow('', null),

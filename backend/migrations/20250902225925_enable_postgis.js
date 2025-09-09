@@ -3,7 +3,9 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.raw('CREATE EXTENSION IF NOT EXISTS postgis;');
+  // PostGIS temporalmente deshabilitado hasta configurar extensión
+  // return knex.raw('CREATE EXTENSION IF NOT EXISTS postgis;');
+  return Promise.resolve();
 };
 
 /**
@@ -11,5 +13,6 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.raw('DROP EXTENSION IF EXISTS postgis;');
+  // return knex.raw('DROP EXTENSION IF EXISTS postgis;');
+  return Promise.resolve();
 };

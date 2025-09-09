@@ -166,6 +166,7 @@ export default function Cargar() {
     tipo_delito: '',
     modalidad: '',
     nombre: '',
+    alias: '', // Campo Alias agregado
     apellido: '',
     dni: '',
     fecha_nacimiento: '',
@@ -173,6 +174,7 @@ export default function Cargar() {
     genero: '',
     nacionalidad: '',
     direccion: '',
+    provincia: 'tucuman', // Provincia preseleccionada por defecto
     telefono: '',
     observaciones: '',
     comisaria: '',
@@ -213,6 +215,22 @@ export default function Cargar() {
   const onSubmit = async () => {
     setError('');
     setOk('');
+
+    // Debug: Verificar token antes de enviar
+    const token = localStorage.getItem('accessToken');
+    console.log('Token disponible:', token ? 'Sí' : 'No');
+    console.log(
+      'Primer caracter del token:',
+      token ? token.substring(0, 10) + '...' : 'No hay token'
+    );
+
+    if (!token) {
+      setError('Sesión expirada. Por favor, inicie sesión nuevamente.');
+      showToast('Sesión expirada', 'error');
+      nav('/login');
+      return;
+    }
+
     try {
       const data = new FormData();
       const formData = { ...form };
@@ -232,6 +250,7 @@ export default function Cargar() {
         tipo_delito: '',
         modalidad: '',
         nombre: '',
+        alias: '', // Limpiar campo Alias al resetear
         apellido: '',
         dni: '',
         fecha_nacimiento: '',
@@ -239,6 +258,7 @@ export default function Cargar() {
         genero: '',
         nacionalidad: '',
         direccion: '',
+        provincia: 'tucuman', // Mantener Tucumán preseleccionada al resetear
         telefono: '',
         observaciones: '',
         comisaria: '',
@@ -397,6 +417,15 @@ export default function Cargar() {
                   required
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
+                {/* Campo Alias - Posicionado estratégicamente después del Nombre */}
+                <FormInput
+                  label="Alias"
+                  value={form.alias}
+                  onChange={v => setForm({ ...form, alias: v })}
+                  placeholder="Apodo o sobrenombre (opcional)"
+                  InputLabelProps={{ style: { color: '#000' } }}
+                  helperText="Ingrese cualquier alias o apodo conocido"
+                />
                 <FormInput
                   label="DNI"
                   value={form.dni}
@@ -443,6 +472,45 @@ export default function Cargar() {
                   onChange={v => setForm({ ...form, direccion: v })}
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
+                {/* Campo Provincia - Dropdown con todas las provincias argentinas */}
+                <FormInput
+                  label="Provincia"
+                  value={form.provincia}
+                  onChange={v => setForm({ ...form, provincia: v })}
+                  select
+                  InputLabelProps={{ style: { color: '#000' } }}
+                  helperText="Provincia de residencia o del hecho"
+                >
+                  <MenuItem value="">Seleccionar provincia</MenuItem>
+                  <MenuItem value="buenos_aires">Buenos Aires</MenuItem>
+                  <MenuItem value="catamarca">Catamarca</MenuItem>
+                  <MenuItem value="chaco">Chaco</MenuItem>
+                  <MenuItem value="chubut">Chubut</MenuItem>
+                  <MenuItem value="ciudad_autonoma_buenos_aires">
+                    Ciudad Autónoma de Buenos Aires
+                  </MenuItem>
+                  <MenuItem value="cordoba">Córdoba</MenuItem>
+                  <MenuItem value="corrientes">Corrientes</MenuItem>
+                  <MenuItem value="entre_rios">Entre Ríos</MenuItem>
+                  <MenuItem value="formosa">Formosa</MenuItem>
+                  <MenuItem value="jujuy">Jujuy</MenuItem>
+                  <MenuItem value="la_pampa">La Pampa</MenuItem>
+                  <MenuItem value="la_rioja">La Rioja</MenuItem>
+                  <MenuItem value="mendoza">Mendoza</MenuItem>
+                  <MenuItem value="misiones">Misiones</MenuItem>
+                  <MenuItem value="neuquen">Neuquén</MenuItem>
+                  <MenuItem value="rio_negro">Río Negro</MenuItem>
+                  <MenuItem value="salta">Salta</MenuItem>
+                  <MenuItem value="san_juan">San Juan</MenuItem>
+                  <MenuItem value="san_luis">San Luis</MenuItem>
+                  <MenuItem value="santa_cruz">Santa Cruz</MenuItem>
+                  <MenuItem value="santa_fe">Santa Fe</MenuItem>
+                  <MenuItem value="santiago_del_estero">
+                    Santiago del Estero
+                  </MenuItem>
+                  <MenuItem value="tierra_del_fuego">Tierra del Fuego</MenuItem>
+                  <MenuItem value="tucuman">Tucumán</MenuItem>
+                </FormInput>
                 <FormInput
                   label="Teléfono"
                   value={form.telefono}
