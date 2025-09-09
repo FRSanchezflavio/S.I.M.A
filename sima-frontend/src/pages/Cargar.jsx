@@ -241,11 +241,69 @@ export default function Cargar() {
       }
       Object.entries(formData).forEach(([k, v]) => data.append(k, v || ''));
       files.forEach(f => data.append('fotos', f));
-      await api.post('/personas', data, {
+
+      // Enviar datos a la base de datos
+      const response = await api.post('/personas', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
+      // Si se guardó correctamente y hay datos de delito, crear antecedente personal
+      if (
+        response.data &&
+        response.data.id &&
+        (form.tipo_delito || form.modalidad)
+      ) {
+        try {
+          // Crear antecedente personal en localStorage
+          const antecedentePersonal = {
+            id: `delito_${Date.now()}_${Math.random()
+              .toString(36)
+              .substr(2, 9)}`,
+            tipo: form.tipo_delito || 'otros',
+            modalidad: form.modalidad || '',
+            descripcion: `Delito registrado desde formulario de carga: ${
+              form.tipo_delito
+            }${form.modalidad ? ` - ${form.modalidad}` : ''}`,
+            lugar: form.direccion || '',
+            comisaria_hecho: form.comisaria_hecho || form.comisaria || '',
+            estado: 'activo',
+            juzgado: '',
+            fecha_hecho:
+              form.fecha_carga || new Date().toISOString().split('T')[0],
+            fecha_carga: new Date().toISOString(),
+            observaciones: form.observaciones || '',
+            fotos: [], // Las fotos ya se guardaron en el registro principal
+            sujetoId: response.data.id.toString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          // Guardar en localStorage usando la misma estructura del hook
+          const storageKey = `delitos_especificos_${response.data.id}`;
+          const existingDelitos = JSON.parse(
+            localStorage.getItem(storageKey) || '[]'
+          );
+          const nuevosDelitos = [...existingDelitos, antecedentePersonal];
+          localStorage.setItem(storageKey, JSON.stringify(nuevosDelitos));
+
+          console.log(
+            'Antecedente personal creado automáticamente:',
+            antecedentePersonal
+          );
+        } catch (err) {
+          console.error('Error creando antecedente personal automático:', err);
+          // No fallar el proceso principal si hay error en antecedentes
+        }
+      }
+
       setOk('Guardado correctamente');
       showToast('Persona guardada', 'success');
+
+      // Mostrar mensaje adicional si se creó antecedente personal
+      if (form.tipo_delito || form.modalidad) {
+        showToast('Antecedente personal creado automáticamente', 'info');
+      }
+
       setForm({
         tipo_delito: '',
         modalidad: '',
@@ -268,6 +326,13 @@ export default function Cargar() {
         fecha_carga: new Date().toISOString().split('T')[0],
       });
       setFiles([]);
+
+      // Navegar al detalle de la persona recién creada para ver los antecedentes
+      if (response.data && response.data.id) {
+        setTimeout(() => {
+          nav(`/personas/${response.data.id}`);
+        }, 1500); // Dar tiempo para que se vean los toasts
+      }
     } catch (err) {
       setError(err?.response?.data?.message || 'Error al guardar');
       showToast('Error al guardar', 'error');

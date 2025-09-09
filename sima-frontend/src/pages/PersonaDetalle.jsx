@@ -33,7 +33,7 @@ import AddIcon from '@mui/icons-material/Add';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AgregarDelitoEspecifico from '../components/AgregarDelitoEspecifico';
-import ListaDelitosEspecificos from '../components/ListaDelitosEspecificos';
+import ListaAntecedentesPersonalesMejorada from '../components/ListaAntecedentesPersonalesMejorada';
 import EstadisticasDelitos from '../components/EstadisticasDelitos';
 import useDelitosEspecificos from '../hooks/useDelitosEspecificos';
 import api from '../services/api';
@@ -72,6 +72,23 @@ export default function PersonaDetalle() {
     eliminarDelito,
     getEstadisticas,
   } = useDelitosEspecificos(id);
+
+  // Debug: Verificar datos en localStorage
+  useEffect(() => {
+    if (id) {
+      const storageKey = `delitos_especificos_${id}`;
+      const stored = localStorage.getItem(storageKey);
+      console.log(`Debug - Datos en localStorage para persona ${id}:`, stored);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          console.log(`Debug - Antecedentes encontrados:`, parsed);
+        } catch (err) {
+          console.error('Error parseando datos de localStorage:', err);
+        }
+      }
+    }
+  }, [id, antecedentesPersonales]);
 
   function decodeJwt(token) {
     try {
@@ -911,11 +928,12 @@ export default function PersonaDetalle() {
                           </Alert>
                         )}
 
-                        <ListaDelitosEspecificos
+                        <ListaAntecedentesPersonalesMejorada
                           delitos={antecedentesPersonales}
                           onActualizar={handleActualizarAntecedentePersonal}
                           onEliminar={handleEliminarAntecedentePersonal}
                           loading={loadingAntecedentesPersonales}
+                          showTableView={antecedentesPersonales.length > 5}
                         />
                       </Box>
                     )}
