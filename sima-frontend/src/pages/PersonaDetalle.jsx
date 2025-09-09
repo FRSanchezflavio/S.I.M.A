@@ -51,21 +51,7 @@ export default function PersonaDetalle() {
   const [files, setFiles] = useState([]);
   const { showToast } = useToast();
 
-  // Estado para agregar nuevo delito
-  const [showDelitoForm, setShowDelitoForm] = useState(false);
-  const [delitoForm, setDelitoForm] = useState({
-    tipo_delito: '',
-    modalidad: '',
-    lugar: '',
-    estado: '',
-    juzgado: '',
-    detalle: '',
-    comisaria_hecho: '',
-    fecha_carga: new Date().toISOString().split('T')[0],
-  });
-  const [delitoFiles, setDelitoFiles] = useState([]);
-  const [delitoError, setDelitoError] = useState('');
-  const [savingDelito, setSavingDelito] = useState(false);
+  // Estado para paginación de registros
   const [registros, setRegistros] = useState([]);
   const [totalRegistros, setTotalRegistros] = useState(0);
   const [page, setPage] = useState(1);
@@ -232,74 +218,6 @@ export default function PersonaDetalle() {
     }
   };
 
-  // Función para agregar nuevo delito
-  const handleAgregarDelito = async () => {
-    setSavingDelito(true);
-    setDelitoError('');
-
-    try {
-      const data = new FormData();
-
-      // Agregar campos del formulario
-      Object.entries(delitoForm).forEach(([k, v]) => data.append(k, v || ''));
-
-      // Agregar persona_id
-      data.append('persona_id', id);
-
-      // Agregar archivos
-      delitoFiles.forEach(f => data.append('fotos', f));
-
-      // Enviar al endpoint de registros
-      await api.post('/registros', data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      showToast('Delito registrado correctamente', 'success');
-
-      // Limpiar formulario
-      setDelitoForm({
-        tipo_delito: '',
-        modalidad: '',
-        lugar: '',
-        estado: '',
-        juzgado: '',
-        detalle: '',
-        comisaria_hecho: '',
-        fecha_carga: new Date().toISOString().split('T')[0],
-      });
-      setDelitoFiles([]);
-      setShowDelitoForm(false);
-
-      // Recargar registros
-      const { data: updatedRegistros } = await api.get('/registros', {
-        params: { persona_id: id, page, pageSize },
-      });
-      if (Array.isArray(updatedRegistros)) {
-        setRegistros(updatedRegistros);
-        setTotalRegistros(updatedRegistros.length);
-      } else {
-        setRegistros(updatedRegistros?.items || []);
-        setTotalRegistros(
-          Number(
-            updatedRegistros?.total ??
-              (updatedRegistros?.items ? updatedRegistros.items.length : 0)
-          )
-        );
-      }
-    } catch (err) {
-      setDelitoError(err?.response?.data?.message || 'Error al guardar');
-      showToast('Error al guardar el delito', 'error');
-    } finally {
-      setSavingDelito(false);
-    }
-  };
-
-  const onDelitoFile = e => {
-    setDelitoFiles(Array.from(e.target.files || []));
-  };
-
-  const canSaveDelito = delitoForm.tipo_delito && delitoFiles.length > 0;
-
   // Handlers para antecedentes personales
   const handleAgregarAntecedentePersonal = async delitoData => {
     try {
@@ -311,10 +229,9 @@ export default function PersonaDetalle() {
 
   // Función unificada para manejar el botón AGREGAR DELITO
   // Detecta el contexto (pestaña activa) para determinar qué acción realizar
-  // UNIFICACIÓN: Combina funcionalidades de "AGREGAR DELITO" y "AGREGAR ANTECEDENTE PERSONAL"
   const handleAgregarDelitoUnificado = () => {
     if (tabValue === 0) {
-      // Pestaña "Antecedentes Oficiales" - Ejecutar funciones originales del botón AGREGAR DELITO
+      // Pestaña "Antecedentes Oficiales" - navegar a página de agregar delito
       nav('/agregar-delito', {
         state: {
           sujetoId: item.id,
@@ -334,7 +251,7 @@ export default function PersonaDetalle() {
         },
       });
     } else if (tabValue === 1) {
-      // Pestaña "Antecedentes Personales" - Ejecutar funciones del botón eliminado AGREGAR ANTECEDENTE PERSONAL
+      // Pestaña "Antecedentes Personales" - abrir dialog
       setShowAntecedentePersonalDialog(true);
     }
   };
@@ -741,7 +658,6 @@ export default function PersonaDetalle() {
                     </Box>
                   </Grid>
                 )}
-
                 {/* Acciones */}
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
@@ -788,259 +704,7 @@ export default function PersonaDetalle() {
                       </Button>
                     )}
                   </Box>
-                  <List>
-                    <ListItem disableGutters>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        onClick={() => setShowDelitoForm(!showDelitoForm)}
-                        sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#111' } }}
-                      >
-                        {showDelitoForm
-                          ? 'Ocultar formulario'
-                          : 'Agregar delito (formulario interno)'}
-                      </Button>
-                    </ListItem>
-                  </List>
                 </Grid>
-
-                {/* Formulario para agregar delito */}
-                {showDelitoForm && (
-                  <Grid item xs={12}>
-                    <Paper
-                      elevation={2}
-                      sx={{ p: 3, mt: 2, bgcolor: '#f8f9fa' }}
-                    >
-                      <Typography
-                        variant="h6"
-                        sx={{ mb: 2, fontWeight: 600, color: '#000' }}
-                      >
-                        Agregar Nuevo Delito
-                      </Typography>
-
-                      {delitoError && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                          {delitoError}
-                        </Alert>
-                      )}
-
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            select
-                            label="Tipo de delito"
-                            fullWidth
-                            value={delitoForm.tipo_delito}
-                            onChange={e =>
-                              setDelitoForm({
-                                ...delitoForm,
-                                tipo_delito: e.target.value,
-                              })
-                            }
-                            sx={{ mb: 2 }}
-                          >
-                            <MenuItem value="">Seleccionar tipo</MenuItem>
-                            <MenuItem value="robo">Robo</MenuItem>
-                            <MenuItem value="hurto">Hurto</MenuItem>
-                          </TextField>
-
-                          <TextField
-                            select
-                            label="Modalidad"
-                            fullWidth
-                            value={delitoForm.modalidad}
-                            onChange={e =>
-                              setDelitoForm({
-                                ...delitoForm,
-                                modalidad: e.target.value,
-                              })
-                            }
-                            sx={{ mb: 2 }}
-                          >
-                            <MenuItem value="">Seleccionar modalidad</MenuItem>
-                            <MenuItem value="arrebato">Arrebato</MenuItem>
-                            <MenuItem value="descuido">Descuido</MenuItem>
-                            <MenuItem value="destreza">Destreza</MenuItem>
-                            <MenuItem value="escalamiento">
-                              Escalamiento
-                            </MenuItem>
-                            <MenuItem value="fuerza_puerta">
-                              Fuerza en puerta
-                            </MenuItem>
-                            <MenuItem value="fuerza_ventana">
-                              Fuerza en ventana
-                            </MenuItem>
-                            <MenuItem value="intimidacion">
-                              Intimidación
-                            </MenuItem>
-                            <MenuItem value="llave_falsa">Llave falsa</MenuItem>
-                            <MenuItem value="motochorro">Motochorro</MenuItem>
-                            <MenuItem value="violencia">Violencia</MenuItem>
-                            <MenuItem value="otro">Otro</MenuItem>
-                          </TextField>
-
-                          <TextField
-                            label="Comisaría donde sucedió el hecho"
-                            fullWidth
-                            value={delitoForm.comisaria_hecho}
-                            onChange={e =>
-                              setDelitoForm({
-                                ...delitoForm,
-                                comisaria_hecho: e.target.value,
-                              })
-                            }
-                            sx={{ mb: 2 }}
-                          />
-
-                          <TextField
-                            label="Lugar del hecho"
-                            fullWidth
-                            value={delitoForm.lugar}
-                            onChange={e =>
-                              setDelitoForm({
-                                ...delitoForm,
-                                lugar: e.target.value,
-                              })
-                            }
-                            sx={{ mb: 2 }}
-                          />
-
-                          <TextField
-                            select
-                            label="Estado del caso"
-                            fullWidth
-                            value={delitoForm.estado}
-                            onChange={e =>
-                              setDelitoForm({
-                                ...delitoForm,
-                                estado: e.target.value,
-                              })
-                            }
-                            sx={{ mb: 2 }}
-                          >
-                            <MenuItem value="">Seleccionar estado</MenuItem>
-                            <MenuItem value="activo">Activo</MenuItem>
-                            <MenuItem value="resuelto">Resuelto</MenuItem>
-                            <MenuItem value="archivado">Archivado</MenuItem>
-                            <MenuItem value="en_proceso">En proceso</MenuItem>
-                            <MenuItem value="suspendido">Suspendido</MenuItem>
-                          </TextField>
-
-                          <TextField
-                            label="Juzgado interviniente"
-                            fullWidth
-                            value={delitoForm.juzgado}
-                            onChange={e =>
-                              setDelitoForm({
-                                ...delitoForm,
-                                juzgado: e.target.value,
-                              })
-                            }
-                            sx={{ mb: 2 }}
-                          />
-
-                          <TextField
-                            type="date"
-                            label="Fecha de carga"
-                            fullWidth
-                            InputLabelProps={{ shrink: true }}
-                            value={delitoForm.fecha_carga}
-                            onChange={e =>
-                              setDelitoForm({
-                                ...delitoForm,
-                                fecha_carga: e.target.value,
-                              })
-                            }
-                            sx={{ mb: 2 }}
-                          />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            label="Detalle del caso"
-                            fullWidth
-                            multiline
-                            rows={5}
-                            value={delitoForm.detalle}
-                            onChange={e =>
-                              setDelitoForm({
-                                ...delitoForm,
-                                detalle: e.target.value,
-                              })
-                            }
-                            sx={{ mb: 2 }}
-                          />
-
-                          <Box
-                            sx={{
-                              p: 2,
-                              border: '2px dashed #90a4ae',
-                              borderRadius: 2,
-                              textAlign: 'center',
-                              mb: 2,
-                            }}
-                          >
-                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                              Adjuntar fotografías (obligatorio)
-                            </Typography>
-                            <input
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              onChange={onDelitoFile}
-                            />
-                            {delitoFiles.length > 0 && (
-                              <Typography
-                                variant="body2"
-                                sx={{ mt: 1, color: 'green' }}
-                              >
-                                {delitoFiles.length} archivo(s) seleccionado(s)
-                              </Typography>
-                            )}
-                          </Box>
-
-                          <Stack direction="row" spacing={2}>
-                            <Button
-                              variant="outlined"
-                              onClick={() => {
-                                setShowDelitoForm(false);
-                                setDelitoForm({
-                                  tipo_delito: '',
-                                  modalidad: '',
-                                  lugar: '',
-                                  estado: '',
-                                  juzgado: '',
-                                  detalle: '',
-                                  comisaria_hecho: '',
-                                  fecha_carga: new Date()
-                                    .toISOString()
-                                    .split('T')[0],
-                                });
-                                setDelitoFiles([]);
-                                setDelitoError('');
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                            <Button
-                              variant="contained"
-                              onClick={handleAgregarDelito}
-                              disabled={!canSaveDelito || savingDelito}
-                              sx={{
-                                bgcolor: '#000',
-                                '&:hover': { bgcolor: '#111' },
-                                '&:disabled': { bgcolor: '#ccc' },
-                              }}
-                            >
-                              {savingDelito ? 'Guardando...' : 'AGREGAR DELITO'}
-                            </Button>
-                          </Stack>
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                  </Grid>
-                )}
-
                 {/* Lista de antecedentes - con pestañas */}
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
@@ -1086,22 +750,6 @@ export default function PersonaDetalle() {
                           <Typography variant="h6" sx={{ fontWeight: 600 }}>
                             Antecedentes Delictuales Oficiales
                           </Typography>
-                          {canEdit && (
-                            <Button
-                              variant="contained"
-                              size="small"
-                              startIcon={<AddIcon />}
-                              onClick={() =>
-                                nav(`/registros/nuevo?persona_id=${item?.id}`)
-                              }
-                              sx={{
-                                bgcolor: '#000',
-                                '&:hover': { bgcolor: '#333' },
-                              }}
-                            >
-                              Agregar Registro
-                            </Button>
-                          )}
                         </Box>
 
                         {registros.length === 0 ? (
@@ -1180,38 +828,21 @@ export default function PersonaDetalle() {
                           </Grid>
                         )}
 
-                        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                          <TextField
-                            label="Tamaño de página"
-                            type="number"
-                            size="small"
-                            value={pageSize}
-                            onChange={e => {
-                              const val = Math.max(
-                                1,
-                                Math.min(50, Number(e.target.value) || 5)
-                              );
-                              setPageSize(val);
-                              setPage(1);
-                            }}
-                            sx={{ width: 160 }}
-                          />
-                          <Stack direction="row" spacing={1}>
-                            <Button
-                              variant="outlined"
-                              disabled={page <= 1}
-                              onClick={() => setPage(p => p - 1)}
-                            >
-                              Anterior
-                            </Button>
-                            <Button
-                              variant="outlined"
-                              disabled={page * pageSize >= totalRegistros}
-                              onClick={() => setPage(p => p + 1)}
-                            >
-                              Siguiente
-                            </Button>
-                          </Stack>
+                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                          <Button
+                            variant="outlined"
+                            disabled={page <= 1}
+                            onClick={() => setPage(p => p - 1)}
+                          >
+                            Anterior
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            disabled={page * pageSize >= totalRegistros}
+                            onClick={() => setPage(p => p + 1)}
+                          >
+                            Siguiente
+                          </Button>
                           <Typography variant="body2" color="text.secondary">
                             Página {page} · {totalRegistros} resultados
                           </Typography>
@@ -1290,7 +921,6 @@ export default function PersonaDetalle() {
                     )}
                   </Box>
                 </Grid>
-
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="body2" color="text.secondary">
