@@ -17,6 +17,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Chip,
 } from '@mui/material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -25,6 +26,7 @@ import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import DownloadIcon from '@mui/icons-material/Download';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import InfoIcon from '@mui/icons-material/Info';
 import { useToast } from '../components/ToastProvider';
 
 export default function Buscar() {
@@ -141,6 +143,23 @@ export default function Buscar() {
             <Typography variant="h4" sx={{ fontWeight: 900, mb: 3, mt: 1 }}>
               Buscar Mencionado/Aprehendido
             </Typography>
+
+            {/* Información sobre los delitos específicos */}
+            <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>
+                  Búsqueda en registros oficiales
+                </Typography>
+                <Typography variant="body2">
+                  Esta búsqueda solo muestra los{' '}
+                  <strong>antecedentes delictuales oficiales</strong>{' '}
+                  registrados en el sistema. Los delitos específicos de cada
+                  sujeto no aparecen en estos resultados y solo son visibles en
+                  el perfil individual.
+                </Typography>
+              </Box>
+            </Alert>
+
             {error && (
               <Alert severity="error" sx={{ mb: 4 }}>
                 {error}

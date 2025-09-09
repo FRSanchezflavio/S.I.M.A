@@ -21,14 +21,21 @@ import {
   AccordionSummary,
   AccordionDetails,
   Paper,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AddIcon from '@mui/icons-material/Add';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import AgregarDelitoEspecifico from '../components/AgregarDelitoEspecifico';
+import ListaDelitosEspecificos from '../components/ListaDelitosEspecificos';
+import EstadisticasDelitos from '../components/EstadisticasDelitos';
+import useDelitosEspecificos from '../hooks/useDelitosEspecificos';
 import api from '../services/api';
 import { useToast } from '../components/ToastProvider';
 
@@ -63,6 +70,22 @@ export default function PersonaDetalle() {
   const [totalRegistros, setTotalRegistros] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+
+  // Estados para antecedentes personales
+  const [showAntecedentePersonalDialog, setShowAntecedentePersonalDialog] =
+    useState(false);
+  const [tabValue, setTabValue] = useState(0); // 0: Antecedentes oficiales, 1: Antecedentes personales
+
+  // Hook para gestión de antecedentes personales
+  const {
+    delitos: antecedentesPersonales,
+    loading: loadingAntecedentesPersonales,
+    error: errorAntecedentesPersonales,
+    agregarDelito,
+    actualizarDelito,
+    eliminarDelito,
+    getEstadisticas,
+  } = useDelitosEspecificos(id);
 
   function decodeJwt(token) {
     try {
@@ -276,6 +299,69 @@ export default function PersonaDetalle() {
   };
 
   const canSaveDelito = delitoForm.tipo_delito && delitoFiles.length > 0;
+
+  // Handlers para antecedentes personales
+  const handleAgregarAntecedentePersonal = async delitoData => {
+    try {
+      await agregarDelito(delitoData);
+    } catch (error) {
+      throw error; // Re-throw para que el componente hijo lo maneje
+    }
+  };
+
+  // Función unificada para manejar el botón AGREGAR DELITO
+  // Detecta el contexto (pestaña activa) para determinar qué acción realizar
+  // UNIFICACIÓN: Combina funcionalidades de "AGREGAR DELITO" y "AGREGAR ANTECEDENTE PERSONAL"
+  const handleAgregarDelitoUnificado = () => {
+    if (tabValue === 0) {
+      // Pestaña "Antecedentes Oficiales" - Ejecutar funciones originales del botón AGREGAR DELITO
+      nav('/agregar-delito', {
+        state: {
+          sujetoId: item.id,
+          prefilledData: {
+            apellido: item.apellido,
+            nombre: item.nombre,
+            dni: item.dni,
+            fecha_nacimiento: item.fecha_nacimiento,
+            edad: item.edad,
+            genero: item.genero,
+            nacionalidad: item.nacionalidad,
+            direccion: item.direccion,
+            telefono: item.telefono,
+            comisaria: item.comisaria,
+            comisaria_hecho: item.comisaria_hecho,
+          },
+        },
+      });
+    } else if (tabValue === 1) {
+      // Pestaña "Antecedentes Personales" - Ejecutar funciones del botón eliminado AGREGAR ANTECEDENTE PERSONAL
+      setShowAntecedentePersonalDialog(true);
+    }
+  };
+
+  const handleActualizarAntecedentePersonal = async (
+    delitoId,
+    datosActualizados
+  ) => {
+    try {
+      await actualizarDelito(delitoId, datosActualizados);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleEliminarAntecedentePersonal = async delitoId => {
+    try {
+      await eliminarDelito(delitoId);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Obtener estadísticas de antecedentes personales
+  const estadisticasAntecedentesPersonales = useMemo(() => {
+    return getEstadisticas();
+  }, [getEstadisticas]);
 
   return (
     <>
@@ -659,9 +745,49 @@ export default function PersonaDetalle() {
                 {/* Acciones */}
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
-                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                    Acciones
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      Acciones
+                    </Typography>
+                    {canEdit && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={handleAgregarDelitoUnificado}
+                        sx={{
+                          bgcolor: '#000',
+                          color: '#fff',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: 2,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                          '&:hover': {
+                            bgcolor: 'rgb(21, 77, 113)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            transform: 'translateY(-1px)',
+                          },
+                          transition: 'all 0.2s ease',
+                        }}
+                        title={
+                          tabValue === 0
+                            ? 'Agregar delito oficial (aparece en búsquedas)'
+                            : 'Agregar antecedente personal (no aparece en búsquedas generales)'
+                        }
+                      >
+                        + AGREGAR DELITO
+                        {tabValue === 1 && ' PERSONAL'}
+                      </Button>
+                    )}
+                  </Box>
                   <List>
                     <ListItem disableGutters>
                       <Button
@@ -672,7 +798,7 @@ export default function PersonaDetalle() {
                       >
                         {showDelitoForm
                           ? 'Ocultar formulario'
-                          : 'Agregar delito'}
+                          : 'Agregar delito (formulario interno)'}
                       </Button>
                     </ListItem>
                   </List>
@@ -915,113 +1041,254 @@ export default function PersonaDetalle() {
                   </Grid>
                 )}
 
-                {/* Lista de antecedentes delictuales */}
+                {/* Lista de antecedentes - con pestañas */}
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    Antecedentes Delictuales (
-                    {totalRegistros || registros.length})
-                  </Typography>
 
-                  {registros.length === 0 ? (
-                    <Alert severity="info">
-                      No se encontraron antecedentes delictuales para esta
-                      persona.
-                    </Alert>
-                  ) : (
-                    <Grid container spacing={2}>
-                      {registros.map((registro, index) => (
-                        <Grid item xs={12} key={registro.id}>
-                          <Paper elevation={1} sx={{ p: 2 }}>
-                            <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                              <Chip
-                                label={
-                                  registro.tipo_delito || 'Sin especificar'
-                                }
-                                color="primary"
-                                size="small"
-                              />
-                              <Chip
-                                label={registro.estado || 'Sin estado'}
-                                variant="outlined"
-                                size="small"
-                              />
-                              {registro.modalidad && (
-                                <Chip
-                                  label={registro.modalidad}
-                                  variant="outlined"
-                                  size="small"
-                                />
-                              )}
-                            </Stack>
-                            <Typography variant="body2" color="text.secondary">
-                              <strong>Lugar:</strong> {registro.lugar || '-'} |
-                              <strong> Comisaría:</strong>{' '}
-                              {registro.comisaria_hecho || '-'} |
-                              <strong> Juzgado:</strong>{' '}
-                              {registro.juzgado || '-'}
+                  <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                    <Tabs
+                      value={tabValue}
+                      onChange={(e, newValue) => setTabValue(newValue)}
+                      aria-label="antecedentes tabs"
+                    >
+                      <Tab
+                        label={`Antecedentes Oficiales (${
+                          totalRegistros || registros.length
+                        })`}
+                        id="tab-0"
+                        aria-controls="tabpanel-0"
+                      />
+                      <Tab
+                        label={`Antecedentes Personales (${estadisticasAntecedentesPersonales.total})`}
+                        id="tab-1"
+                        aria-controls="tabpanel-1"
+                      />
+                    </Tabs>
+                  </Box>
+
+                  {/* Panel de Antecedentes Oficiales */}
+                  <Box
+                    role="tabpanel"
+                    hidden={tabValue !== 0}
+                    id="tabpanel-0"
+                    aria-labelledby="tab-0"
+                  >
+                    {tabValue === 0 && (
+                      <Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: 2,
+                          }}
+                        >
+                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            Antecedentes Delictuales Oficiales
+                          </Typography>
+                          {canEdit && (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              startIcon={<AddIcon />}
+                              onClick={() =>
+                                nav(`/registros/nuevo?persona_id=${item?.id}`)
+                              }
+                              sx={{
+                                bgcolor: '#000',
+                                '&:hover': { bgcolor: '#333' },
+                              }}
+                            >
+                              Agregar Registro
+                            </Button>
+                          )}
+                        </Box>
+
+                        {registros.length === 0 ? (
+                          <Alert severity="info">
+                            No se encontraron antecedentes delictuales oficiales
+                            para esta persona.
+                          </Alert>
+                        ) : (
+                          <Grid container spacing={2}>
+                            {registros.map((registro, index) => (
+                              <Grid item xs={12} key={registro.id}>
+                                <Paper elevation={1} sx={{ p: 2 }}>
+                                  <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    sx={{ mb: 1 }}
+                                  >
+                                    <Chip
+                                      label={
+                                        registro.tipo_delito ||
+                                        'Sin especificar'
+                                      }
+                                      color="primary"
+                                      size="small"
+                                    />
+                                    <Chip
+                                      label={registro.estado || 'Sin estado'}
+                                      variant="outlined"
+                                      size="small"
+                                    />
+                                    {registro.modalidad && (
+                                      <Chip
+                                        label={registro.modalidad}
+                                        variant="outlined"
+                                        size="small"
+                                      />
+                                    )}
+                                  </Stack>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Lugar:</strong>{' '}
+                                    {registro.lugar || '-'} |
+                                    <strong> Comisaría:</strong>{' '}
+                                    {registro.comisaria_hecho || '-'} |
+                                    <strong> Juzgado:</strong>{' '}
+                                    {registro.juzgado || '-'}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Fecha:</strong>{' '}
+                                    {registro.fecha_carga
+                                      ? new Date(
+                                          registro.fecha_carga
+                                        ).toLocaleDateString()
+                                      : '-'}{' '}
+                                    |<strong> Registrado:</strong>{' '}
+                                    {registro.created_at
+                                      ? new Date(
+                                          registro.created_at
+                                        ).toLocaleDateString()
+                                      : '-'}
+                                  </Typography>
+                                  {registro.detalle && (
+                                    <Typography variant="body2" sx={{ mt: 1 }}>
+                                      <strong>Detalle:</strong>{' '}
+                                      {registro.detalle}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        )}
+
+                        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                          <TextField
+                            label="Tamaño de página"
+                            type="number"
+                            size="small"
+                            value={pageSize}
+                            onChange={e => {
+                              const val = Math.max(
+                                1,
+                                Math.min(50, Number(e.target.value) || 5)
+                              );
+                              setPageSize(val);
+                              setPage(1);
+                            }}
+                            sx={{ width: 160 }}
+                          />
+                          <Stack direction="row" spacing={1}>
+                            <Button
+                              variant="outlined"
+                              disabled={page <= 1}
+                              onClick={() => setPage(p => p - 1)}
+                            >
+                              Anterior
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              disabled={page * pageSize >= totalRegistros}
+                              onClick={() => setPage(p => p + 1)}
+                            >
+                              Siguiente
+                            </Button>
+                          </Stack>
+                          <Typography variant="body2" color="text.secondary">
+                            Página {page} · {totalRegistros} resultados
+                          </Typography>
+                        </Stack>
+                      </Box>
+                    )}
+                  </Box>
+
+                  {/* Panel de Antecedentes Personales */}
+                  <Box
+                    role="tabpanel"
+                    hidden={tabValue !== 1}
+                    id="tabpanel-1"
+                    aria-labelledby="tab-1"
+                  >
+                    {tabValue === 1 && (
+                      <Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: 2,
+                          }}
+                        >
+                          <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                              Antecedentes Personales del Sujeto
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              <strong>Fecha:</strong>{' '}
-                              {registro.fecha_carga
-                                ? new Date(
-                                    registro.fecha_carga
-                                  ).toLocaleDateString()
-                                : '-'}{' '}
-                              |<strong> Registrado:</strong>{' '}
-                              {registro.created_at
-                                ? new Date(
-                                    registro.created_at
-                                  ).toLocaleDateString()
-                                : '-'}
+                              Estos antecedentes no aparecen en las búsquedas
+                              generales del sistema
                             </Typography>
-                            {registro.detalle && (
-                              <Typography variant="body2" sx={{ mt: 1 }}>
-                                <strong>Detalle:</strong> {registro.detalle}
-                              </Typography>
-                            )}
-                          </Paper>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  )}
+                          </Box>
+                          {canEdit && (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              startIcon={<AddIcon />}
+                              onClick={() =>
+                                setShowAntecedentePersonalDialog(true)
+                              }
+                              sx={{
+                                display: 'none', // UNIFICACIÓN: Botón oculto - funcionalidad movida al botón principal unificado
+                                bgcolor: '#000',
+                                '&:hover': { bgcolor: '#333' },
+                              }}
+                            >
+                              Agregar Antecedente Personal{' '}
+                              {/* Funcionalidad preservada en handleAgregarDelitoUnificado */}
+                            </Button>
+                          )}
+                        </Box>
 
-                  <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                    <TextField
-                      label="Tamaño de página"
-                      type="number"
-                      size="small"
-                      value={pageSize}
-                      onChange={e => {
-                        const val = Math.max(
-                          1,
-                          Math.min(50, Number(e.target.value) || 5)
-                        );
-                        setPageSize(val);
-                        setPage(1);
-                      }}
-                      sx={{ width: 160 }}
-                    />
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        variant="outlined"
-                        disabled={page <= 1}
-                        onClick={() => setPage(p => p - 1)}
-                      >
-                        Anterior
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        disabled={page * pageSize >= totalRegistros}
-                        onClick={() => setPage(p => p + 1)}
-                      >
-                        Siguiente
-                      </Button>
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary">
-                      Página {page} · {totalRegistros} resultados
-                    </Typography>
-                  </Stack>
+                        {/* Estadísticas rápidas */}
+                        {estadisticasAntecedentesPersonales.total > 0 && (
+                          <EstadisticasDelitos
+                            estadisticas={estadisticasAntecedentesPersonales}
+                            loading={loadingAntecedentesPersonales}
+                          />
+                        )}
+
+                        {errorAntecedentesPersonales && (
+                          <Alert severity="error" sx={{ mb: 2 }}>
+                            {errorAntecedentesPersonales}
+                          </Alert>
+                        )}
+
+                        <ListaDelitosEspecificos
+                          delitos={antecedentesPersonales}
+                          onActualizar={handleActualizarAntecedentePersonal}
+                          onEliminar={handleEliminarAntecedentePersonal}
+                          loading={loadingAntecedentesPersonales}
+                        />
+                      </Box>
+                    )}
+                  </Box>
                 </Grid>
 
                 <Grid item xs={12}>
@@ -1046,6 +1313,24 @@ export default function PersonaDetalle() {
           </CardContent>
         </Card>
       </Container>
+
+      {/* Dialog para agregar antecedente personal */}
+      <AgregarDelitoEspecifico
+        open={showAntecedentePersonalDialog}
+        onClose={() => setShowAntecedentePersonalDialog(false)}
+        onAgregar={handleAgregarAntecedentePersonal}
+        sujetoInfo={
+          item
+            ? {
+                apellido: item.apellido,
+                nombre: item.nombre,
+                dni: item.dni,
+              }
+            : null
+        }
+        loading={loadingAntecedentesPersonales}
+      />
+
       <Footer />
     </>
   );
