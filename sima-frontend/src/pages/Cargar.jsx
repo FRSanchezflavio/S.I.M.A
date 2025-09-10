@@ -275,7 +275,23 @@ export default function Cargar() {
         formData.unidades_regionales = formData.UnidadesRegionales;
         delete formData.UnidadesRegionales;
       }
-      Object.entries(formData).forEach(([k, v]) => data.append(k, v || ''));
+
+      // Debug: mostrar datos que se van a enviar
+      console.log('Datos del formulario a enviar:', formData);
+
+      // Convertir coordenadas a números si están presentes
+      if (formData.latitud && formData.latitud !== '') {
+        formData.latitud = parseFloat(formData.latitud);
+      }
+      if (formData.longitud && formData.longitud !== '') {
+        formData.longitud = parseFloat(formData.longitud);
+      }
+
+      Object.entries(formData).forEach(([k, v]) => {
+        if (v !== '' && v !== null && v !== undefined) {
+          data.append(k, v);
+        }
+      });
       files.forEach(f => data.append('fotos', f));
 
       // Enviar datos a la base de datos
