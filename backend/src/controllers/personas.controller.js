@@ -32,6 +32,9 @@ const personSchema = Joi.object({
   categoria: Joi.string().optional().allow('', null),
   fecha_carga: Joi.date().optional().allow('', null),
   unidades_regionales: Joi.string().optional().allow('', null),
+  // Campos de georeferenciación
+  latitud: Joi.number().min(-90).max(90).optional().allow('', null),
+  longitud: Joi.number().min(-180).max(180).optional().allow('', null),
 });
 
 exports.search = async (req, res, next) => {
@@ -212,9 +215,17 @@ exports.search = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
+    console.log('Datos recibidos en el backend:', req.body);
     const { value, error } = personSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
+    if (error) {
+      console.log('Error de validación:', error.message);
+      console.log('Detalles:', error.details);
+      return res
+        .status(400)
+        .json({ message: error.message, details: error.details });
+    }
     const fotos = (req.files || []).map(f => `/uploads/${f.filename}`);
+    console.log('Datos validados:', value);
     const [id] = await db('personas_registradas')
       .insert({
         ...value,
@@ -236,6 +247,7 @@ exports.create = async (req, res, next) => {
     } catch (_) {}
     res.status(201).json({ id: newId });
   } catch (e) {
+    console.error('Error en create persona:', e);
     next(e);
   }
 };

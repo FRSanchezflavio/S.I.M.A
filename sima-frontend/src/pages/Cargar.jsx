@@ -9,10 +9,15 @@ import {
   Alert,
   Box,
   MenuItem,
+  TextField,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
+import { LocationOn } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import FormInput from '../components/FormInput';
+import MapModal from '../components/MapModal';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ToastProvider';
@@ -182,15 +187,46 @@ export default function Cargar() {
     categoria: '',
     UnidadesRegionales: '',
     fecha_carga: new Date().toISOString().split('T')[0], // Fecha actual por defecto
+    // Campos para georeferenciación
+    latitud: '',
+    longitud: '',
   });
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [comisariasDisponibles, setComisariasDisponibles] = useState([]);
+  const [mapModalOpen, setMapModalOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const nav = useNavigate();
   const { showToast } = useToast();
 
   const canSave = form.nombre && form.apellido && form.dni && files.length > 0;
+
+  // Función para manejar la selección de ubicación en el mapa
+  const handleLocationSelect = location => {
+    if (location) {
+      setSelectedLocation(location);
+      setForm(prev => ({
+        ...prev,
+        latitud: location.lat.toString(),
+        longitud: location.lng.toString(),
+      }));
+      showToast('Ubicación seleccionada correctamente', 'success');
+    } else {
+      setSelectedLocation(null);
+      setForm(prev => ({
+        ...prev,
+        latitud: '',
+        longitud: '',
+      }));
+      showToast('Ubicación eliminada', 'info');
+    }
+  };
+
+  // Función para abrir el modal del mapa
+  const handleOpenMap = () => {
+    setMapModalOpen(true);
+  };
 
   // Función para manejar el cambio de regional
   const handleRegionalChange = regional => {
@@ -239,7 +275,23 @@ export default function Cargar() {
         formData.unidades_regionales = formData.UnidadesRegionales;
         delete formData.UnidadesRegionales;
       }
-      Object.entries(formData).forEach(([k, v]) => data.append(k, v || ''));
+
+      // Debug: mostrar datos que se van a enviar
+      console.log('Datos del formulario a enviar:', formData);
+
+      // Convertir coordenadas a números si están presentes
+      if (formData.latitud && formData.latitud !== '') {
+        formData.latitud = parseFloat(formData.latitud);
+      }
+      if (formData.longitud && formData.longitud !== '') {
+        formData.longitud = parseFloat(formData.longitud);
+      }
+
+      Object.entries(formData).forEach(([k, v]) => {
+        if (v !== '' && v !== null && v !== undefined) {
+          data.append(k, v);
+        }
+      });
       files.forEach(f => data.append('fotos', f));
 
       // Enviar datos a la base de datos
@@ -324,8 +376,12 @@ export default function Cargar() {
         categoria: '',
         UnidadesRegionales: '',
         fecha_carga: new Date().toISOString().split('T')[0],
+        // Limpiar campos de georeferenciación
+        latitud: '',
+        longitud: '',
       });
       setFiles([]);
+      setSelectedLocation(null);
 
       // Navegar al detalle de la persona recién creada para ver los antecedentes
       if (response.data && response.data.id) {
@@ -398,6 +454,10 @@ export default function Cargar() {
                   <MenuItem value="">Seleccionar tipo</MenuItem>
                   <MenuItem value="robo">Robo</MenuItem>
                   <MenuItem value="hurto">Hurto</MenuItem>
+                  <MenuItem value="Portación de Arma de Fuego">
+                    Portación de Arma de Fuego
+                  </MenuItem>
+                  <MenuItem value="estafa">Estafa</MenuItem>
                 </FormInput>
                 <FormInput
                   label="Modalidad"
@@ -407,16 +467,39 @@ export default function Cargar() {
                   InputLabelProps={{ style: { color: '#000' } }}
                 >
                   <MenuItem value="">Seleccionar modalidad</MenuItem>
+                  <MenuItem value="arriete">Arriete</MenuItem>
                   <MenuItem value="arrebato">Arrebato</MenuItem>
-                  <MenuItem value="descuido">Descuido</MenuItem>
-                  <MenuItem value="destreza">Destreza</MenuItem>
+                  <MenuItem value="asaltante">Asaltante</MenuItem>
+                  <MenuItem value="asaltante_En_Banda">
+                    Asaltante en Banda
+                  </MenuItem>
+                  <MenuItem value="boquetero">Boquetero</MenuItem>
+                  <MenuItem value="clavero_De_Autos">Clavero de Autos</MenuItem>
+                  <MenuItem value="clonacion_de_tarjeta">
+                    Clonación de tarjeta
+                  </MenuItem>
+                  <MenuItem value="piraña">Piraña</MenuItem>
+                  <MenuItem value="robo_motovehiculo">
+                    Robo de motovehículo
+                  </MenuItem>
+                  <MenuItem value="robo_automotor">Robo de automotor</MenuItem>
+                  <MenuItem value="rompe_vidrios">Rompe vidrios</MenuItem>
+                  <MenuItem value="entradera">Entradera</MenuItem>
+                  <MenuItem value="salidera">Salidera</MenuItem>
+                  <MenuItem value="oportunista">Oportunista</MenuItem>
+                  <MenuItem value="escruche">Escruche</MenuItem>
+                  <MenuItem value="punga">Punga</MenuItem>
+                  <MenuItem value="mechera">Mechera</MenuItem>
+                  <MenuItem value="hurto motovehiculo">
+                    Hurto motovehículo
+                  </MenuItem>
+                  <MenuItem value="hurto automotor">Hurto automotor</MenuItem>
                   <MenuItem value="escalamiento">Escalamiento</MenuItem>
-                  <MenuItem value="fuerza_puerta">Fuerza en puerta</MenuItem>
-                  <MenuItem value="fuerza_ventana">Fuerza en ventana</MenuItem>
-                  <MenuItem value="intimidacion">Intimidación</MenuItem>
-                  <MenuItem value="llave_falsa">Llave falsa</MenuItem>
-                  <MenuItem value="motochorro">Motochorro</MenuItem>
-                  <MenuItem value="violencia">Violencia</MenuItem>
+                  <MenuItem value="inhibidor de alarmas">
+                    Inhibidor de alarmas
+                  </MenuItem>
+                  <MenuItem value="viuda_negra">Viuda negra</MenuItem>
+                  <MenuItem value="Artículo_189_bis">Artículo 189 bis</MenuItem>
                   <MenuItem value="otro">Otro</MenuItem>
                 </FormInput>
                 <FormInput
@@ -489,7 +572,7 @@ export default function Cargar() {
                   onChange={v => setForm({ ...form, alias: v })}
                   placeholder="Apodo o sobrenombre (opcional)"
                   InputLabelProps={{ style: { color: '#000' } }}
-                  helperText="Ingrese cualquier alias o apodo conocido"
+                  // helperText="Ingrese cualquier alias o apodo conocido"
                 />
                 <FormInput
                   label="DNI"
@@ -531,20 +614,67 @@ export default function Cargar() {
                   onChange={v => setForm({ ...form, nacionalidad: v })}
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
-                <FormInput
-                  label="Dirección"
-                  value={form.direccion}
-                  onChange={v => setForm({ ...form, direccion: v })}
-                  InputLabelProps={{ style: { color: '#000' } }}
-                />
-                {/* Campo Provincia - Dropdown con todas las provincias argentinas */}
+
+                {/* Campo de Dirección con icono de georeferenciación */}
+                <Box sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Dirección"
+                    value={form.direccion}
+                    onChange={e =>
+                      setForm({ ...form, direccion: e.target.value })
+                    }
+                    InputLabelProps={{ style: { color: '#000' } }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={handleOpenMap}
+                            edge="end"
+                            title="Seleccionar ubicación en el mapa"
+                            sx={{
+                              color: selectedLocation ? '#4caf50' : '#757575',
+                              '&:hover': {
+                                color: '#2196f3',
+                                backgroundColor: 'rgba(33, 150, 243, 0.04)',
+                              },
+                            }}
+                          >
+                            <LocationOn />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    helperText={
+                      selectedLocation
+                        ? `Ubicación: ${selectedLocation.lat.toFixed(
+                            6
+                          )}, ${selectedLocation.lng.toFixed(6)}`
+                        : 'Ingrese la dirección y use el ícono para georeferenciación precisa'
+                    }
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#e0e0e0',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#000',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#000',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+
                 <FormInput
                   label="Provincia"
                   value={form.provincia}
                   onChange={v => setForm({ ...form, provincia: v })}
                   select
                   InputLabelProps={{ style: { color: '#000' } }}
-                  helperText="Provincia de residencia o del hecho"
+                  // helperText="Provincia de residencia o del hecho"
                 >
                   <MenuItem value="">Seleccionar provincia</MenuItem>
                   <MenuItem value="buenos_aires">Buenos Aires</MenuItem>
@@ -861,6 +991,15 @@ export default function Cargar() {
           </CardContent>
         </Card>
       </Container>
+
+      {/* Modal del mapa para georeferenciación */}
+      <MapModal
+        open={mapModalOpen}
+        onClose={() => setMapModalOpen(false)}
+        onLocationSelect={handleLocationSelect}
+        initialPosition={selectedLocation}
+      />
+
       <Footer />
     </>
   );
