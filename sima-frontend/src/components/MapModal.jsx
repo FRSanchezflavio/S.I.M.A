@@ -82,11 +82,11 @@ export default function MapModal({
     <Dialog
       open={open}
       onClose={handleCancel}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       PaperProps={{
         sx: {
-          height: '80vh',
+          height: '990px',
           maxHeight: '600px',
         },
       }}

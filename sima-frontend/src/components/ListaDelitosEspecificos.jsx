@@ -169,7 +169,7 @@ export default function ListaDelitosEspecificos({
                       : getEstadoColor(delito.estado) === 'warning'
                       ? '#ff9800'
                       : getEstadoColor(delito.estado) === 'success'
-                      ? '#4caf50'
+                      ? '#666666'
                       : '#9e9e9e'
                   }`,
                 }}

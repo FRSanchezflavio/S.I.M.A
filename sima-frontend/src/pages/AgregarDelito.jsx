@@ -355,7 +355,15 @@ export default function AgregarDelito() {
                           border: '4px solid #ddd',
                         }}
                       >
-                        <Box sx={{ fontSize: 60, color: '#999' }}>📷</Box>
+                        <Box
+                          sx={{
+                            fontSize: 60,
+                            color: '#999',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          IMG
+                        </Box>
                       </Box>
 
                       <Typography variant="h5" sx={{ mb: 1, color: '#000' }}>
@@ -380,7 +388,7 @@ export default function AgregarDelito() {
                           document.getElementById('file-input').click();
                         }}
                       >
-                        📁 SELECCIONAR IMÁGENES
+                        SELECCIONAR IMÁGENES
                       </Button>
 
                       <input

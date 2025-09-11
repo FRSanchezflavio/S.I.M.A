@@ -9,6 +9,7 @@ import Registros from './pages/Registros';
 import RegistroDetalle from './pages/RegistroDetalle';
 import RegistroNuevo from './pages/RegistroNuevo';
 import ProtectedRoute from './components/ProtectedRoute';
+import PDFTestComponent from './components/PDFTestComponent';
 
 export default function RoutesApp() {
   return (
@@ -23,6 +24,7 @@ export default function RoutesApp() {
         <Route path="/registros/nuevo" element={<RegistroNuevo />} />
         <Route path="/registros/:id" element={<RegistroDetalle />} />
         <Route path="/personas/:id" element={<PersonaDetalle />} />
+        <Route path="/test-pdf" element={<PDFTestComponent />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

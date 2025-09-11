@@ -400,7 +400,7 @@ export default function ListaAntecedentesPersonales({
                     : getEstadoColor(delito.estado) === 'warning'
                     ? '#ff9800'
                     : getEstadoColor(delito.estado) === 'success'
-                    ? '#4caf50'
+                    ? '#666666'
                     : '#9e9e9e'
                 }`,
                 transition: 'transform 0.2s, box-shadow 0.2s',

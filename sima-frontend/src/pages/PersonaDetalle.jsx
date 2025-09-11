@@ -30,6 +30,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddIcon from '@mui/icons-material/Add';
+import DownloadIcon from '@mui/icons-material/Download';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AgregarDelitoEspecifico from '../components/AgregarDelitoEspecifico';
@@ -38,6 +40,10 @@ import EstadisticasDelitos from '../components/EstadisticasDelitos';
 import useDelitosEspecificos from '../hooks/useDelitosEspecificos';
 import api from '../services/api';
 import { useToast } from '../components/ToastProvider';
+import * as XLSX from 'xlsx';
+import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function PersonaDetalle() {
   const { id } = useParams();
@@ -49,6 +55,7 @@ export default function PersonaDetalle() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({});
   const [files, setFiles] = useState([]);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const { showToast } = useToast();
 
   // Estado para paginación de registros
@@ -297,6 +304,421 @@ export default function PersonaDetalle() {
     return getEstadisticas();
   }, [getEstadisticas]);
 
+  // Función para descargar datos de la persona en formato Excel
+  const downloadSubjectData = async () => {
+    try {
+      // Validar que existan datos de la persona
+      if (!item) {
+        showToast('No hay datos de la persona para exportar', 'error');
+        return;
+      }
+
+      // Crear libro de trabajo Excel
+      const workbook = XLSX.utils.book_new();
+
+      // 1. Hoja "Datos Personales"
+      const datosPersonales = {
+        ID: item.id || '',
+        Apellido: item.apellido || '',
+        Nombre: item.nombre || '',
+        DNI: item.dni || '',
+        'Fecha de Nacimiento': item.fecha_nacimiento
+          ? new Date(item.fecha_nacimiento).toLocaleDateString('es-AR')
+          : '',
+        Edad: item.edad || '',
+        Género: item.genero || '',
+        Nacionalidad: item.nacionalidad || '',
+        Dirección: item.direccion || '',
+        Teléfono: item.telefono || '',
+        Email: item.email || '',
+        Comisaría: item.comisaria || '',
+        'Comisaría del Hecho': item.comisaria_hecho || '',
+        Observaciones: item.observaciones || '',
+        'Fecha de Creación': item.created_at
+          ? new Date(item.created_at).toLocaleString('es-AR')
+          : '',
+        'Última Actualización': item.updated_at
+          ? new Date(item.updated_at).toLocaleString('es-AR')
+          : '',
+      };
+
+      // Convertir objeto a array de arrays para Excel
+      const datosPersonalesArray = Object.entries(datosPersonales).map(
+        ([key, value]) => [key, value]
+      );
+      const wsPersonales = XLSX.utils.aoa_to_sheet([
+        ['Campo', 'Valor'],
+        ...datosPersonalesArray,
+      ]);
+
+      // Ajustar ancho de columnas
+      wsPersonales['!cols'] = [
+        { width: 25 }, // Campo
+        { width: 40 }, // Valor
+      ];
+
+      XLSX.utils.book_append_sheet(workbook, wsPersonales, 'Datos Personales');
+
+      // 2. Hoja "Registros Oficiales" (si existen)
+      if (registros && registros.length > 0) {
+        const registrosData = registros.map(registro => ({
+          ID: registro.id || '',
+          'Tipo de Delito': registro.tipo_delito || '',
+          Descripción: registro.descripcion || '',
+          'Fecha del Hecho': registro.fecha_hecho
+            ? new Date(registro.fecha_hecho).toLocaleDateString('es-AR')
+            : '',
+          'Lugar del Hecho': registro.lugar_hecho || '',
+          Comisaría: registro.comisaria || '',
+          'Número de Expediente': registro.numero_expediente || '',
+          Estado: registro.estado || '',
+          Observaciones: registro.observaciones || '',
+          'Fecha de Registro': registro.created_at
+            ? new Date(registro.created_at).toLocaleString('es-AR')
+            : '',
+        }));
+
+        const wsRegistros = XLSX.utils.json_to_sheet(registrosData);
+
+        // Ajustar ancho de columnas
+        wsRegistros['!cols'] = [
+          { width: 10 }, // ID
+          { width: 20 }, // Tipo de Delito
+          { width: 30 }, // Descripción
+          { width: 15 }, // Fecha del Hecho
+          { width: 25 }, // Lugar del Hecho
+          { width: 20 }, // Comisaría
+          { width: 20 }, // Número de Expediente
+          { width: 15 }, // Estado
+          { width: 30 }, // Observaciones
+          { width: 20 }, // Fecha de Registro
+        ];
+
+        XLSX.utils.book_append_sheet(
+          workbook,
+          wsRegistros,
+          'Registros Oficiales'
+        );
+      }
+
+      // 3. Hoja "Antecedentes Personales" (si existen)
+      if (delitosEspecificos && delitosEspecificos.length > 0) {
+        const antecedentesData = delitosEspecificos.map(delito => ({
+          ID: delito.id || '',
+          'Tipo de Delito': delito.tipo_delito || '',
+          Descripción: delito.descripcion || '',
+          'Fecha del Hecho': delito.fecha_hecho
+            ? new Date(delito.fecha_hecho).toLocaleDateString('es-AR')
+            : '',
+          'Lugar del Hecho': delito.lugar_hecho || '',
+          Víctima: delito.victima || '',
+          Testigos: delito.testigos || '',
+          Evidencias: delito.evidencias || '',
+          Estado: delito.estado || '',
+          Observaciones: delito.observaciones || '',
+          'Fecha de Registro': delito.created_at
+            ? new Date(delito.created_at).toLocaleString('es-AR')
+            : '',
+        }));
+
+        const wsAntecedentes = XLSX.utils.json_to_sheet(antecedentesData);
+
+        // Ajustar ancho de columnas
+        wsAntecedentes['!cols'] = [
+          { width: 10 }, // ID
+          { width: 20 }, // Tipo de Delito
+          { width: 30 }, // Descripción
+          { width: 15 }, // Fecha del Hecho
+          { width: 25 }, // Lugar del Hecho
+          { width: 20 }, // Víctima
+          { width: 20 }, // Testigos
+          { width: 20 }, // Evidencias
+          { width: 15 }, // Estado
+          { width: 30 }, // Observaciones
+          { width: 20 }, // Fecha de Registro
+        ];
+
+        XLSX.utils.book_append_sheet(
+          workbook,
+          wsAntecedentes,
+          'Antecedentes Personales'
+        );
+      }
+
+      // 4. Hoja "Estadísticas" (si existen antecedentes personales)
+      if (
+        estadisticasAntecedentesPersonales &&
+        Object.keys(estadisticasAntecedentesPersonales).length > 0
+      ) {
+        const estadisticasData = [
+          ['Métrica', 'Valor'],
+          [
+            'Total de Antecedentes',
+            estadisticasAntecedentesPersonales.total || 0,
+          ],
+          [
+            'Delitos más Frecuente',
+            estadisticasAntecedentesPersonales.delitoMasFrecuente || 'N/A',
+          ],
+          [
+            'Lugares más Frecuentes',
+            Array.isArray(estadisticasAntecedentesPersonales.lugaresFrecuentes)
+              ? estadisticasAntecedentesPersonales.lugaresFrecuentes.join(', ')
+              : 'N/A',
+          ],
+          [
+            'Tendencia Temporal',
+            estadisticasAntecedentesPersonales.tendencia || 'N/A',
+          ],
+        ];
+
+        const wsEstadisticas = XLSX.utils.aoa_to_sheet(estadisticasData);
+
+        // Ajustar ancho de columnas
+        wsEstadisticas['!cols'] = [
+          { width: 25 }, // Métrica
+          { width: 40 }, // Valor
+        ];
+
+        XLSX.utils.book_append_sheet(workbook, wsEstadisticas, 'Estadísticas');
+      }
+
+      // Generar nombre del archivo
+      const fechaHora = new Date()
+        .toLocaleString('es-AR')
+        .replace(/[/:]/g, '-')
+        .replace(/,/g, '');
+      const apellidoNombre = `${item.apellido || 'SinApellido'}_${
+        item.nombre || 'SinNombre'
+      }`.replace(/\s+/g, '_');
+      const nombreArchivo = `SIMA_Persona_${apellidoNombre}_${
+        item.dni || 'SinDNI'
+      }_${fechaHora}.xlsx`;
+
+      // Descargar archivo
+      XLSX.writeFile(workbook, nombreArchivo);
+
+      showToast('Archivo Excel descargado exitosamente', 'success');
+    } catch (error) {
+      console.error('Error al generar archivo Excel:', error);
+      showToast('Error al generar el archivo Excel', 'error');
+    }
+  };
+
+  // Función para descargar datos de la persona en formato PDF
+  const handleDownloadPDF = async () => {
+    try {
+      // Validar que existan datos de la persona
+      if (!item) {
+        showToast('No hay datos de la persona para exportar', 'error');
+        return;
+      }
+
+      // Validar permisos de usuario
+      if (!canEdit) {
+        showToast('No tienes permisos para descargar este reporte', 'error');
+        return;
+      }
+
+      setIsGeneratingPDF(true);
+      showToast('Generando PDF, esto puede tomar unos momentos...', 'info');
+
+      // Buscar el contenido a exportar
+      const contentElement = document.querySelector('.card');
+      if (!contentElement) {
+        throw new Error('No se encontró el contenido a exportar');
+      }
+
+      // Nombre del archivo
+      const filename = `SIMA_Persona_${item.apellido || 'SinApellido'}_${
+        item.nombre || 'SinNombre'
+      }_${item.dni || 'SinDNI'}_${new Date()
+        .toLocaleString('es-AR')
+        .replace(/[/:]/g, '-')
+        .replace(/,/g, '')}.pdf`;
+
+      // MÉTODO SIMPLIFICADO: Usar solo html2canvas + jsPDF (más confiable)
+      try {
+        // Crear contenedor temporal simplificado
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '0';
+        tempDiv.style.width = '794px'; // A4 width en px a 96 DPI
+        tempDiv.style.backgroundColor = '#ffffff';
+        tempDiv.style.padding = '20px';
+        tempDiv.style.fontFamily = 'Arial, sans-serif';
+        tempDiv.style.fontSize = '14px';
+        tempDiv.style.lineHeight = '1.4';
+        tempDiv.style.color = '#000000';
+
+        // Header simple
+        const header = document.createElement('div');
+        header.innerHTML = `
+          <div style="text-align: center; margin-bottom: 20px; padding: 15px; border-bottom: 2px solid rgb(21, 77, 113);">
+            <h1 style="color: rgb(21, 77, 113); margin: 0; font-size: 20px; font-weight: bold;">
+              S.I.M.A - SISTEMA DE INFORMACIÓN POLICIAL
+            </h1>
+            <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+              Reporte de Persona - ${new Date().toLocaleString('es-AR')}
+            </p>
+          </div>
+        `;
+
+        // Clonar y limpiar contenido
+        const clonedContent = contentElement.cloneNode(true);
+
+        // Remover todos los botones y elementos problemáticos
+        const elementsToRemove = clonedContent.querySelectorAll(`
+          button, 
+          .MuiIconButton-root, 
+          .no-print,
+          [role="button"]
+        `);
+        elementsToRemove.forEach(el => el.remove());
+
+        // Remover stacks que contengan botones
+        const stacks = clonedContent.querySelectorAll('.MuiStack-root');
+        stacks.forEach(stack => {
+          if (
+            stack.textContent.includes('Volver') ||
+            stack.textContent.includes('Editar') ||
+            stack.textContent.includes('Descargar') ||
+            stack.textContent.includes('Eliminar')
+          ) {
+            stack.remove();
+          }
+        });
+
+        // Mejorar estilos del contenido clonado
+        clonedContent.style.backgroundColor = '#ffffff';
+        clonedContent.style.boxShadow = 'none';
+        clonedContent.style.border = '1px solid #ddd';
+        clonedContent.style.borderRadius = '0';
+
+        // Footer simple
+        const footer = document.createElement('div');
+        footer.innerHTML = `
+          <div style="margin-top: 30px; padding: 15px; border-top: 1px solid #ddd; text-align: center; font-size: 10px; color: #666;">
+            <div style="display: flex; justify-content: space-between;">
+              <span>CONFIDENCIAL - USO INTERNO</span>
+              <span>S.I.M.A - Sistema Policial</span>
+              <span>${new Date().toLocaleDateString('es-AR')}</span>
+            </div>
+          </div>
+        `;
+
+        // Ensamblar contenido
+        tempDiv.appendChild(header);
+        tempDiv.appendChild(clonedContent);
+        tempDiv.appendChild(footer);
+
+        // Agregar al DOM
+        document.body.appendChild(tempDiv);
+
+        // Capturar con html2canvas
+        const canvas = await html2canvas(tempDiv, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff',
+          logging: false,
+          width: tempDiv.scrollWidth,
+          height: tempDiv.scrollHeight,
+          onclone: clonedDoc => {
+            // Asegurar que los estilos se apliquen en el documento clonado
+            const clonedElement = clonedDoc.querySelector('div');
+            if (clonedElement) {
+              clonedElement.style.fontFamily = 'Arial, sans-serif';
+              clonedElement.style.fontSize = '14px';
+            }
+          },
+        });
+
+        // Crear PDF con jsPDF
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true,
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pdfWidth - 20; // Margen de 10mm a cada lado
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 10; // Margen superior
+
+        // Primera página
+        pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight - 20; // Restar márgenes
+
+        // Páginas adicionales si es necesario
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight + 10;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight - 20;
+        }
+
+        // Descargar PDF
+        pdf.save(filename);
+
+        // Limpiar
+        document.body.removeChild(tempDiv);
+
+        showToast('PDF descargado exitosamente', 'success');
+      } catch (canvasError) {
+        console.error('Error con html2canvas:', canvasError);
+        throw new Error(
+          'No se pudo generar el PDF. Verifique que el contenido sea válido.'
+        );
+      }
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      showToast('Error al generar el archivo PDF: ' + error.message, 'error');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  // Función alternativa simple para imprimir (backup)
+  const handlePrintAsPDF = () => {
+    try {
+      // Ocultar botones antes de imprimir
+      const actionButtons = document.querySelectorAll(
+        'button, .MuiIconButton-root'
+      );
+      const originalDisplay = [];
+
+      actionButtons.forEach((btn, index) => {
+        originalDisplay[index] = btn.style.display;
+        btn.style.display = 'none';
+      });
+
+      // Configurar página para impresión
+      const originalTitle = document.title;
+      document.title = `SIMA_Persona_${item.apellido}_${item.nombre}_${item.dni}`;
+
+      // Imprimir
+      window.print();
+
+      // Restaurar elementos
+      setTimeout(() => {
+        actionButtons.forEach((btn, index) => {
+          btn.style.display = originalDisplay[index];
+        });
+        document.title = originalTitle;
+      }, 1000);
+    } catch (error) {
+      console.error('Error en impresión:', error);
+      showToast('Error al abrir la ventana de impresión', 'error');
+    }
+  };
+
   return (
     <>
       <Header showSettings />
@@ -321,6 +743,35 @@ export default function PersonaDetalle() {
                 sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#111' } }}
               >
                 Agregar registro
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<DownloadIcon />}
+                onClick={downloadSubjectData}
+                disabled={isGeneratingPDF}
+                sx={{
+                  bgcolor: 'rgb(21, 77, 113)',
+                  '&:hover': { bgcolor: 'rgb(16, 58, 85)' },
+                  borderRadius: '4px',
+                }}
+              >
+                Descargar Excel
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<PictureAsPdfIcon />}
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF || saving}
+                sx={{
+                  bgcolor: isGeneratingPDF ? '#999' : 'rgb(21, 77, 113)',
+                  '&:hover': {
+                    bgcolor: isGeneratingPDF ? '#999' : 'rgb(16, 58, 85)',
+                  },
+                  borderRadius: '4px',
+                  minWidth: '160px',
+                }}
+              >
+                {isGeneratingPDF ? 'Generando PDF...' : 'Descargar PDF'}
               </Button>
               <Button
                 variant="outlined"

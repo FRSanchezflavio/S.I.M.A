@@ -624,7 +624,7 @@ export default function Cargar() {
                             edge="end"
                             title="Seleccionar ubicación en el mapa"
                             sx={{
-                              color: selectedLocation ? '#4caf50' : '#757575',
+                              color: selectedLocation ? '#666666' : '#757575',
                               '&:hover': {
                                 color: '#2196f3',
                                 backgroundColor: 'rgba(33, 150, 243, 0.04)',
@@ -797,22 +797,23 @@ export default function Cargar() {
                         sx={{
                           width: 180,
                           height: 180,
-                          bgcolor: 'rgb(255, 249, 175)',
+                          bgcolor: 'rgb(245, 245, 245)',
                           borderRadius: 2,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           mb: 2,
-                          border: '6px solid #ddd',
+                          border: '2px dashed #ccc',
                         }}
                       >
                         <Box
                           sx={{
-                            fontSize: 80,
+                            fontSize: 60,
                             color: '#999',
+                            fontWeight: 'bold',
                           }}
                         >
-                          📷
+                          IMG
                         </Box>
                       </Box>
 
@@ -839,7 +840,7 @@ export default function Cargar() {
                           document.getElementById('file-input').click();
                         }}
                       >
-                        📁 SELECCIONAR IMÁGENES
+                        SELECCIONAR IMÁGENES
                       </Button>
 
                       <input

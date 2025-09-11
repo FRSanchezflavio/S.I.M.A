@@ -109,14 +109,12 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
 
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 <Chip
-                  icon={<CheckCircleIcon />}
                   label={`${estadisticas.resueltos} resueltos (${porcentajeResueltos}%)`}
-                  color="success"
+                  sx={{ bgcolor: '#666666', color: 'white' }}
                   size="small"
                 />
                 {estadisticas.archivados > 0 && (
                   <Chip
-                    icon={<ArchiveIcon />}
                     label={`${estadisticas.archivados} archivados`}
                     color="default"
                     size="small"
@@ -124,7 +122,6 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                 )}
                 {estadisticas.suspendido > 0 && (
                   <Chip
-                    icon={<PauseIcon />}
                     label={`${estadisticas.suspendido} suspendidos`}
                     color="warning"
                     size="small"
@@ -238,7 +235,7 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
           {estadisticas.resueltos > 0 && (
             <Box
               sx={{
-                bgcolor: 'success.main',
+                bgcolor: '#666666',
                 width: `${porcentajeResueltos}%`,
                 transition: 'width 0.3s ease',
               }}
@@ -262,7 +259,7 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
           <Typography variant="caption" color="error.main">
             {porcentajeActivos}% activos
           </Typography>
-          <Typography variant="caption" color="success.main">
+          <Typography variant="caption" sx={{ color: '#666666' }}>
             {porcentajeResueltos}% resueltos
           </Typography>
         </Box>

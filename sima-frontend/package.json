@@ -8,19 +8,23 @@
     "@mui/icons-material": "^5.15.20",
     "@mui/material": "^5.15.20",
     "axios": "^1.7.2",
+    "html2canvas": "^1.4.1",
+    "html2pdf.js": "^0.12.0",
+    "jspdf": "^3.0.2",
     "leaflet": "^1.9.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.23.1",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "dev": "react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build"
   },
-  "proxy": "http://localhost:4000",
+  "proxy": "http://localhost:4001",
   "browserslist": {
     "production": [
       ">0.2%",

@@ -17,11 +17,10 @@ export default function CardResult({ item, onDetail }) {
         gap: 1,
         p: 0,
         backgroundColor: '#ffffff',
-        border: 'none',
-        borderRadius: '12px',
-        boxShadow:
-          '0 2px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(25, 118, 210, 0.12)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+        transition: 'all 0.3s ease',
         position: 'relative',
         overflow: 'hidden',
         '&:before': {
@@ -31,12 +30,12 @@ export default function CardResult({ item, onDetail }) {
           left: 0,
           right: 0,
           height: '4px',
-          background: 'linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)',
+          background: 'linear-gradient(90deg, #333 0%, #555 100%)',
         },
         '&:hover': {
-          boxShadow:
-            '0 30px 24px rgba(0, 0, 0, 0.12), 0 0 0 4px rgba(25, 118, 210, 0.2)',
-          transform: 'translateY(-4px)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+          transform: 'translateY(-2px)',
+          border: '1px solid #888',
         },
       }}
     >
@@ -48,9 +47,9 @@ export default function CardResult({ item, onDetail }) {
           margin: '20px auto',
           ml: 2,
           objectFit: 'cover',
-          borderRadius: 2,
-          border: '1px solid #1976d2',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          borderRadius: 1,
+          border: '2px solid #666',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
         }}
         image={
           item.foto_principal || 'https://via.placeholder.com/150?text=Sin+foto'
@@ -65,10 +64,10 @@ export default function CardResult({ item, onDetail }) {
           variant="h2"
           sx={{
             fontWeight: 700,
-            color: '#0d355cff',
+            color: '#2c2c2c',
             textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            borderBottom: '2px solid #e3f2fd',
+            letterSpacing: '1px',
+            borderBottom: '2px solid #ccc',
             pb: 1,
             mb: 1,
             fontSize: '1.5rem',
@@ -81,12 +80,13 @@ export default function CardResult({ item, onDetail }) {
           sx={{
             fontWeight: 600,
             color: '#333',
-            backgroundColor: '#e3f2fd',
+            backgroundColor: '#f5f5f5',
             padding: '4px 8px',
-            borderRadius: '4px',
+            borderRadius: '2px',
             display: 'inline-block',
             mb: 0.5,
             fontSize: '1rem',
+            border: '1px solid #ddd',
           }}
         >
           DNI: {item.dni}
@@ -102,18 +102,17 @@ export default function CardResult({ item, onDetail }) {
         >
           Jurisdicción: {item.comisaria || '-'}
         </Typography>
-        {/* {item.comisaria_hecho && /} */}
-        {item.genero && (
+        {item.direccion && (
           <Typography
             variant="body1"
             sx={{
-              color: '#388e3c',
+              color: '#212421ff',
               fontWeight: 800,
               mb: 0.5,
               fontSize: '1rem',
             }}
           >
-            Género: {item.genero}
+            Domicilio: {item.direccion}
           </Typography>
         )}
         <Stack direction="row" mt={1}>
@@ -128,19 +127,20 @@ export default function CardResult({ item, onDetail }) {
               fontWeight: 900,
               textTransform: 'uppercase',
               letterSpacing: '0.9px',
-              borderRadius: '6px',
-              boxShadow: '0 3px 6px rgba(25, 118, 210, 0.3)',
+              borderRadius: '4px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
               fontSize: '0.95rem',
               padding: '6px 16px 8px 16px',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
               '&:hover': {
-                bgcolor: '#1976d2',
-                boxShadow: '0 4px 8px rgba(25, 118, 210, 0.4)',
+                bgcolor: '#154d71',
+                boxShadow: '0 3px 6px rgba(0, 0, 0, 0.4)',
                 transform: 'translateY(-1px)',
               },
               transition: 'all 0.2s ease',
             }}
           >
-            🔍Ver detalle
+            VER DETALLE
           </Button>
         </Stack>
       </CardContent>
