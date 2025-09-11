@@ -219,28 +219,63 @@ export default function Buscar() {
                     MOSTRAR TODAS
                   </Button>
                   <Button
-                    variant="outlined"
+                    variant="contained"
                     onClick={() => nav('/dashboard')}
                     sx={{
                       height: '56px',
                       width: '180px',
-                      fontSize: '17px',
-                      fontWeight: 'bold',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                      fontSize: '14px',
+                      fontWeight: 800,
+                      borderRadius: '6px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      bgcolor: '#1a365d',
+                      color: '#ffffff',
+                      border: '2px solid #2d5986',
+                      boxShadow:
+                        '0 3px 10px rgba(26, 54, 93, 0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                      background:
+                        'linear-gradient(135deg, #1a365d 0%, #2d5986 100%)',
                       '&:hover': {
-                        boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
-                        bgcolor: 'rgb(21, 77, 113) ',
-                        color: 'white',
+                        bgcolor: '#ffffff',
+                        background: '#ffffff',
+                        color: '#000000',
+                        boxShadow:
+                          '0 5px 15px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(0,0,0,0.1)',
+                        transform: 'translateY(-2px)',
+                        border: '2px solid #1a365d',
                       },
+                      '&:active': {
+                        transform: 'translateY(0px)',
+                        boxShadow: '0 2px 8px rgba(26, 54, 93, 0.5)',
+                      },
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '2px',
+                        background:
+                          'linear-gradient(90deg, #4a90b8, #ffffff, #4a90b8)',
+                        borderRadius: '6px 6px 0 0',
+                      },
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
-                    ← VOLVER AL INICIO
+                    🏛️ VOLVER AL INICIO
                   </Button>
                 </Stack>
               </Grid>
             </Grid>
-            <Grid container spacing={4} alignItems="center" sx={{ mt: 0 }}>
+            <Grid
+              container
+              spacing={4}
+              alignItems="center"
+              sx={{ mt: -1, mb: 1 }}
+            >
               <Grid item xs={12}>
                 <RadioGroup
                   row
@@ -269,7 +304,7 @@ export default function Buscar() {
                   />
                 </RadioGroup>
                 {modo === 'campo_especifico' && (
-                  <FormControl fullWidth sx={{ mt: 2 }}>
+                  <FormControl fullWidth sx={{ mt: 0.5 }}>
                     <InputLabel>Seleccionar campo</InputLabel>
                     <Select
                       value={campoBusqueda}
@@ -288,11 +323,11 @@ export default function Buscar() {
             </Grid>
             <Box
               sx={{
-                mt: 3,
+                mt: 2,
                 display: 'grid',
-                height: '860px',
+                height: '700px',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 2fr))',
-                gap: 3,
+                gap: 2,
               }}
             >
               {items.length === 0 && (
