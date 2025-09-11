@@ -252,14 +252,8 @@ export default function Cargar() {
     setError('');
     setOk('');
 
-    // Debug: Verificar token antes de enviar
+    // Verificar token antes de enviar
     const token = localStorage.getItem('accessToken');
-    console.log('Token disponible:', token ? 'Sí' : 'No');
-    console.log(
-      'Primer caracter del token:',
-      token ? token.substring(0, 10) + '...' : 'No hay token'
-    );
-
     if (!token) {
       setError('Sesión expirada. Por favor, inicie sesión nuevamente.');
       showToast('Sesión expirada', 'error');
@@ -275,9 +269,6 @@ export default function Cargar() {
         formData.unidades_regionales = formData.UnidadesRegionales;
         delete formData.UnidadesRegionales;
       }
-
-      // Debug: mostrar datos que se van a enviar
-      console.log('Datos del formulario a enviar:', formData);
 
       // Convertir coordenadas a números si están presentes
       if (formData.latitud && formData.latitud !== '') {
