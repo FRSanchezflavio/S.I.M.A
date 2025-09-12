@@ -5,8 +5,26 @@ const personSchema = Joi.object({
   nombre: Joi.string().min(2).max(100).required(),
   apellido: Joi.string().min(2).max(100).required(),
   dni: Joi.string()
-    .pattern(/^\d{7,9}$/)
-    .required(),
+    .required()
+    .custom((value, helpers) => {
+      // Permitir valores como "NO", "NULO", "N/A", "SIN DNI", etc.
+      const specialValues =
+        /^(no|nulo|n\/a|sin\s*(dni|documento)|s\/d|extranjero|ext)$/i;
+      // Permitir DNI válidos (7-9 dígitos)
+      const dniPattern = /^\d{7,9}$/;
+
+      if (!value || value === '') {
+        return helpers.message('El DNI es requerido');
+      }
+
+      if (specialValues.test(value) || dniPattern.test(value)) {
+        return value;
+      }
+
+      return helpers.message(
+        'El DNI debe tener 7-9 dígitos o un valor como "NO", "NULO", "EXTRANJERO", etc.'
+      );
+    }),
   fecha_nacimiento: Joi.date().optional().allow(null, ''),
   edad: Joi.number().integer().min(0).max(120).optional().allow(null, ''),
   genero: Joi.string()
@@ -16,10 +34,50 @@ const personSchema = Joi.object({
   nacionalidad: Joi.string().optional().allow('', null),
   direccion: Joi.string().optional().allow('', null),
   telefono: Joi.string()
-    .pattern(/^[+\d][\d\s\-()]{6,20}$/)
     .optional()
-    .allow('', null),
-  email: Joi.string().email().optional().allow('', null),
+    .allow('', null)
+    .custom((value, helpers) => {
+      // Permitir valores como "NO", "NULO", "N/A", "SIN TELEFONO", etc.
+      const specialValues = /^(no|nulo|n\/a|sin\s*(telefono|tel)|s\/d|s\/t)$/i;
+      // Permitir números de teléfono válidos
+      const phonePattern = /^[+\d][\d\s\-()]{6,20}$/;
+
+      if (
+        !value ||
+        value === '' ||
+        specialValues.test(value) ||
+        phonePattern.test(value)
+      ) {
+        return value;
+      }
+
+      return helpers.message(
+        'El teléfono debe ser un número válido o un valor como "NO", "NULO", "N/A", etc.'
+      );
+    }),
+  email: Joi.string()
+    .optional()
+    .allow('', null)
+    .custom((value, helpers) => {
+      // Permitir valores como "NO", "NULO", "N/A", "SIN EMAIL", etc.
+      const specialValues =
+        /^(no|nulo|n\/a|sin\s*(email|mail|correo)|s\/d|s\/e)$/i;
+      // Permitir emails válidos
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (
+        !value ||
+        value === '' ||
+        specialValues.test(value) ||
+        emailPattern.test(value)
+      ) {
+        return value;
+      }
+
+      return helpers.message(
+        'El email debe ser una dirección válida o un valor como "NO", "NULO", "N/A", etc.'
+      );
+    }),
   observaciones: Joi.string().optional().allow('', null),
   comisaria: Joi.string().optional().allow('', null),
   comisaria_hecho: Joi.string().optional().allow('', null),

@@ -245,7 +245,7 @@ export default function AgregarDelitoEspecifico({
               ))}
             </TextField>
 
-            <TextField
+            {/* <TextField
               select
               label="Estado del caso"
               fullWidth
@@ -258,7 +258,7 @@ export default function AgregarDelitoEspecifico({
                   {estado.label}
                 </MenuItem>
               ))}
-            </TextField>
+            </TextField> */}
 
             <TextField
               type="date"
@@ -291,14 +291,14 @@ export default function AgregarDelitoEspecifico({
               sx={{ mb: 2 }}
             />
 
-            <TextField
+            {/* <TextField
               label="Juzgado interviniente"
               fullWidth
               value={form.juzgado}
               onChange={e => handleChange('juzgado', e.target.value)}
               placeholder="Ej: Juzgado Nacional en lo Criminal N° 45"
               sx={{ mb: 2 }}
-            />
+            /> */}
           </Grid>
 
           {/* Descripción detallada */}

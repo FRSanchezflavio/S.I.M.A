@@ -154,6 +154,7 @@ export default function PersonaDetalle() {
           observaciones: personaRes.data.observaciones || '',
           comisaria: personaRes.data.comisaria || '',
           comisaria_hecho: personaRes.data.comisaria_hecho || '',
+          alias: personaRes.data.alias || '',
         });
       } catch (e) {
         setError('No se pudo cargar el detalle');
@@ -799,6 +800,7 @@ export default function PersonaDetalle() {
                       observaciones: item.observaciones || '',
                       comisaria: item.comisaria || '',
                       comisaria_hecho: item.comisaria_hecho || '',
+                      alias: item.alias || '',
                     });
                   }
                 }}
@@ -831,7 +833,9 @@ export default function PersonaDetalle() {
                   <Box
                     sx={{
                       position: 'relative',
-                      width: '100%',
+                      height: '600px',
+                      width: '280px',
+                      mt: '25px',
                       aspectRatio: '1/1',
                       borderRadius: '12px',
                       overflow: 'hidden',
@@ -903,34 +907,349 @@ export default function PersonaDetalle() {
                 </Grid>
                 <Grid item xs={12} sm={8}>
                   {!editMode ? (
-                    <>
-                      <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    <Box sx={{ p: 2 }}>
+                      {/* Nombre principal */}
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          fontWeight: 700,
+                          color: 'rgb(21, 77, 113)',
+                          mb: 3,
+                          borderBottom: '2px solid rgb(21, 77, 113)',
+                          pb: 1,
+                        }}
+                      >
                         {item.apellido}, {item.nombre}
                       </Typography>
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{ mt: 1, flexWrap: 'wrap' }}
-                      >
-                        <Chip label={`DNI: ${item.dni || '-'}`} />
-                        <Chip label={`Comisaría: ${item.comisaria || '-'}`} />
-                        {item.comisaria_hecho && (
-                          <Chip
-                            label={`Com. del Hecho: ${item.comisaria_hecho}`}
-                          />
+
+                      {/* Datos organizados verticalmente */}
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <Paper
+                            elevation={1}
+                            sx={{
+                              p: 1,
+                              bgcolor: '#f8f9fa',
+                              border: '1px solid #e9ecef',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                color: 'rgb(21, 77, 113)',
+                                fontWeight: 600,
+                                mb: 0.5,
+                              }}
+                            >
+                              DNI
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 800 }}
+                            >
+                              {item.dni || 'No registrado'}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                          <Paper
+                            elevation={1}
+                            sx={{
+                              p: 1,
+                              bgcolor: '#f8f9fa',
+                              border: '1px solid #e9ecef',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                color: 'rgb(21, 77, 113)',
+                                fontWeight: 600,
+                                mb: 0.5,
+                              }}
+                            >
+                              FECHA DE NACIMIENTO
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 800 }}
+                            >
+                              {item.fecha_nacimiento
+                                ? new Date(
+                                    item.fecha_nacimiento
+                                  ).toLocaleDateString('es-AR')
+                                : 'No registrada'}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                          <Paper
+                            elevation={1}
+                            sx={{
+                              p: 1,
+                              bgcolor: '#f8f9fa',
+                              border: '1px solid #e9ecef',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                color: 'rgb(21, 77, 113)',
+                                fontWeight: 600,
+                                mb: 0.5,
+                              }}
+                            >
+                              GÉNERO
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 800 }}
+                            >
+                              {item.genero
+                                ? item.genero.charAt(0).toUpperCase() +
+                                  item.genero.slice(1)
+                                : 'No especificado'}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                          <Paper
+                            elevation={1}
+                            sx={{
+                              p: 1,
+                              bgcolor: '#f8f9fa',
+                              border: '1px solid #e9ecef',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                color: 'rgb(21, 77, 113)',
+                                fontWeight: 600,
+                                mb: 0.5,
+                              }}
+                            >
+                              NACIONALIDAD
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 800 }}
+                            >
+                              {item.nacionalidad || 'No registrada'}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        {item.alias && (
+                          <Grid item xs={12}>
+                            <Paper
+                              elevation={1}
+                              sx={{
+                                p: 1,
+                                bgcolor: '#fff3e0',
+                                border: '1px solid #ffcc80',
+                              }}
+                            >
+                              <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  color: '#e65100',
+                                  fontWeight: 600,
+                                  mb: 0.5,
+                                }}
+                              >
+                                ALIAS / APODOS
+                              </Typography>
+                              <Typography
+                                variant="body1"
+                                sx={{ fontWeight: 500, color: '#e65100' }}
+                              >
+                                {item.alias}
+                              </Typography>
+                            </Paper>
+                          </Grid>
                         )}
-                        {item.fecha_nacimiento && (
-                          <Chip
-                            label={`Nac.: ${new Date(
-                              item.fecha_nacimiento
-                            ).toLocaleDateString()}`}
-                          />
+
+                        <Grid item xs={12}>
+                          <Paper
+                            elevation={1}
+                            sx={{
+                              p: 1,
+                              bgcolor: '#f8f9fa',
+                              border: '1px solid #e9ecef',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                color: 'rgb(21, 77, 113)',
+                                fontWeight: 600,
+                                mb: 0.5,
+                              }}
+                            >
+                              COMISARÍA JURISDICCIONAL DE PERTENENCIA
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 800 }}
+                            >
+                              {item.comisaria || 'No asignada'}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        {/* {item.comisaria_hecho && (
+                          <Grid item xs={12}>
+                            <Paper
+                              elevation={1}
+                              sx={{
+                                p: 1,
+                                bgcolor: '#fff3cd',
+                                border: '1px solid #ffeaa7',
+                              }}
+                            > */}
+                        {/* <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  color: '#856404',
+                                  fontWeight: 600,
+                                  mb: 0.5,
+                                }}
+                              >
+                                Comisaría del Hecho
+                              </Typography>
+                              <Typography
+                                variant="body1"
+                                sx={{ fontWeight: 500, color: '#856404' }}
+                              >
+                                {item.comisaria_hecho}
+                              </Typography> */}
+                        {/* </Paper>
+                          </Grid>
+                        )} */}
+
+                        <Grid item xs={12}>
+                          <Paper
+                            elevation={1}
+                            sx={{
+                              p: 1,
+                              bgcolor: '#f8f9fa',
+                              border: '1px solid #e9ecef',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                color: 'rgb(21, 77, 113)',
+                                fontWeight: 600,
+                                mb: 0.5,
+                              }}
+                            >
+                              DOMICILIO
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 800 }}
+                            >
+                              {item.direccion || 'No registrada'}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                          <Paper
+                            elevation={1}
+                            sx={{
+                              p: 1,
+                              bgcolor: '#f8f9fa',
+                              border: '1px solid #e9ecef',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                color: 'rgb(21, 77, 113)',
+                                fontWeight: 600,
+                                mb: 0.5,
+                              }}
+                            >
+                              Teléfono
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {item.telefono || 'No registrado'}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                          <Paper
+                            elevation={1}
+                            sx={{
+                              p: 1,
+                              bgcolor: '#f8f9fa',
+                              border: '1px solid #e9ecef',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                color: 'rgb(21, 77, 113)',
+                                fontWeight: 600,
+                                mb: 0.5,
+                              }}
+                            >
+                              Email
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {item.email || 'No registrado'}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        {item.observaciones && (
+                          <Grid item xs={12}>
+                            <Paper
+                              elevation={1}
+                              sx={{
+                                p: 1,
+                                bgcolor: '#e8f4fd',
+                                border: '1px solid #bee5eb',
+                              }}
+                            >
+                              <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  color: '#0c5460',
+                                  fontWeight: 600,
+                                  mb: 0.5,
+                                }}
+                              >
+                                Observaciones
+                              </Typography>
+                              <Typography
+                                variant="body1"
+                                sx={{
+                                  fontWeight: 500,
+                                  color: '#0c5460',
+                                  whiteSpace: 'pre-wrap',
+                                }}
+                              >
+                                {item.observaciones}
+                              </Typography>
+                            </Paper>
+                          </Grid>
                         )}
-                        {item.genero && (
-                          <Chip label={`Género: ${item.genero}`} />
-                        )}
-                      </Stack>
-                    </>
+                      </Grid>
+                    </Box>
                   ) : (
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>
@@ -957,6 +1276,8 @@ export default function PersonaDetalle() {
                         <TextField
                           label="DNI"
                           fullWidth
+                          placeholder="Ej: 12345678 o NO"
+                          helperText="Ingrese un DNI válido o 'NO', 'NULO', 'EXTRANJERO', etc."
                           value={form.dni}
                           onChange={e =>
                             setForm({ ...form, dni: e.target.value })
@@ -1027,6 +1348,18 @@ export default function PersonaDetalle() {
                           }
                         />
                       </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Alias"
+                          fullWidth
+                          placeholder="Ej: El Flaco, Checo, etc."
+                          helperText="Ingrese cualquier alias o apodo conocido"
+                          value={form.alias}
+                          onChange={e =>
+                            setForm({ ...form, alias: e.target.value })
+                          }
+                        />
+                      </Grid>
                       <Grid item xs={12}>
                         <TextField
                           label="Dirección"
@@ -1041,6 +1374,8 @@ export default function PersonaDetalle() {
                         <TextField
                           label="Teléfono"
                           fullWidth
+                          placeholder="Ej: +54 381 1234567 o NO"
+                          helperText="Puede ingresar un número válido o 'NO', 'NULO', 'N/A', etc."
                           value={form.telefono}
                           onChange={e =>
                             setForm({ ...form, telefono: e.target.value })
@@ -1101,44 +1436,6 @@ export default function PersonaDetalle() {
                       </Grid>
                     </Grid>
                   )}
-                  <Divider sx={{ my: 2 }} />
-                  {!editMode ? (
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Dirección
-                        </Typography>
-                        <Typography>{item.direccion || '-'}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Teléfono / Email
-                        </Typography>
-                        <Typography>
-                          {(item.telefono || '-') + ' / ' + (item.email || '-')}
-                        </Typography>
-                      </Grid>
-                      {item.comisaria_hecho && (
-                        <Grid item xs={12} sm={6}>
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary"
-                          >
-                            Comisaría del Hecho
-                          </Typography>
-                          <Typography>{item.comisaria_hecho}</Typography>
-                        </Grid>
-                      )}
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Observaciones
-                        </Typography>
-                        <Typography whiteSpace="pre-wrap">
-                          {item.observaciones || '-'}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  ) : null}
                 </Grid>
                 {!!fotos.length && (
                   <Grid item xs={12}>
@@ -1189,9 +1486,9 @@ export default function PersonaDetalle() {
                       mb: 1,
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {/* <Typography variant="h6" sx={{ fontWeight: 600 }}>
                       Acciones
-                    </Typography>
+                    </Typography> */}
                     {canEdit && (
                       <Button
                         variant="contained"
@@ -1200,7 +1497,7 @@ export default function PersonaDetalle() {
                         sx={{
                           bgcolor: '#000',
                           color: '#fff',
-                          fontSize: '0.75rem',
+                          fontSize: '25px',
                           fontWeight: 'bold',
                           px: 2,
                           py: 0.5,
@@ -1224,7 +1521,7 @@ export default function PersonaDetalle() {
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
 
-                  <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                  <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}>
                     <Tabs
                       value={tabValue}
                       onChange={(e, newValue) => setTabValue(newValue)}

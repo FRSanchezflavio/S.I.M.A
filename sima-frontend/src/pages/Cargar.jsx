@@ -569,6 +569,8 @@ export default function Cargar() {
                   label="DNI"
                   value={form.dni}
                   onChange={v => setForm({ ...form, dni: v })}
+                  placeholder="Ej: 12345678 o NO"
+                  helperText="Ingrese un DNI válido o 'NO', 'NULO', 'EXTRANJERO', etc."
                   required
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
@@ -701,6 +703,8 @@ export default function Cargar() {
                   label="Teléfono"
                   value={form.telefono}
                   onChange={v => setForm({ ...form, telefono: v })}
+                  placeholder="Ej: +54 381 1234567 o NO"
+                  helperText="Puede ingresar un número válido o 'NO', 'NULO', 'N/A', etc."
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
                 <FormInput
