@@ -1159,7 +1159,7 @@ export default function PersonaDetalle() {
                           </Paper>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
+                        {/* <Grid item xs={12} sm={6}>
                           <Paper
                             elevation={1}
                             sx={{
@@ -1167,8 +1167,8 @@ export default function PersonaDetalle() {
                               bgcolor: '#f8f9fa',
                               border: '1px solid #e9ecef',
                             }}
-                          >
-                            <Typography
+                          > */}
+                        {/* <Typography
                               variant="subtitle2"
                               sx={{
                                 color: 'rgb(21, 77, 113)',
@@ -1183,11 +1183,11 @@ export default function PersonaDetalle() {
                               sx={{ fontWeight: 500 }}
                             >
                               {item.telefono || 'No registrado'}
-                            </Typography>
-                          </Paper>
-                        </Grid>
+                            </Typography> */}
+                        {/* </Paper>
+                        </Grid> */}
 
-                        <Grid item xs={12} sm={6}>
+                        {/* <Grid item xs={12} sm={6}>
                           <Paper
                             elevation={1}
                             sx={{
@@ -1213,7 +1213,7 @@ export default function PersonaDetalle() {
                               {item.email || 'No registrado'}
                             </Typography>
                           </Paper>
-                        </Grid>
+                        </Grid> */}
 
                         {item.observaciones && (
                           <Grid item xs={12}>
@@ -1580,7 +1580,6 @@ export default function PersonaDetalle() {
                             </Button>
                           )}
                         </Box>
-
                         {/* Estadísticas rápidas */}
                         {estadisticasAntecedentesPersonales.total > 0 && (
                           <EstadisticasDelitos
@@ -1588,13 +1587,11 @@ export default function PersonaDetalle() {
                             loading={loadingAntecedentesPersonales}
                           />
                         )}
-
                         {errorAntecedentesPersonales && (
                           <Alert severity="error" sx={{ mb: 2 }}>
                             {errorAntecedentesPersonales}
                           </Alert>
                         )}
-
                         <ListaAntecedentesPersonalesMejorada
                           delitos={antecedentesPersonales}
                           onActualizar={handleActualizarAntecedentePersonal}

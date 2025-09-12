@@ -57,94 +57,258 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
   ).toFixed(1);
 
   return (
-    <Paper sx={{ p: 3, mb: 3 }}>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+    <Paper sx={{ p: 3, mb: 3, mt: -2 }}>
+      <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
         Estadísticas de Delitos Específicos
       </Typography>
 
       <Grid container spacing={3}>
         {/* Resumen general */}
         <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUpIcon sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Card
+            variant="outlined"
+            sx={{
+              height: '100%',
+              background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+              border: '2px solid #dee2e6',
+              borderRadius: 3,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                transform: 'translateY(-2px)',
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 3,
+                  pb: 2,
+                  borderBottom: '2px solid #primary.main',
+                }}
+              >
+                <Box
+                  sx={{
+                    backgroundColor: 'primary.main',
+                    borderRadius: '50%',
+                    p: 1,
+                    mt: 2,
+                    mr: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <TrendingUpIcon sx={{ color: 'white', fontSize: 44 }} />
+                </Box>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: '#1a365d',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                  }}
+                >
                   Resumen General
                 </Typography>
               </Box>
 
+              <Box sx={{ textAlign: 'center', mb: 3, mt: 2 }}>
+                <Typography
+                  variant="h2"
+                  sx={{
+                    fontWeight: 900,
+                    color: 'primary.main',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    mb: 1,
+                  }}
+                >
+                  {estadisticas.total}
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: '#495057',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  Total de Delitos
+                </Typography>
+              </Box>
+
+              <Divider
+                sx={{
+                  my: 2,
+                  borderColor: 'primary.main',
+                  borderWidth: 1,
+                }}
+              />
+
               <Grid container spacing={2}>
                 <Grid item xs={6}>
-                  <Box sx={{ textAlign: 'center' }}>
+                  <Box
+                    sx={{
+                      textAlign: 'center',
+                      p: 2,
+                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                      borderRadius: 2,
+                      border: '1px solid rgba(25, 118, 210, 0.2)',
+                    }}
+                  >
                     <Typography
                       variant="h4"
-                      color="primary.main"
-                      sx={{ fontWeight: 700 }}
+                      sx={{
+                        fontWeight: 700,
+                        color: 'primary.main',
+                        mb: 0.5,
+                      }}
                     >
-                      {estadisticas.total}
+                      {estadisticas.enProceso}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total de delitos
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: 'primary.main',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        fontSize: '0.75rem',
+                      }}
+                    >
+                      En Proceso
                     </Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={6}>
-                  <Box sx={{ textAlign: 'center' }}>
+                  <Box
+                    sx={{
+                      textAlign: 'center',
+                      p: 2,
+                      backgroundColor: 'rgba(102, 102, 102, 0.1)',
+                      borderRadius: 2,
+                      border: '1px solid rgba(102, 102, 102, 0.2)',
+                    }}
+                  >
                     <Typography
                       variant="h4"
-                      color="primary.main"
-                      sx={{ fontWeight: 700 }}
+                      sx={{
+                        fontWeight: 700,
+                        color: '#666666',
+                        mb: 0.5,
+                      }}
                     >
-                      {estadisticas.enProceso}
+                      {estadisticas.resueltos}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Casos en proceso
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#666666',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        fontSize: '0.75rem',
+                      }}
+                    >
+                      Resueltos
                     </Typography>
                   </Box>
                 </Grid>
               </Grid>
-
-              <Divider sx={{ my: 2 }} />
-
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                <Chip
-                  label={`${estadisticas.resueltos} resueltos (${porcentajeResueltos}%)`}
-                  sx={{ bgcolor: '#666666', color: 'white' }}
-                  size="small"
-                />
-                {estadisticas.archivados > 0 && (
-                  <Chip
-                    label={`${estadisticas.archivados} archivados`}
-                    color="default"
-                    size="small"
-                  />
-                )}
-                {estadisticas.suspendido > 0 && (
-                  <Chip
-                    label={`${estadisticas.suspendido} suspendidos`}
-                    color="warning"
-                    size="small"
-                  />
-                )}
-              </Box>
             </CardContent>
           </Card>
         </Grid>
 
         {/* Tipos y modalidades */}
         <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                Tipos de Delitos
-              </Typography>
+          <Card
+            variant="outlined"
+            sx={{
+              height: '100%',
+              background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+              border: '2px solid #dee2e6',
+              borderRadius: 3,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                transform: 'translateY(-2px)',
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 3,
+                  pb: 2,
+                  borderBottom: '2px solid #primary.main',
+                }}
+              >
+                <Box
+                  sx={{
+                    backgroundColor: 'primary.main',
+                    borderRadius: '50%',
+                    p: 1,
+                    mr: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <AssignmentIcon sx={{ color: 'white', fontSize: 24 }} />
+                </Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    color: '#1a365d',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                  }}
+                >
+                  Tipos de Delitos
+                </Typography>
+              </Box>
 
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Tipos únicos ({estadisticas.tiposUnicos.length})
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    mb: 2,
+                    p: 2,
+                    backgroundColor: 'rgba(25, 118, 210, 0.05)',
+                    borderRadius: 2,
+                    border: '1px dashed rgba(25, 118, 210, 0.3)',
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontWeight: 600,
+                      color: '#495057',
+                    }}
+                  >
+                    Tipos únicos
+                  </Typography>
+                  <Chip
+                    label={estadisticas.tiposUnicos.length}
+                    sx={{
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                      fontWeight: 700,
+                      minWidth: 40,
+                    }}
+                    size="small"
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {estadisticas.tiposUnicos.slice(0, 6).map((tipo, index) => (
                     <Chip
                       key={index}
@@ -152,16 +316,27 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                         tipo.charAt(0).toUpperCase() +
                         tipo.slice(1).replace('_', ' ')
                       }
-                      variant="outlined"
+                      sx={{
+                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                        color: 'primary.main',
+                        fontWeight: 600,
+                        border: '1px solid rgba(25, 118, 210, 0.3)',
+                        '&:hover': {
+                          backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                        },
+                      }}
                       size="small"
                     />
                   ))}
                   {estadisticas.tiposUnicos.length > 6 && (
                     <Chip
                       label={`+${estadisticas.tiposUnicos.length - 6} más`}
-                      variant="outlined"
+                      sx={{
+                        backgroundColor: 'primary.main',
+                        color: 'white',
+                        fontWeight: 700,
+                      }}
                       size="small"
-                      color="primary"
                     />
                   )}
                 </Box>
@@ -169,14 +344,39 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
 
               {estadisticas.modalidadesUnicas.length > 0 && (
                 <Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      mb: 2,
+                      p: 2,
+                      backgroundColor: 'rgba(156, 39, 176, 0.05)',
+                      borderRadius: 2,
+                      border: '1px dashed rgba(156, 39, 176, 0.3)',
+                    }}
                   >
-                    Modalidades ({estadisticas.modalidadesUnicas.length})
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: 600,
+                        color: '#495057',
+                      }}
+                    >
+                      Modalidades
+                    </Typography>
+                    <Chip
+                      label={estadisticas.modalidadesUnicas.length}
+                      sx={{
+                        backgroundColor: 'secondary.main',
+                        color: 'white',
+                        fontWeight: 700,
+                        minWidth: 40,
+                      }}
+                      size="small"
+                    />
+                  </Box>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {estadisticas.modalidadesUnicas
                       .slice(0, 4)
                       .map((modalidad, index) => (
@@ -186,9 +386,16 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                             modalidad.charAt(0).toUpperCase() +
                             modalidad.slice(1).replace('_', ' ')
                           }
-                          variant="outlined"
+                          sx={{
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            color: 'secondary.main',
+                            fontWeight: 600,
+                            border: '1px solid rgba(156, 39, 176, 0.3)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                            },
+                          }}
                           size="small"
-                          color="secondary"
                         />
                       ))}
                     {estadisticas.modalidadesUnicas.length > 4 && (
@@ -196,9 +403,12 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                         label={`+${
                           estadisticas.modalidadesUnicas.length - 4
                         } más`}
-                        variant="outlined"
+                        sx={{
+                          backgroundColor: 'secondary.main',
+                          color: 'white',
+                          fontWeight: 700,
+                        }}
                         size="small"
-                        color="secondary"
                       />
                     )}
                   </Box>
