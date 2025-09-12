@@ -14,7 +14,7 @@ function testAntecedentesPersonales(personaId) {
       'Delito de prueba creado automáticamente desde formulario de carga',
     lugar: 'Av. Test 123',
     comisaria_hecho: 'Comisaría de Prueba',
-    estado: 'activo',
+    estado: 'en_proceso',
     juzgado: '',
     fecha_hecho: '2025-09-09',
     fecha_carga: new Date().toISOString(),

@@ -111,7 +111,6 @@ export default function ListaDelitosEspecificos({
 
   const getEstadoColor = estado => {
     const colores = {
-      activo: 'error',
       en_proceso: 'warning',
       resuelto: 'success',
       archivado: 'default',
@@ -441,7 +440,6 @@ export default function ListaDelitosEspecificos({
                 }
                 sx={{ mb: 2 }}
               >
-                <MenuItem value="activo">Activo</MenuItem>
                 <MenuItem value="en_proceso">En Proceso</MenuItem>
                 <MenuItem value="resuelto">Resuelto</MenuItem>
                 <MenuItem value="archivado">Archivado</MenuItem>

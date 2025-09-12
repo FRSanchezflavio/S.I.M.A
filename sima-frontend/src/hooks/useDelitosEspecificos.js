@@ -69,7 +69,7 @@ export const useDelitosEspecificos = sujetoId => {
           descripcion: nuevoDelito.descripcion,
           lugar: nuevoDelito.lugar || '',
           comisaria_hecho: nuevoDelito.comisaria_hecho || '',
-          estado: nuevoDelito.estado || 'activo',
+          estado: nuevoDelito.estado || 'en_proceso',
           juzgado: nuevoDelito.juzgado || '',
           fecha_hecho:
             nuevoDelito.fecha_hecho || new Date().toISOString().split('T')[0],
@@ -173,7 +173,7 @@ export const useDelitosEspecificos = sujetoId => {
   // Obtener estadísticas
   const getEstadisticas = useCallback(() => {
     const total = delitos.length;
-    const activos = delitos.filter(d => d.estado === 'activo').length;
+    const enProceso = delitos.filter(d => d.estado === 'en_proceso').length;
     const resueltos = delitos.filter(d => d.estado === 'resuelto').length;
     const archivados = delitos.filter(d => d.estado === 'archivado').length;
 
@@ -184,7 +184,7 @@ export const useDelitosEspecificos = sujetoId => {
 
     return {
       total,
-      activos,
+      enProceso,
       resueltos,
       archivados,
       tiposUnicos,

@@ -67,7 +67,7 @@ export default function PersonaDetalle() {
   // Estados para antecedentes personales
   const [showAntecedentePersonalDialog, setShowAntecedentePersonalDialog] =
     useState(false);
-  const [tabValue, setTabValue] = useState(0); // 0: Antecedentes oficiales, 1: Antecedentes personales
+  const [tabValue, setTabValue] = useState(1); // Cambiar a 1: Solo Antecedentes personales
 
   // Hook para gestión de antecedentes personales
   const {
@@ -739,13 +739,6 @@ export default function PersonaDetalle() {
               </Button>
               <Button
                 variant="contained"
-                onClick={() => nav(`/registros/nuevo?persona_id=${item?.id}`)}
-                sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#111' } }}
-              >
-                Agregar registro
-              </Button>
-              <Button
-                variant="contained"
                 startIcon={<DownloadIcon />}
                 onClick={downloadSubjectData}
                 disabled={isGeneratingPDF}
@@ -835,19 +828,78 @@ export default function PersonaDetalle() {
             {item && (
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={4}>
-                  <CardMedia
-                    component="img"
-                    sx={{ width: '100%', borderRadius: 2, objectFit: 'cover' }}
-                    image={
-                      item.foto_principal ||
-                      'https://via.placeholder.com/400x400?text=Sin+foto'
-                    }
-                    alt={`${item.apellido}, ${item.nombre}`}
-                    onError={e => {
-                      e.currentTarget.src =
-                        'https://via.placeholder.com/400x400?text=Sin+foto';
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      width: '100%',
+                      aspectRatio: '1/1',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      border: '3px solid rgb(21, 77, 113)',
+                      boxShadow: '0 8px 24px rgba(21, 77, 113, 0.15)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 12px 32px rgba(21, 77, 113, 0.25)',
+                        border: '3px solid rgb(16, 58, 85)',
+                      },
                     }}
-                  />
+                  >
+                    <CardMedia
+                      component="img"
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s ease',
+                        '&:hover': {
+                          transform: 'scale(1.02)',
+                        },
+                      }}
+                      image={
+                        item.foto_principal ||
+                        'https://via.placeholder.com/400x400/f5f5f5/999999?text=Sin+Foto'
+                      }
+                      alt={`${item.apellido}, ${item.nombre}`}
+                      onError={e => {
+                        e.currentTarget.src =
+                          'https://via.placeholder.com/400x400/f5f5f5/999999?text=Sin+Foto';
+                      }}
+                    />
+
+                    {/* Overlay con información básica */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background:
+                          'linear-gradient(transparent, rgba(21, 77, 113, 0.85))',
+                        color: 'white',
+                        p: 2,
+                        transform: 'translateY(100%)',
+                        transition: 'transform 0.3s ease',
+                        '.MuiBox-root:hover &': {
+                          transform: 'translateY(0)',
+                        },
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600, mb: 0.5 }}
+                      >
+                        {item.dni ? `DNI: ${item.dni}` : 'Sin DNI registrado'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                        {item.fecha_nacimiento
+                          ? `Nac: ${new Date(
+                              item.fecha_nacimiento
+                            ).toLocaleDateString('es-AR')}`
+                          : 'Fecha de nacimiento no registrada'}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Grid>
                 <Grid item xs={12} sm={8}>
                   {!editMode ? (
@@ -1161,14 +1213,9 @@ export default function PersonaDetalle() {
                           },
                           transition: 'all 0.2s ease',
                         }}
-                        title={
-                          tabValue === 0
-                            ? 'Agregar delito oficial (aparece en búsquedas)'
-                            : 'Agregar antecedente personal (no aparece en búsquedas generales)'
-                        }
+                        title="Agregar antecedente personal (no aparece en búsquedas generales)"
                       >
-                        + AGREGAR DELITO
-                        {tabValue === 1 && ' PERSONAL'}
+                        + AGREGAR ANTECEDENTE PERSONAL
                       </Button>
                     )}
                   </Box>
@@ -1184,139 +1231,11 @@ export default function PersonaDetalle() {
                       aria-label="antecedentes tabs"
                     >
                       <Tab
-                        label={`Antecedentes Oficiales (${
-                          totalRegistros || registros.length
-                        })`}
-                        id="tab-0"
-                        aria-controls="tabpanel-0"
-                      />
-                      <Tab
                         label={`Antecedentes Personales (${estadisticasAntecedentesPersonales.total})`}
                         id="tab-1"
                         aria-controls="tabpanel-1"
                       />
                     </Tabs>
-                  </Box>
-
-                  {/* Panel de Antecedentes Oficiales */}
-                  <Box
-                    role="tabpanel"
-                    hidden={tabValue !== 0}
-                    id="tabpanel-0"
-                    aria-labelledby="tab-0"
-                  >
-                    {tabValue === 0 && (
-                      <Box>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            mb: 2,
-                          }}
-                        >
-                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            Antecedentes Delictuales Oficiales
-                          </Typography>
-                        </Box>
-
-                        {registros.length === 0 ? (
-                          <Alert severity="info">
-                            No se encontraron antecedentes delictuales oficiales
-                            para esta persona.
-                          </Alert>
-                        ) : (
-                          <Grid container spacing={2}>
-                            {registros.map((registro, index) => (
-                              <Grid item xs={12} key={registro.id}>
-                                <Paper elevation={1} sx={{ p: 2 }}>
-                                  <Stack
-                                    direction="row"
-                                    spacing={1}
-                                    sx={{ mb: 1 }}
-                                  >
-                                    <Chip
-                                      label={
-                                        registro.tipo_delito ||
-                                        'Sin especificar'
-                                      }
-                                      color="primary"
-                                      size="small"
-                                    />
-                                    <Chip
-                                      label={registro.estado || 'Sin estado'}
-                                      variant="outlined"
-                                      size="small"
-                                    />
-                                    {registro.modalidad && (
-                                      <Chip
-                                        label={registro.modalidad}
-                                        variant="outlined"
-                                        size="small"
-                                      />
-                                    )}
-                                  </Stack>
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    <strong>Lugar:</strong>{' '}
-                                    {registro.lugar || '-'} |
-                                    <strong> Comisaría:</strong>{' '}
-                                    {registro.comisaria_hecho || '-'} |
-                                    <strong> Juzgado:</strong>{' '}
-                                    {registro.juzgado || '-'}
-                                  </Typography>
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    <strong>Fecha:</strong>{' '}
-                                    {registro.fecha_carga
-                                      ? new Date(
-                                          registro.fecha_carga
-                                        ).toLocaleDateString()
-                                      : '-'}{' '}
-                                    |<strong> Registrado:</strong>{' '}
-                                    {registro.created_at
-                                      ? new Date(
-                                          registro.created_at
-                                        ).toLocaleDateString()
-                                      : '-'}
-                                  </Typography>
-                                  {registro.detalle && (
-                                    <Typography variant="body2" sx={{ mt: 1 }}>
-                                      <strong>Detalle:</strong>{' '}
-                                      {registro.detalle}
-                                    </Typography>
-                                  )}
-                                </Paper>
-                              </Grid>
-                            ))}
-                          </Grid>
-                        )}
-
-                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-                          <Button
-                            variant="outlined"
-                            disabled={page <= 1}
-                            onClick={() => setPage(p => p - 1)}
-                          >
-                            Anterior
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            disabled={page * pageSize >= totalRegistros}
-                            onClick={() => setPage(p => p + 1)}
-                          >
-                            Siguiente
-                          </Button>
-                          <Typography variant="body2" color="text.secondary">
-                            Página {page} · {totalRegistros} resultados
-                          </Typography>
-                        </Stack>
-                      </Box>
-                    )}
                   </Box>
 
                   {/* Panel de Antecedentes Personales */}

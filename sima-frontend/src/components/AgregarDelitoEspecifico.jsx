@@ -36,7 +36,7 @@ export default function AgregarDelitoEspecifico({
     descripcion: '',
     lugar: '',
     comisaria_hecho: '',
-    estado: 'activo',
+    estado: 'en_proceso',
     juzgado: '',
     fecha_hecho: new Date().toISOString().split('T')[0],
     observaciones: '',
@@ -75,7 +75,6 @@ export default function AgregarDelitoEspecifico({
   ];
 
   const estados = [
-    { value: 'activo', label: 'Activo' },
     { value: 'en_proceso', label: 'En Proceso' },
     { value: 'resuelto', label: 'Resuelto' },
     { value: 'archivado', label: 'Archivado' },
@@ -158,7 +157,7 @@ export default function AgregarDelitoEspecifico({
       descripcion: '',
       lugar: '',
       comisaria_hecho: '',
-      estado: 'activo',
+      estado: 'en_proceso',
       juzgado: '',
       fecha_hecho: new Date().toISOString().split('T')[0],
       observaciones: '',

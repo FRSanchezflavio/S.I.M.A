@@ -132,7 +132,6 @@ export default function ListaAntecedentesPersonales({
 
   const getEstadoColor = estado => {
     const colores = {
-      activo: 'error',
       en_proceso: 'warning',
       resuelto: 'success',
       archivado: 'default',
@@ -163,7 +162,6 @@ export default function ListaAntecedentesPersonales({
 
   const formatEstado = estado => {
     const estados = {
-      activo: 'Activo',
       en_proceso: 'En Proceso',
       resuelto: 'Resuelto',
       archivado: 'Archivado',
@@ -743,8 +741,8 @@ export default function ListaAntecedentesPersonales({
         <Alert severity="info" sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
             <Typography variant="body2">
-              <strong>Activos:</strong>{' '}
-              {delitos.filter(d => d.estado === 'activo').length}
+              <strong>En Proceso:</strong>{' '}
+              {delitos.filter(d => d.estado === 'en_proceso').length}
             </Typography>
             <Typography variant="body2">
               <strong>Resueltos:</strong>{' '}
@@ -812,7 +810,6 @@ export default function ListaAntecedentesPersonales({
                 }
                 sx={{ mb: 2 }}
               >
-                <MenuItem value="activo">Activo</MenuItem>
                 <MenuItem value="en_proceso">En Proceso</MenuItem>
                 <MenuItem value="resuelto">Resuelto</MenuItem>
                 <MenuItem value="archivado">Archivado</MenuItem>

@@ -309,7 +309,7 @@ export default function Cargar() {
             }${form.modalidad ? ` - ${form.modalidad}` : ''}`,
             lugar: form.direccion || '',
             comisaria_hecho: form.comisaria_hecho || form.comisaria || '',
-            estado: 'activo',
+            estado: 'en_proceso',
             juzgado: '',
             fecha_hecho:
               form.fecha_carga || new Date().toISOString().split('T')[0],

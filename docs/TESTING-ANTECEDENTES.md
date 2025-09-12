@@ -96,7 +96,7 @@ Los delitos cargados desde el formulario "Cargar" ahora aparecen automáticament
   "descripcion": "Delito registrado desde formulario de carga: robo - con_violencia",
   "lugar": "Dirección del formulario",
   "comisaria_hecho": "Comisaría del hecho",
-  "estado": "activo",
+  "estado": "en_proceso",
   "fecha_hecho": "2025-09-09",
   "observaciones": "Observaciones del formulario",
   "sujetoId": "123",

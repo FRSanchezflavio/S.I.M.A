@@ -47,8 +47,8 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
     );
   }
 
-  const porcentajeActivos = (
-    (estadisticas.activos / estadisticas.total) *
+  const porcentajeEnProceso = (
+    (estadisticas.enProceso / estadisticas.total) *
     100
   ).toFixed(1);
   const porcentajeResueltos = (
@@ -93,13 +93,13 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography
                       variant="h4"
-                      color="error.main"
+                      color="primary.main"
                       sx={{ fontWeight: 700 }}
                     >
-                      {estadisticas.activos}
+                      {estadisticas.enProceso}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Casos activos
+                      Casos en proceso
                     </Typography>
                   </Box>
                 </Grid>
@@ -223,11 +223,11 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
             bgcolor: 'grey.200',
           }}
         >
-          {estadisticas.activos > 0 && (
+          {estadisticas.enProceso > 0 && (
             <Box
               sx={{
-                bgcolor: 'error.main',
-                width: `${porcentajeActivos}%`,
+                bgcolor: 'primary.main',
+                width: `${porcentajeEnProceso}%`,
                 transition: 'width 0.3s ease',
               }}
             />
@@ -256,8 +256,8 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
           )}
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-          <Typography variant="caption" color="error.main">
-            {porcentajeActivos}% activos
+          <Typography variant="caption" color="primary.main">
+            {porcentajeEnProceso}% en proceso
           </Typography>
           <Typography variant="caption" sx={{ color: '#666666' }}>
             {porcentajeResueltos}% resueltos
