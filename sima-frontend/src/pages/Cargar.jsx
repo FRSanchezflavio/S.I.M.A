@@ -819,59 +819,6 @@ export default function Cargar() {
                   rows={5}
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
-                <FormInput
-                  label="Descripción Física"
-                  value={form.descripcion_fisica}
-                  onChange={v => setForm({ ...form, descripcion_fisica: v })}
-                  multiline
-                  rows={4}
-                  placeholder="Ingrese características físicas relevantes (altura, complexión, cabello, ojos, marcas distintivas, etc.)"
-                  inputProps={{ maxLength: 500 }}
-                  helperText={`${form.descripcion_fisica.length}/500 caracteres`}
-                  InputLabelProps={{ style: { color: '#000' } }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#000',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#000',
-                      },
-                    },
-                  }}
-                />
-                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => nav('/dashboard')}
-                    sx={{
-                      bgcolor: '#f1f1f1ff',
-                      color: '#000',
-                      '&:hover': {
-                        bgcolor: 'rgb(21, 77, 113)',
-                        color: '#fff',
-                        transition: 'all 0.3s ease',
-                      },
-                    }}
-                  >
-                    ← VOLVER AL INICIO
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={onSubmit}
-                    disabled={!canSave}
-                    sx={{
-                      bgcolor: '#000',
-                      color: '#fff',
-                      '&:hover': { bgcolor: 'rgb(21, 77, 113)' },
-                    }}
-                  >
-                    GUARDAR
-                  </Button>
-                </Box>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Box
@@ -1305,6 +1252,34 @@ export default function Cargar() {
                       </Box>
                     </>
                   )}
+                </Box>
+
+                {/* Campo de Descripción Física debajo del área de imágenes */}
+                <Box sx={{ mt: 3, width: '570px', ml: '-20px' }}>
+                  <FormInput
+                    label="Descripción Física"
+                    value={form.descripcion_fisica}
+                    onChange={v => setForm({ ...form, descripcion_fisica: v })}
+                    multiline
+                    rows={4}
+                    placeholder="Ingrese características físicas relevantes (altura, complexión, cabello, ojos, marcas distintivas, etc.)"
+                    inputProps={{ maxLength: 500 }}
+                    helperText={`${form.descripcion_fisica.length}/500 caracteres`}
+                    InputLabelProps={{ style: { color: '#000' } }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#e0e0e0',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#000',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#000',
+                        },
+                      },
+                    }}
+                  />
                 </Box>
               </Grid>
             </Grid>
