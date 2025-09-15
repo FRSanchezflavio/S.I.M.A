@@ -102,10 +102,10 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                     justifyContent: 'center',
                   }}
                 >
-                  <TrendingUpIcon sx={{ color: 'white', fontSize: 44 }} />
+                  <TrendingUpIcon sx={{ color: 'white', fontSize: 64 }} />
                 </Box>
                 <Typography
-                  variant="h5"
+                  variant="h4"
                   sx={{
                     fontWeight: 700,
                     color: '#1a365d',
@@ -136,6 +136,7 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: 0.5,
+                    marginTop: 2,
                   }}
                 >
                   Total de Delitos
@@ -150,7 +151,7 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                 }}
               />
 
-              <Grid container spacing={2}>
+              {/* <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <Box
                     sx={{
@@ -183,8 +184,8 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                       En Proceso
                     </Typography>
                   </Box>
-                </Grid>
-                <Grid item xs={6}>
+                </Grid> */}
+              {/* <Grid item xs={6}>
                   <Box
                     sx={{
                       textAlign: 'center',
@@ -193,8 +194,8 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                       borderRadius: 2,
                       border: '1px solid rgba(102, 102, 102, 0.2)',
                     }}
-                  >
-                    <Typography
+                  > */}
+              {/* <Typography
                       variant="h4"
                       sx={{
                         fontWeight: 700,
@@ -214,10 +215,10 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                       }}
                     >
                       Resueltos
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
+                    </Typography> */}
+              {/* </Box>
+                </Grid> */}
+              {/* </Grid> */}
             </CardContent>
           </Card>
         </Grid>
@@ -263,9 +264,9 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                   <AssignmentIcon sx={{ color: 'white', fontSize: 24 }} />
                 </Box>
                 <Typography
-                  variant="h6"
+                  variant="h5"
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 900,
                     color: '#1a365d',
                     textTransform: 'uppercase',
                     letterSpacing: 1,
@@ -281,7 +282,8 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    mb: 2,
+                    mt: -2,
+                    mb: 1,
                     p: 2,
                     backgroundColor: 'rgba(25, 118, 210, 0.05)',
                     borderRadius: 2,
@@ -289,7 +291,7 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                   }}
                 >
                   <Typography
-                    variant="body1"
+                    variant="h6"
                     sx={{
                       fontWeight: 600,
                       color: '#495057',
@@ -302,10 +304,10 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                     sx={{
                       backgroundColor: 'primary.main',
                       color: 'white',
-                      fontWeight: 700,
-                      minWidth: 40,
+                      fontWeight: 900,
+                      minWidth: 60,
                     }}
-                    size="small"
+                    size="medium"
                   />
                 </Box>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -334,9 +336,9 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                       sx={{
                         backgroundColor: 'primary.main',
                         color: 'white',
-                        fontWeight: 700,
+                        fontWeight: 900,
                       }}
-                      size="small"
+                      size="medium"
                     />
                   )}
                 </Box>
@@ -349,15 +351,16 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      mt: -1,
                       mb: 2,
                       p: 2,
-                      backgroundColor: 'rgba(156, 39, 176, 0.05)',
+                      backgroundColor: 'rgba(25, 118, 210, 0.05)',
                       borderRadius: 2,
-                      border: '1px dashed rgba(156, 39, 176, 0.3)',
+                      border: '1px dashed rgba(25, 118, 210, 0.3)',
                     }}
                   >
                     <Typography
-                      variant="body1"
+                      variant="h6"
                       sx={{
                         fontWeight: 600,
                         color: '#495057',
@@ -368,10 +371,10 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                     <Chip
                       label={estadisticas.modalidadesUnicas.length}
                       sx={{
-                        backgroundColor: 'secondary.main',
+                        backgroundColor: 'primary.main',
                         color: 'white',
-                        fontWeight: 700,
-                        minWidth: 40,
+                        fontWeight: 900,
+                        minWidth: 60,
                       }}
                       size="small"
                     />
@@ -387,12 +390,13 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                             modalidad.slice(1).replace('_', ' ')
                           }
                           sx={{
-                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                            color: 'secondary.main',
-                            fontWeight: 600,
-                            border: '1px solid rgba(156, 39, 176, 0.3)',
+                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                            color: 'primary.main',
+                            width: '100px',
+                            fontWeight: 900,
+                            border: '1px solid rgba(25, 118, 210, 0.3)',
                             '&:hover': {
-                              backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                              backgroundColor: 'rgba(25, 118, 210, 0.2)',
                             },
                           }}
                           size="small"
@@ -404,7 +408,7 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
                           estadisticas.modalidadesUnicas.length - 4
                         } más`}
                         sx={{
-                          backgroundColor: 'secondary.main',
+                          backgroundColor: 'primary.main',
                           color: 'white',
                           fontWeight: 700,
                         }}
@@ -420,7 +424,7 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
       </Grid>
 
       {/* Indicadores de progreso visual */}
-      <Box sx={{ mt: 3 }}>
+      {/* <Box sx={{ mt: 0 }}>
         <Typography variant="body2" color="text.secondary" gutterBottom>
           Distribución por estado
         </Typography>
@@ -473,7 +477,7 @@ export default function EstadisticasDelitos({ estadisticas, loading }) {
             {porcentajeResueltos}% resueltos
           </Typography>
         </Box>
-      </Box>
+      </Box> */}
     </Paper>
   );
 }

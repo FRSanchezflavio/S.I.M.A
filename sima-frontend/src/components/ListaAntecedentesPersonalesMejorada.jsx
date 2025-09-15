@@ -292,7 +292,7 @@ export default function ListaAntecedentesPersonales({
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <span>{getTipoIcon(delito.tipo)}</span>
                   <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
                       {delito.tipo.charAt(0).toUpperCase() +
                         delito.tipo.slice(1).replace('_', ' ')}
                     </Typography>
@@ -365,7 +365,7 @@ export default function ListaAntecedentesPersonales({
         </TableBody>
       </Table>
 
-      <TablePagination
+      {/* <TablePagination
         component="div"
         count={delitos.length}
         page={page}
@@ -377,7 +377,7 @@ export default function ListaAntecedentesPersonales({
         labelDisplayedRows={({ from, to, count }) =>
           `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
         }
-      />
+      /> */}
     </TableContainer>
   );
 
@@ -667,13 +667,13 @@ export default function ListaAntecedentesPersonales({
                 >
                   Ver
                 </Button>
-                <Button
+                {/* <Button
                   size="small"
                   startIcon={<EditIcon />}
                   onClick={() => handleEdit(delito)}
                 >
                   Editar
-                </Button>
+                </Button> */}
                 <Button
                   size="small"
                   color="error"
@@ -741,16 +741,8 @@ export default function ListaAntecedentesPersonales({
         <Alert severity="info" sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
             <Typography variant="body2">
-              <strong>En Proceso:</strong>{' '}
-              {delitos.filter(d => d.estado === 'en_proceso').length}
-            </Typography>
-            <Typography variant="body2">
               <strong>Resueltos:</strong>{' '}
               {delitos.filter(d => d.estado === 'resuelto').length}
-            </Typography>
-            <Typography variant="body2">
-              <strong>En Proceso:</strong>{' '}
-              {delitos.filter(d => d.estado === 'en_proceso').length}
             </Typography>
             <Typography variant="body2">
               <strong>Último registro:</strong>{' '}
@@ -1177,3 +1169,11 @@ export default function ListaAntecedentesPersonales({
     </Box>
   );
 }
+//           >
+//             Cerrar
+//           </Button>
+//         </DialogActions>
+//       </Dialog>
+//     </Box>
+//   );
+// }
