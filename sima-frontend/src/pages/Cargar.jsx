@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Container,
   Grid,
@@ -12,8 +12,16 @@ import {
   TextField,
   InputAdornment,
   IconButton,
+  Modal,
+  Backdrop,
+  Fade,
 } from '@mui/material';
-import { LocationOn } from '@mui/icons-material';
+import {
+  LocationOn,
+  ArrowBackIos,
+  ArrowForwardIos,
+  Close,
+} from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import FormInput from '../components/FormInput';
@@ -182,6 +190,7 @@ export default function Cargar() {
     provincia: 'tucuman', // Provincia preseleccionada por defecto
     telefono: '',
     observaciones: '',
+    descripcion_fisica: '', // Nuevo campo para descripción física
     comisaria: '',
     comisaria_hecho: '',
     categoria: '',
@@ -197,6 +206,9 @@ export default function Cargar() {
   const [comisariasDisponibles, setComisariasDisponibles] = useState([]);
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  // Estados para modal de visualización de imágenes
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const nav = useNavigate();
   const { showToast } = useToast();
 
@@ -227,6 +239,71 @@ export default function Cargar() {
   const handleOpenMap = () => {
     setMapModalOpen(true);
   };
+
+  // Funciones para el modal de visualización de imágenes
+  const handleImageClick = index => {
+    setCurrentImageIndex(index);
+    setImageModalOpen(true);
+  };
+
+  const handleCloseImageModal = () => {
+    setImageModalOpen(false);
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : files.length - 1));
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex(prev => (prev < files.length - 1 ? prev + 1 : 0));
+  };
+
+  // Effect para navegación por teclado en el modal de imágenes
+  useEffect(() => {
+    const handleKeyDown = event => {
+      if (!imageModalOpen) return;
+
+      switch (event.key) {
+        case 'Escape':
+          handleCloseImageModal();
+          break;
+        case 'ArrowLeft':
+          handlePrevImage();
+          break;
+        case 'ArrowRight':
+          handleNextImage();
+          break;
+        default:
+          break;
+      }
+    };
+
+    if (imageModalOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      // Prevenir scroll del body cuando modal está abierto
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [imageModalOpen]);
+
+  // Cleanup de URLs cuando se cierra el modal
+  useEffect(() => {
+    return () => {
+      if (files.length > 0) {
+        files.forEach(file => {
+          try {
+            URL.revokeObjectURL(URL.createObjectURL(file));
+          } catch (error) {
+            // Silently handle error
+          }
+        });
+      }
+    };
+  }, [imageModalOpen, files]);
 
   // Función para manejar el cambio de regional
   const handleRegionalChange = regional => {
@@ -362,6 +439,7 @@ export default function Cargar() {
         provincia: 'tucuman', // Mantener Tucumán preseleccionada al resetear
         telefono: '',
         observaciones: '',
+        descripcion_fisica: '', // Limpiar descripción física al resetear
         comisaria: '',
         comisaria_hecho: '',
         categoria: '',
@@ -373,6 +451,10 @@ export default function Cargar() {
       });
       setFiles([]);
       setSelectedLocation(null);
+      // Cerrar modal de imágenes si está abierto
+      if (imageModalOpen) {
+        handleCloseImageModal();
+      }
 
       // Navegar al detalle de la persona recién creada para ver los antecedentes
       if (response.data && response.data.id) {
@@ -404,6 +486,15 @@ export default function Cargar() {
   };
 
   const removeFile = idx => {
+    // Si se está eliminando la imagen que se está viendo en el modal, cerrarlo
+    if (imageModalOpen && currentImageIndex === idx) {
+      handleCloseImageModal();
+    }
+    // Si se elimina una imagen anterior a la actual, ajustar el índice
+    else if (imageModalOpen && currentImageIndex > idx) {
+      setCurrentImageIndex(prev => prev - 1);
+    }
+
     setFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
@@ -728,35 +819,6 @@ export default function Cargar() {
                   rows={5}
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
-                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => nav('/dashboard')}
-                    sx={{
-                      bgcolor: '#f1f1f1ff',
-                      color: '#000',
-                      '&:hover': {
-                        bgcolor: 'rgb(21, 77, 113)',
-                        color: '#fff',
-                        transition: 'all 0.3s ease',
-                      },
-                    }}
-                  >
-                    ← VOLVER AL INICIO
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={onSubmit}
-                    disabled={!canSave}
-                    sx={{
-                      bgcolor: '#000',
-                      color: '#fff',
-                      '&:hover': { bgcolor: 'rgb(21, 77, 113)' },
-                    }}
-                  >
-                    GUARDAR
-                  </Button>
-                </Box>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Box
@@ -765,27 +827,40 @@ export default function Cargar() {
                   onDragLeave={handleDrag}
                   onDrop={handleDrop}
                   sx={{
-                    p: 3,
-                    border: `2px dashed ${dragActive ? '#15616f' : '#90a4ae'}`,
-                    borderRadius: 2,
+                    '&:hover': {
+                      zIndex: 10,
+                      position: 'relative',
+                      top: -2,
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                      transition: 'all 0.3s ease',
+                    },
+                    height: '50%',
+                    width: '570px',
+                    ml: '-20px',
+                    p: 1,
+                    border: `2px dashed ${dragActive ? '#15616f' : '#bdbdbd'}`,
+                    borderRadius: 3,
                     textAlign: 'center',
                     color: '#000',
                     position: 'relative',
-                    bgcolor: dragActive
-                      ? 'rgba(21,77,113,0.06)'
-                      : 'transparent',
-                    transition: 'all 0.15s ease',
-                    minHeight: 500,
+                    bgcolor: dragActive ? 'rgba(21,97,111,0.08)' : '#fafafa',
+                    transition: 'all 0.3s ease',
+                    minHeight: files.length === 0 ? 400 : '200px',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'center',
+                    justifyContent:
+                      files.length === 0 ? 'center' : 'flex-start',
                     alignItems: 'center',
                     cursor: files.length === 0 ? 'pointer' : 'default',
+                    boxShadow: dragActive
+                      ? '0 4px 20px rgba(21,97,111,0.15)'
+                      : '0 2px 8px rgba(0,0,0,0.05)',
                     '&:hover':
                       files.length === 0
                         ? {
                             borderColor: '#15616f',
-                            bgcolor: 'rgba(21,77,113,0.03)',
+                            bgcolor: 'rgba(21,97,111,0.03)',
+                            boxShadow: '0 4px 16px rgba(21,97,111,0.1)',
                           }
                         : {},
                   }}
@@ -796,56 +871,97 @@ export default function Cargar() {
                 >
                   {files.length === 0 ? (
                     <>
-                      {/* Imagen de ejemplo */}
+                      {/* Área de carga vacía mejorada */}
                       <Box
                         sx={{
-                          width: 180,
-                          height: 180,
-                          bgcolor: 'rgb(245, 245, 245)',
-                          borderRadius: 2,
+                          width: 120,
+                          height: 120,
+                          bgcolor: 'rgba(21,97,111,0.1)',
+                          borderRadius: '50%',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          mb: 2,
-                          border: '2px dashed #ccc',
+                          mb: 3,
+                          border: '3px dashed rgba(21,97,111,0.3)',
+                          transition: 'all 0.3s ease',
                         }}
                       >
                         <Box
                           sx={{
-                            fontSize: 60,
-                            color: '#999',
+                            fontSize: 78,
+                            color: '#15616f',
                             fontWeight: 'bold',
+                            opacity: 0.7,
                           }}
                         >
-                          IMG
+                          📷
                         </Box>
                       </Box>
 
-                      <Typography variant="h4" sx={{ mb: 1, color: '#000' }}>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          mb: 1,
+                          color: '#15616f',
+                          fontWeight: 600,
+                          fontSize: { xs: '1.25rem', md: '1.5rem' },
+                        }}
+                      >
                         {dragActive
-                          ? 'Suelte las imágenes aquí'
+                          ? '¡Suelte las imágenes aquí!'
                           : 'Cargar fotografías'}
                       </Typography>
 
-                      <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
-                        Arrastre y suelte imágenes aquí o use el botón
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          mb: 3,
+                          color: '#666',
+                          fontSize: '1rem',
+                          maxWidth: 280,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        Arrastre y suelte imágenes aquí o haga clic para
+                        seleccionar
                       </Typography>
 
                       <Button
                         variant="contained"
                         sx={{
-                          bgcolor: 'rgb(13, 17, 100)',
-                          '&:hover': { bgcolor: 'rgb(21, 77, 113)' },
+                          bgcolor: '#15616f',
+                          '&:hover': {
+                            bgcolor: '#0d4650',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 6px 20px rgba(21,97,111,0.3)',
+                          },
                           color: '#fff',
-                          mb: 1,
+                          py: 1.5,
+                          px: 4,
+                          borderRadius: 2,
+                          fontWeight: 600,
+                          fontSize: '0.95rem',
+                          transition: 'all 0.3s ease',
+                          textTransform: 'none',
                         }}
                         onClick={e => {
                           e.stopPropagation();
                           document.getElementById('file-input').click();
                         }}
                       >
-                        SELECCIONAR IMÁGENES
+                        Seleccionar imágenes
                       </Button>
+
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          mt: 2,
+                          color: '#999',
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        Formatos admitidos: JPG, PNG, GIF
+                      </Typography>
 
                       <input
                         id="file-input"
@@ -858,27 +974,97 @@ export default function Cargar() {
                     </>
                   ) : (
                     <>
-                      <Typography variant="h5" sx={{ mb: 2, color: '#000' }}>
-                        Imágenes seleccionadas: {files.length}
-                      </Typography>
-
-                      <Button
-                        variant="outlined"
-                        onClick={() =>
-                          document.getElementById('file-input-add').click()
-                        }
+                      {/* Header con información y botones */}
+                      <Box
                         sx={{
-                          mb: 2,
-                          borderColor: '#15616f',
-                          color: '#15616f',
-                          '&:hover': {
-                            bgcolor: '#15616f',
-                            color: '#fff',
-                          },
+                          width: '100%',
+                          height: 'auto',
+                          maxWidth: '570px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 3,
+                          pb: 2,
+                          borderBottom: '2px solid #e0e0e0',
                         }}
                       >
-                        + AGREGAR MÁS IMÁGENES
-                      </Button>
+                        <Box>
+                          <Typography
+                            variant="h5"
+                            sx={{
+                              color: '#15616f',
+                              fontWeight: 900,
+                              fontSize: '1.3rem',
+                            }}
+                          >
+                            📁 {files.length} imagen
+                            {files.length !== 1 ? 'es' : ''} seleccionada
+                            {files.length !== 1 ? 's' : ''}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: '#666',
+                              fontSize: '1rem',
+                            }}
+                          >
+                            Haga clic en una imagen para ampliarla
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() =>
+                              document.getElementById('file-input-add').click()
+                            }
+                            sx={{
+                              borderColor: '#15616f',
+                              color: '#15616f',
+                              '&:hover': {
+                                bgcolor: '#15616f',
+                                color: '#fff',
+                                transform: 'translateY(-1px)',
+                              },
+                              borderRadius: 2,
+                              px: 2,
+                              py: 0.5,
+                              fontSize: '1rem',
+                              fontWeight: 900,
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            + Agregar más
+                          </Button>
+
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="error"
+                            onClick={() => {
+                              setFiles([]);
+                              setSelectedLocation(null);
+                              if (imageModalOpen) {
+                                handleCloseImageModal();
+                              }
+                            }}
+                            sx={{
+                              borderRadius: 2,
+                              px: 2,
+                              py: 0.5,
+                              fontSize: '0.9rem',
+                              fontWeight: 900,
+                              '&:hover': {
+                                transform: 'translateY(-5px)',
+                              },
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            🗑️ Limpiar todo
+                          </Button>
+                        </Box>
+                      </Box>
 
                       <input
                         id="file-input-add"
@@ -888,99 +1074,212 @@ export default function Cargar() {
                         onChange={onFile}
                         style={{ display: 'none' }}
                       />
-                    </>
-                  )}
 
-                  {files.length > 0 && (
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns:
-                          'repeat(auto-fill, minmax(150px, 1fr))',
-                        gap: 2,
-                        mt: 2,
-                        width: '100%',
-                        maxHeight: 300,
-                        overflowY: 'auto',
-                      }}
-                    >
-                      {files.map((f, idx) => (
-                        <Box
-                          key={idx}
-                          sx={{
-                            width: 300,
-                            height: 300,
-                            position: 'relative',
-                            ml: 12,
-                            border: '1px solid rgb(51, 161, 224)',
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                            boxShadow: 2,
-                            bgcolor: '#f7f7f7',
-                          }}
-                        >
-                          <img
-                            src={URL.createObjectURL(f)}
-                            alt={f.name}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                            }}
-                          />
+                      {/* Grid de imágenes mejorado */}
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: {
+                            xs: 'repeat(2, 1fr)',
+                            sm: 'repeat(3, 1fr)',
+                            md: 'repeat(2, 1fr)',
+                            lg: 'repeat(3, 1fr)',
+                          },
+                          gap: 0.5,
+                          width: '100%',
+                          height: 'auto',
+                          maxHeight: 900,
+                          overflowY: 'auto',
+                          overflowX: 'hidden',
+                          pr: 1,
+                          '&::-webkit-scrollbar': {
+                            width: '8px',
+                          },
+                          '&::-webkit-scrollbar-track': {
+                            background: '#f1f1f1',
+                            borderRadius: '10px',
+                          },
+                          '&::-webkit-scrollbar-thumb': {
+                            background: '#c1c1c1',
+                            borderRadius: '10px',
+                            '&:hover': {
+                              background: '#a8a8a8',
+                            },
+                          },
+                        }}
+                      >
+                        {files.map((f, idx) => (
                           <Box
+                            key={idx}
                             sx={{
-                              position: 'absolute',
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              bgcolor: 'rgba(0,0,0,0.7)',
-                              color: '#fff',
-                              fontSize: 12,
-                              py: 1,
-                              px: 1,
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
+                              aspectRatio: '1',
+                              position: 'relative',
+                              border: '2px solid #e0e0e0',
+                              borderRadius: 3,
+                              overflow: 'hidden',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                              bgcolor: '#fff',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease',
+                              '&:hover': {
+                                transform: 'scale(1.05)',
+                                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                                borderColor: '#15616f',
+                                zIndex: 1,
+                              },
                             }}
+                            onClick={() => handleImageClick(idx)}
                           >
-                            <span
+                            <img
+                              src={URL.createObjectURL(f)}
+                              alt={f.name}
                               style={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                flex: 1,
-                                marginRight: 8,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
                               }}
-                            >
-                              {f.name}
-                            </span>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              onClick={e => {
-                                e.stopPropagation();
-                                removeFile(idx);
-                              }}
+                            />
+
+                            {/* Overlay con información */}
+                            <Box
                               sx={{
-                                minWidth: 28,
-                                height: 28,
-                                bgcolor: 'rgba(255,0,0,0.8)',
-                                color: '#fff',
-                                fontSize: 16,
-                                fontWeight: 'bold',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background:
+                                  'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.7) 100%)',
+                                opacity: 0,
+                                transition: 'opacity 0.3s ease',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                p: 1,
                                 '&:hover': {
-                                  bgcolor: 'rgba(255,0,0,1)',
+                                  opacity: 1,
                                 },
                               }}
                             >
-                              ×
-                            </Button>
+                              {/* Número de imagen */}
+                              <Box
+                                sx={{
+                                  alignSelf: 'flex-start',
+                                  bgcolor: 'rgba(21,97,111,0.9)',
+                                  color: '#fff',
+                                  px: 1,
+                                  py: 0.5,
+                                  borderRadius: 1,
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                #{idx + 1}
+                              </Box>
+
+                              {/* Nombre del archivo y botón eliminar */}
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'flex-end',
+                                  gap: 1,
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: '#fff',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 500,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    flex: 1,
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                                  }}
+                                >
+                                  {f.name}
+                                </Typography>
+
+                                <IconButton
+                                  size="small"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    removeFile(idx);
+                                  }}
+                                  sx={{
+                                    bgcolor: 'rgba(244,67,54,0.9)',
+                                    color: '#fff',
+                                    width: 24,
+                                    height: 24,
+                                    '&:hover': {
+                                      bgcolor: '#d32f2f',
+                                      transform: 'scale(1.1)',
+                                    },
+                                    transition: 'all 0.2s ease',
+                                  }}
+                                >
+                                  <Close fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            </Box>
                           </Box>
-                        </Box>
-                      ))}
-                    </Box>
+                        ))}
+                      </Box>
+
+                      {/* Información adicional */}
+                      <Box
+                        sx={{
+                          mt: 2,
+                          pt: 2,
+                          borderTop: '1px solid #e0e0e0',
+                          width: '100%',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: '#666',
+                            fontSize: '0.8rem',
+                            fontStyle: 'italic',
+                          }}
+                        >
+                          💡 Tip: Use Ctrl+Click para seleccionar múltiples
+                          archivos
+                        </Typography>
+                      </Box>
+                    </>
                   )}
+                </Box>
+
+                {/* Campo de Descripción Física debajo del área de imágenes */}
+                <Box sx={{ mt: 3, width: '570px', ml: '-20px' }}>
+                  <FormInput
+                    label="Descripción Física"
+                    value={form.descripcion_fisica}
+                    onChange={v => setForm({ ...form, descripcion_fisica: v })}
+                    multiline
+                    rows={4}
+                    placeholder="Ingrese características físicas relevantes (altura, complexión, cabello, ojos, marcas distintivas, etc.)"
+                    inputProps={{ maxLength: 500 }}
+                    helperText={`${form.descripcion_fisica.length}/500 caracteres`}
+                    InputLabelProps={{ style: { color: '#000' } }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#e0e0e0',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#000',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#000',
+                        },
+                      },
+                    }}
+                  />
                 </Box>
               </Grid>
             </Grid>
@@ -995,6 +1294,170 @@ export default function Cargar() {
         onLocationSelect={handleLocationSelect}
         initialPosition={selectedLocation}
       />
+
+      {/* Modal de visualización de imágenes */}
+      <Modal
+        open={imageModalOpen}
+        onClose={handleCloseImageModal}
+        closeAfterTransition
+        slots={{ backdrop: Backdrop }}
+        slotProps={{
+          backdrop: {
+            timeout: 500,
+            sx: { bgcolor: 'rgba(0, 0, 0, 0.8)' },
+          },
+        }}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1300,
+        }}
+      >
+        <Fade in={imageModalOpen}>
+          <Box
+            sx={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '90vw',
+              height: '90vh',
+              outline: 'none',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {files.length > 0 && (
+              <>
+                {/* Botón cerrar */}
+                <IconButton
+                  onClick={handleCloseImageModal}
+                  sx={{
+                    position: 'absolute',
+                    top: 20,
+                    right: 20,
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    color: '#000',
+                    zIndex: 1,
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 1)',
+                    },
+                  }}
+                  aria-label="Cerrar modal"
+                >
+                  <Close />
+                </IconButton>
+
+                {/* Botón anterior */}
+                {files.length > 1 && (
+                  <IconButton
+                    onClick={handlePrevImage}
+                    sx={{
+                      position: 'absolute',
+                      left: 20,
+                      bgcolor: 'rgba(255, 255, 255, 0.9)',
+                      color: '#000',
+                      zIndex: 1,
+                      '&:hover': {
+                        bgcolor: 'rgba(255, 255, 255, 1)',
+                      },
+                    }}
+                    aria-label="Imagen anterior"
+                  >
+                    <ArrowBackIos />
+                  </IconButton>
+                )}
+
+                {/* Imagen principal */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                    position: 'relative',
+                  }}
+                >
+                  <img
+                    src={URL.createObjectURL(files[currentImageIndex])}
+                    alt={files[currentImageIndex]?.name || 'Imagen'}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      borderRadius: 8,
+                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                    }}
+                  />
+                </Box>
+
+                {/* Botón siguiente */}
+                {files.length > 1 && (
+                  <IconButton
+                    onClick={handleNextImage}
+                    sx={{
+                      position: 'absolute',
+                      right: 20,
+                      bgcolor: 'rgba(255, 255, 255, 0.9)',
+                      color: '#000',
+                      zIndex: 1,
+                      '&:hover': {
+                        bgcolor: 'rgba(255, 255, 255, 1)',
+                      },
+                    }}
+                    aria-label="Imagen siguiente"
+                  >
+                    <ArrowForwardIos />
+                  </IconButton>
+                )}
+
+                {/* Contador de imágenes */}
+                {files.length > 1 && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 20,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      bgcolor: 'rgba(0, 0, 0, 0.7)',
+                      color: '#fff',
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      fontSize: 14,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {currentImageIndex + 1} de {files.length}
+                  </Box>
+                )}
+
+                {/* Nombre del archivo */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 20,
+                    left: 20,
+                    bgcolor: 'rgba(0, 0, 0, 0.7)',
+                    color: '#fff',
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    fontSize: 12,
+                    maxWidth: '300px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {files[currentImageIndex]?.name}
+                </Box>
+              </>
+            )}
+          </Box>
+        </Fade>
+      </Modal>
 
       <Footer />
     </>
