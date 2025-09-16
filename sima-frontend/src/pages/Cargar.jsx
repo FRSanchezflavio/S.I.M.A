@@ -1299,7 +1299,7 @@ export default function Cargar() {
             >
               <Button
                 variant="outlined"
-                onClick={() => nav('/')}
+                onClick={() => nav('/dashboard')}
                 sx={{
                   color: 'var(--secondary)',
                   borderColor: 'var(--secondary)',
