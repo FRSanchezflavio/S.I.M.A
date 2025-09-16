@@ -54,17 +54,6 @@ export default function Dashboard() {
     }
   `;
 
-  const scaleIn = keyframes`
-    from {
-      opacity: 0;
-      transform: scale(0.9);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  `;
-
   const menuItems = [
     {
       id: 0,
@@ -73,12 +62,12 @@ export default function Dashboard() {
       description: 'Cargar mencionado/aprehendido',
       icon: (
         <PersonAdd
-          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } }}
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
         />
       ),
       path: '/cargar',
-      color: 'var(--primary)',
-      hoverColor: 'var(--secondary)',
+      color: 'var(--secondary)',
+      hoverColor: 'var(--accent)',
     },
     {
       id: 1,
@@ -86,7 +75,7 @@ export default function Dashboard() {
       subtitle: 'Consultar datos',
       description: 'Buscar mencionado/aprehendido',
       icon: (
-        <Search sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } }} />
+        <Search sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }} />
       ),
       path: '/buscar',
       color: 'var(--secondary)',
@@ -99,12 +88,12 @@ export default function Dashboard() {
       description: 'Registros delictuales',
       icon: (
         <Assignment
-          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } }}
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
         />
       ),
       path: '/registros',
-      color: 'var(--accent)',
-      hoverColor: 'var(--primary)',
+      color: 'var(--secondary)',
+      hoverColor: 'var(--accent)',
     },
   ];
 
@@ -351,3 +340,7 @@ export default function Dashboard() {
     </Box>
   );
 }
+
+<Box sx={{ mt: 'auto' }}>
+  <Footer />
+</Box>;

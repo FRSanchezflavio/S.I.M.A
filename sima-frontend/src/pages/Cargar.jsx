@@ -929,9 +929,9 @@ export default function Cargar() {
                       <Button
                         variant="contained"
                         sx={{
-                          bgcolor: '#15616f',
+                          bgcolor: 'var(--secondary)',
                           '&:hover': {
-                            bgcolor: '#0d4650',
+                            bgcolor: 'var(--accent)',
                             transform: 'translateY(-2px)',
                             boxShadow: '0 6px 20px rgba(21,97,111,0.3)',
                           },
@@ -1020,10 +1020,11 @@ export default function Cargar() {
                               document.getElementById('file-input-add').click()
                             }
                             sx={{
-                              borderColor: '#15616f',
-                              color: '#15616f',
+                              borderColor: 'var(--secondary)',
+                              color: 'var(--secondary)',
                               '&:hover': {
-                                bgcolor: '#15616f',
+                                bgcolor: 'var(--accent)',
+                                borderColor: 'var(--accent)',
                                 color: '#fff',
                                 transform: 'translateY(-1px)',
                               },
@@ -1283,6 +1284,69 @@ export default function Cargar() {
                 </Box>
               </Grid>
             </Grid>
+
+            {/* Botones de acción */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mt: 4,
+                pt: 3,
+                borderTop: '2px solid #e0e0e0',
+                gap: 2,
+              }}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => nav('/')}
+                sx={{
+                  color: 'var(--secondary)',
+                  borderColor: 'var(--secondary)',
+                  '&:hover': {
+                    borderColor: 'var(--accent)',
+                    bgcolor: 'var(--accent)',
+                    color: '#fff',
+                  },
+                  py: 1.5,
+                  px: 3,
+                  fontSize: '1.3rem',
+                  fontWeight: 900,
+                  textTransform: 'none',
+                }}
+              >
+                ← Volver al inicio
+              </Button>
+
+              <Button
+                variant="contained"
+                onClick={onSubmit}
+                disabled={!canSave}
+                sx={{
+                  bgcolor: canSave ? 'var(--secondary)' : '#ccc',
+                  color: '#fff',
+                  '&:hover': {
+                    bgcolor: canSave ? 'var(--accent)' : '#ccc',
+                    transform: canSave ? 'translateY(-2px)' : 'none',
+                    boxShadow: canSave
+                      ? '0 6px 20px rgba(21,97,111,0.3)'
+                      : 'none',
+                  },
+                  '&:disabled': {
+                    bgcolor: '#ccc',
+                    color: '#999',
+                  },
+                  py: 1.5,
+                  px: 4,
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                💾 Guardar mencionado/aprehendido
+              </Button>
+            </Box>
           </CardContent>
         </Card>
       </Container>
