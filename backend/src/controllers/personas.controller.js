@@ -79,6 +79,7 @@ const personSchema = Joi.object({
       );
     }),
   observaciones: Joi.string().optional().allow('', null),
+  descripcion_fisica: Joi.string().max(500).optional().allow('', null),
   comisaria: Joi.string().optional().allow('', null),
   comisaria_hecho: Joi.string().optional().allow('', null),
   // Campos nuevos agregados
@@ -135,6 +136,7 @@ exports.search = async (req, res, next) => {
       'unidades_regionales',
       'fecha_carga',
       'observaciones',
+      'descripcion_fisica',
     ];
 
     for (const field of allowedFields) {
@@ -176,7 +178,8 @@ exports.search = async (req, res, next) => {
           'email',
           'comisaria',
           'comisaria_hecho',
-          'observaciones'
+          'observaciones',
+          'descripcion_fisica'
         )
         .orderBy('apellido', 'asc');
 
@@ -202,6 +205,7 @@ exports.search = async (req, res, next) => {
           'Comisaría',
           'Comisaría del Hecho',
           'Observaciones',
+          'Descripción Física',
         ];
         res.write(headers.join(';') + '\n');
         for (const r of rows) {
@@ -219,6 +223,7 @@ exports.search = async (req, res, next) => {
             r.comisaria || '',
             r.comisaria_hecho || '',
             (r.observaciones || '').replace(/[\r\n]+/g, ' '),
+            (r.descripcion_fisica || '').replace(/[\r\n]+/g, ' '),
           ]
             .map(v => `${v}`.replace(/;/g, ','))
             .join(';');
@@ -245,6 +250,11 @@ exports.search = async (req, res, next) => {
           { header: 'Comisaría', key: 'comisaria', width: 15 },
           { header: 'Comisaría del Hecho', key: 'comisaria_hecho', width: 20 },
           { header: 'Observaciones', key: 'observaciones', width: 40 },
+          {
+            header: 'Descripción Física',
+            key: 'descripcion_fisica',
+            width: 30,
+          },
         ];
         ws.addRows(rows);
         res.setHeader(
