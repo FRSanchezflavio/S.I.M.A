@@ -96,7 +96,6 @@ export default function ListaAntecedentesPersonales({
       descripcion: delito.descripcion || '',
       lugar: delito.lugar || '',
       fecha_hecho: delito.fecha_hecho || '',
-      estado: delito.estado || 'en_proceso',
       observaciones: delito.observaciones || '',
     });
     setEditDialog({ open: true, delito });
@@ -124,19 +123,6 @@ export default function ListaAntecedentesPersonales({
       showToast('Antecedente eliminado exitosamente', 'success');
     } catch (error) {
       showToast('Error al eliminar el antecedente', 'error');
-    }
-  };
-
-  const getEstadoColor = estado => {
-    switch (estado) {
-      case 'resuelto':
-        return 'success';
-      case 'en_proceso':
-        return 'warning';
-      case 'pendiente':
-        return 'error';
-      default:
-        return 'default';
     }
   };
 
@@ -170,19 +156,6 @@ export default function ListaAntecedentesPersonales({
       month: '2-digit',
       year: 'numeric',
     });
-  };
-
-  const formatEstado = estado => {
-    switch (estado) {
-      case 'resuelto':
-        return 'RESUELTO';
-      case 'en_proceso':
-        return 'EN PROCESO';
-      case 'pendiente':
-        return 'PENDIENTE';
-      default:
-        return estado?.toUpperCase() || 'DESCONOCIDO';
-    }
   };
 
   // Paginación para tabla
@@ -255,9 +228,7 @@ export default function ListaAntecedentesPersonales({
             <TableCell>
               <strong>Fecha</strong>
             </TableCell>
-            <TableCell>
-              <strong>Estado</strong>
-            </TableCell>
+
             <TableCell>
               <strong>Comisaría</strong>
             </TableCell>
@@ -296,13 +267,6 @@ export default function ListaAntecedentesPersonales({
                 <Typography variant="body2">
                   {formatFecha(delito.fecha_hecho)}
                 </Typography>
-              </TableCell>
-              <TableCell>
-                <Chip
-                  label={formatEstado(delito.estado)}
-                  color={getEstadoColor(delito.estado)}
-                  size="small"
-                />
               </TableCell>
               <TableCell>
                 <Typography variant="body2">
@@ -369,22 +333,14 @@ export default function ListaAntecedentesPersonales({
             <Card
               elevation={3}
               sx={{
-                borderLeft: `6px solid ${
-                  getEstadoColor(delito.estado) === 'error'
-                    ? '#d32f2f'
-                    : getEstadoColor(delito.estado) === 'warning'
-                    ? '#ed6c02'
-                    : getEstadoColor(delito.estado) === 'success'
-                    ? '#2e7d32'
-                    : '#757575'
-                }`,
+                borderLeft: `6px solid #1a365d`,
                 background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                 border: '1px solid #e0e0e0',
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   transform: 'translateY(-2px)',
                   boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                  borderLeft: `6px solid #1a365d`,
+                  borderLeft: `6px solid #2c5282`,
                 },
               }}
             >
@@ -460,16 +416,6 @@ export default function ListaAntecedentesPersonales({
                       spacing={1}
                       sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}
                     >
-                      <Chip
-                        label={formatEstado(delito.estado)}
-                        color={getEstadoColor(delito.estado)}
-                        size="medium"
-                        sx={{
-                          fontWeight: 600,
-                          textTransform: 'uppercase',
-                          fontSize: '0.75rem',
-                        }}
-                      />
                       <Chip
                         icon={<DateIcon />}
                         label={formatFecha(delito.fecha_hecho)}
@@ -841,16 +787,6 @@ export default function ListaAntecedentesPersonales({
                   </Typography>
                 </Grid>
               )}
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="primary">
-                  <strong>Estado:</strong>
-                </Typography>
-                <Chip
-                  label={formatEstado(viewDialog.delito.estado)}
-                  color={getEstadoColor(viewDialog.delito.estado)}
-                  size="small"
-                />
-              </Grid>
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle2" color="primary">
                   <strong>Fecha del hecho:</strong>
