@@ -2,49 +2,52 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  Paper,
-  Chip,
-  Stack,
-  Button,
-  Grid,
-  Collapse,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Alert,
-  Divider,
-  Avatar,
   Card,
   CardContent,
   CardActions,
+  Grid,
+  Chip,
+  Button,
+  IconButton,
+  Collapse,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Pagination,
   TablePagination,
-  Tooltip,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  TextField,
+  Alert,
 } from '@mui/material';
+
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   Visibility as VisibilityIcon,
-  PhotoCamera as PhotoCameraIcon,
-  Close as CloseIcon,
-  Person as PersonIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
   LocationOn as LocationIcon,
-  DateRange as DateIcon,
-  Gavel as GavelIcon,
-  Description as DescriptionIcon,
+  AccessTime as AccessTimeIcon,
+  PhotoCamera as PhotoCameraIcon,
+  CalendarToday as DateIcon,
+  Notes as NotesIcon,
+  Person as PersonIcon,
+  Security as SecurityIcon,
+  LocalPolice as PoliceIcon,
+  DirectionsCar as CarIcon,
+  Home as HomeIcon,
+  AttachMoney as MoneyIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
+
 import { useToast } from './ToastProvider';
 
 /**
@@ -88,86 +91,98 @@ export default function ListaAntecedentesPersonales({
 
   const handleEdit = delito => {
     setEditForm({
-      tipo: delito.tipo,
-      modalidad: delito.modalidad,
-      descripcion: delito.descripcion,
-      lugar: delito.lugar,
-      comisaria_hecho: delito.comisaria_hecho,
-      estado: delito.estado,
-      juzgado: delito.juzgado,
-      fecha_hecho: delito.fecha_hecho,
-      observaciones: delito.observaciones,
+      tipo: delito.tipo || '',
+      modalidad: delito.modalidad || '',
+      descripcion: delito.descripcion || '',
+      lugar: delito.lugar || '',
+      fecha_hecho: delito.fecha_hecho || '',
+      estado: delito.estado || 'en_proceso',
+      observaciones: delito.observaciones || '',
     });
     setEditDialog({ open: true, delito });
     setEditError('');
   };
 
   const handleSaveEdit = async () => {
-    setEditError('');
-
-    if (!editForm.tipo || !editForm.descripcion?.trim()) {
-      setEditError('Tipo y descripción son obligatorios');
+    if (!editForm.descripcion?.trim()) {
+      setEditError('La descripción es requerida');
       return;
     }
-
     try {
       await onActualizar(editDialog.delito.id, editForm);
-      showToast('Antecedente actualizado correctamente', 'success');
       setEditDialog({ open: false, delito: null });
-    } catch (err) {
-      setEditError(err.message || 'Error al actualizar');
-      showToast('Error al actualizar el antecedente', 'error');
+      showToast('Antecedente actualizado exitosamente', 'success');
+    } catch (error) {
+      setEditError('Error al actualizar el antecedente');
     }
   };
 
   const handleDelete = async () => {
     try {
       await onEliminar(deleteDialog.delito.id);
-      showToast('Antecedente eliminado correctamente', 'success');
       setDeleteDialog({ open: false, delito: null });
-    } catch (err) {
+      showToast('Antecedente eliminado exitosamente', 'success');
+    } catch (error) {
       showToast('Error al eliminar el antecedente', 'error');
     }
   };
 
   const getEstadoColor = estado => {
-    const colores = {
-      en_proceso: 'warning',
-      resuelto: 'success',
-      archivado: 'default',
-      suspendido: 'secondary',
-    };
-    return colores[estado] || 'default';
+    switch (estado) {
+      case 'resuelto':
+        return 'success';
+      case 'en_proceso':
+        return 'warning';
+      case 'pendiente':
+        return 'error';
+      default:
+        return 'default';
+    }
   };
 
   const getTipoIcon = tipo => {
-    const iconos = {
-      robo: '🚨',
-      hurto: '🔍',
-      estafa: '💰',
-      amenazas: '⚠️',
-      lesiones: '🏥',
-      otros: '📋',
-    };
-    return iconos[tipo] || '📋';
+    switch (tipo) {
+      case 'robo':
+        return '🔓';
+      case 'hurto':
+        return '👜';
+      case 'lesiones':
+        return '🩹';
+      case 'amenazas':
+        return '⚠️';
+      case 'estafa':
+        return '💰';
+      case 'daños':
+        return '🔨';
+      case 'violencia_domestica':
+        return '🏠';
+      case 'trafico_drogas':
+        return '💊';
+      default:
+        return '📋';
+    }
   };
 
   const formatFecha = fecha => {
-    return new Date(fecha).toLocaleDateString('es-AR', {
+    if (!fecha) return 'Sin fecha';
+    return new Date(fecha).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
       year: 'numeric',
-      month: 'short',
-      day: 'numeric',
     });
   };
 
   const formatEstado = estado => {
-    const estados = {
-      en_proceso: 'En Proceso',
-      resuelto: 'Resuelto',
-      archivado: 'Archivado',
-      suspendido: 'Suspendido',
-    };
-    return estados[estado] || estado;
+    switch (estado) {
+      case 'resuelto':
+        return 'RESUELTO';
+      case 'en_proceso':
+        return 'EN PROCESO';
+      case 'pendiente':
+        return 'PENDIENTE';
+      default:
+        return estado?.toUpperCase() || 'DESCONOCIDO';
+    }
   };
 
   // Paginación para tabla
@@ -187,13 +202,6 @@ export default function ListaAntecedentesPersonales({
 
   // Estado vacío mejorado
   if (delitos.length === 0) {
-    // Debug info
-    console.log('ListaAntecedentesPersonalesMejorada - No hay delitos:', {
-      delitos,
-      loading,
-      totalDelitos: delitos.length,
-    });
-
     return (
       <Paper
         sx={{
@@ -228,29 +236,9 @@ export default function ListaAntecedentesPersonales({
         >
           <Typography variant="body2" sx={{ fontWeight: 500 }}>
             💡 <strong>Tip:</strong> Use el botón "AGREGAR DELITO PERSONAL" para
-            comenzar a registrar el historial específico de este sujeto, o
-            cargue una nueva persona con datos de delito desde el formulario
-            principal.
+            crear nuevos registros específicos del sujeto.
           </Typography>
         </Box>
-
-        {/* Información de debug en desarrollo */}
-        {process.env.NODE_ENV === 'development' && (
-          <Box
-            sx={{
-              mt: 2,
-              p: 1,
-              bgcolor: 'grey.100',
-              borderRadius: 1,
-              fontSize: '0.8em',
-            }}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Debug: {delitos.length} delitos cargados, loading:{' '}
-              {loading.toString()}
-            </Typography>
-          </Box>
-        )}
       </Paper>
     );
   }
@@ -318,7 +306,7 @@ export default function ListaAntecedentesPersonales({
               </TableCell>
               <TableCell>
                 <Typography variant="body2">
-                  {delito.comisaria_hecho || '-'}
+                  {delito.comisaria_hecho || 'No especificada'}
                 </Typography>
               </TableCell>
               <TableCell>
@@ -335,37 +323,26 @@ export default function ListaAntecedentesPersonales({
                 </Typography>
               </TableCell>
               <TableCell align="center">
-                <Stack direction="row" spacing={0.5} justifyContent="center">
-                  <Tooltip title="Ver detalles">
-                    <IconButton
-                      size="small"
-                      onClick={() => setViewDialog({ open: true, delito })}
-                    >
-                      <VisibilityIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Editar">
-                    <IconButton size="small" onClick={() => handleEdit(delito)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Eliminar">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => setDeleteDialog({ open: true, delito })}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Stack>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => setViewDialog({ open: true, delito })}
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => setDeleteDialog({ open: true, delito })}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-
-      {/* <TablePagination
+      <TablePagination
         component="div"
         count={delitos.length}
         page={page}
@@ -373,49 +350,56 @@ export default function ListaAntecedentesPersonales({
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[5, 10, 25]}
-        labelRowsPerPage="Registros por página:"
+        labelRowsPerPage="Filas por página:"
         labelDisplayedRows={({ from, to, count }) =>
-          `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+          `${from}-${to} de ${count}`
         }
-      /> */}
+      />
     </TableContainer>
   );
 
-  // Vista de tarjetas (original mejorada)
+  // Vista de tarjetas mejorada con estilo policial
   const renderCardView = () => (
-    <Grid container spacing={2}>
+    <Grid container spacing={3}>
       {delitos.map(delito => {
         const isExpanded = expandedItems.has(delito.id);
 
         return (
           <Grid item xs={12} key={delito.id}>
             <Card
-              elevation={2}
+              elevation={3}
               sx={{
-                borderLeft: `4px solid ${
+                borderLeft: `6px solid ${
                   getEstadoColor(delito.estado) === 'error'
-                    ? '#f44336'
+                    ? '#d32f2f'
                     : getEstadoColor(delito.estado) === 'warning'
-                    ? '#ff9800'
+                    ? '#ed6c02'
                     : getEstadoColor(delito.estado) === 'success'
-                    ? '#666666'
-                    : '#9e9e9e'
+                    ? '#2e7d32'
+                    : '#757575'
                 }`,
-                transition: 'transform 0.2s, box-shadow 0.2s',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                border: '1px solid #e0e0e0',
+                transition: 'all 0.3s ease',
                 '&:hover': {
                   transform: 'translateY(-2px)',
-                  boxShadow: 4,
+                  boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                  borderLeft: `6px solid #1a365d`,
                 },
               }}
             >
               <CardContent sx={{ pb: 1 }}>
-                {/* Header del delito */}
+                {/* Header del delito con estilo policial */}
                 <Box
                   sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
                     mb: 2,
+                    p: 2,
+                    bgcolor: 'rgba(26, 54, 93, 0.05)',
+                    borderRadius: 1,
+                    border: '1px solid rgba(26, 54, 93, 0.1)',
                   }}
                 >
                   <Box sx={{ flex: 1 }}>
@@ -427,260 +411,315 @@ export default function ListaAntecedentesPersonales({
                         mb: 1,
                       }}
                     >
-                      <span style={{ fontSize: '1.2em' }}>
+                      <Box
+                        sx={{
+                          fontSize: '1.5em',
+                          backgroundColor: '#1a365d',
+                          color: 'white',
+                          borderRadius: '50%',
+                          width: 40,
+                          height: 40,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
                         {getTipoIcon(delito.tipo)}
-                      </span>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {delito.tipo.charAt(0).toUpperCase() +
-                          delito.tipo.slice(1).replace('_', ' ')}
-                        {delito.modalidad &&
-                          ` - ${
-                            delito.modalidad.charAt(0).toUpperCase() +
-                            delito.modalidad.slice(1).replace('_', ' ')
-                          }`}
-                      </Typography>
+                      </Box>
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            color: '#1a365d',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5,
+                          }}
+                        >
+                          {delito.tipo.charAt(0).toUpperCase() +
+                            delito.tipo.slice(1).replace('_', ' ')}
+                        </Typography>
+                        {delito.modalidad && (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: '#666',
+                              fontWeight: 500,
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            {delito.modalidad.charAt(0).toUpperCase() +
+                              delito.modalidad.slice(1).replace('_', ' ')}
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
 
                     <Stack
                       direction="row"
                       spacing={1}
-                      sx={{ mb: 1, flexWrap: 'wrap', gap: 0.5 }}
+                      sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}
                     >
                       <Chip
                         label={formatEstado(delito.estado)}
                         color={getEstadoColor(delito.estado)}
-                        size="small"
+                        size="medium"
+                        sx={{
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          fontSize: '0.75rem',
+                        }}
                       />
                       <Chip
                         icon={<DateIcon />}
                         label={formatFecha(delito.fecha_hecho)}
                         variant="outlined"
-                        size="small"
+                        size="medium"
+                        sx={{
+                          borderColor: '#1a365d',
+                          color: '#1a365d',
+                          fontWeight: 500,
+                        }}
                       />
                       {delito.comisaria_hecho && (
                         <Chip
                           icon={<LocationIcon />}
                           label={delito.comisaria_hecho}
                           variant="outlined"
-                          size="small"
+                          size="medium"
+                          sx={{
+                            borderColor: '#2c5282',
+                            color: '#2c5282',
+                            fontWeight: 500,
+                          }}
                         />
                       )}
                       {delito.fotos?.length > 0 && (
                         <Chip
                           icon={<PhotoCameraIcon />}
-                          label={`${delito.fotos.length} foto${
+                          label={`${delito.fotos.length} evidencia${
                             delito.fotos.length > 1 ? 's' : ''
                           }`}
-                          variant="outlined"
-                          size="small"
+                          variant="filled"
+                          size="medium"
+                          sx={{
+                            bgcolor: '#ed6c02',
+                            color: 'white',
+                            fontWeight: 600,
+                          }}
                         />
                       )}
                     </Stack>
 
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
+                    <Box
                       sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: isExpanded ? 'none' : 2,
-                        WebkitBoxOrient: 'vertical',
-                        lineHeight: 1.4,
+                        p: 2,
+                        bgcolor: '#f8f9fa',
+                        borderRadius: 1,
+                        border: '1px solid #dee2e6',
                       }}
                     >
-                      {delito.descripcion}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => toggleExpanded(delito.id)}
-                    >
-                      {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </IconButton>
-                  </Box>
-                </Box>
-
-                {/* Información expandida */}
-                <Collapse in={isExpanded}>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
-                    {delito.lugar && (
-                      <Grid item xs={12} sm={6}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            mb: 1,
-                          }}
-                        >
-                          <LocationIcon fontSize="small" color="action" />
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary"
-                          >
-                            Lugar del Hecho
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2">{delito.lugar}</Typography>
-                      </Grid>
-                    )}
-
-                    {delito.juzgado && (
-                      <Grid item xs={12} sm={6}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            mb: 1,
-                          }}
-                        >
-                          <GavelIcon fontSize="small" color="action" />
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary"
-                          >
-                            Juzgado
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2">
-                          {delito.juzgado}
-                        </Typography>
-                      </Grid>
-                    )}
-
-                    <Grid item xs={12} sm={6}>
-                      <Box
+                      <Typography
+                        variant="body1"
                         sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          mb: 1,
+                          color: '#495057',
+                          lineHeight: 1.6,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: isExpanded ? 'none' : 3,
+                          WebkitBoxOrient: 'vertical',
                         }}
                       >
-                        <DateIcon fontSize="small" color="action" />
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Fecha de Registro
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2">
-                        {formatFecha(delito.createdAt)}
+                        <strong>Descripción:</strong> {delito.descripcion}
                       </Typography>
-                    </Grid>
+                    </Box>
+                  </Box>
 
-                    {delito.observaciones && (
-                      <Grid item xs={12}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            mb: 1,
-                          }}
-                        >
-                          <DescriptionIcon fontSize="small" color="action" />
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary"
+                  <IconButton
+                    size="large"
+                    onClick={() => toggleExpanded(delito.id)}
+                    sx={{
+                      ml: 2,
+                      bgcolor: '#1a365d',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: '#2c5282',
+                      },
+                    }}
+                  >
+                    {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  </IconButton>
+                </Box>
+
+                {/* Información expandida con estilo policial */}
+                <Collapse in={isExpanded}>
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 2,
+                      bgcolor: 'rgba(26, 54, 93, 0.02)',
+                      borderRadius: 1,
+                      border: '1px solid rgba(26, 54, 93, 0.1)',
+                    }}
+                  >
+                    <Grid container spacing={2}>
+                      {delito.lugar && (
+                        <Grid item xs={12} sm={6}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              mb: 1,
+                            }}
                           >
-                            Observaciones
+                            <LocationIcon sx={{ color: '#1a365d' }} />
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              Lugar:
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            {delito.lugar}
                           </Typography>
-                        </Box>
-                        <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
-                          <Typography variant="body2">
+                        </Grid>
+                      )}
+
+                      {delito.fecha_carga && (
+                        <Grid item xs={12} sm={6}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              mb: 1,
+                            }}
+                          >
+                            <AccessTimeIcon sx={{ color: '#1a365d' }} />
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              Fecha de carga:
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatFecha(delito.fecha_carga)}
+                          </Typography>
+                        </Grid>
+                      )}
+
+                      {delito.observaciones && (
+                        <Grid item xs={12}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              mb: 1,
+                            }}
+                          >
+                            <NotesIcon sx={{ color: '#1a365d' }} />
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              Observaciones:
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
                             {delito.observaciones}
                           </Typography>
-                        </Paper>
-                      </Grid>
-                    )}
+                        </Grid>
+                      )}
 
-                    {delito.fotos?.length > 0 && (
-                      <Grid item xs={12}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            mb: 1,
-                          }}
-                        >
-                          <PhotoCameraIcon fontSize="small" color="action" />
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary"
+                      {/* Galería de fotos/evidencias */}
+                      {delito.fotos?.length > 0 && (
+                        <Grid item xs={12}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              mb: 1,
+                            }}
                           >
-                            Evidencia Fotográfica ({delito.fotos.length})
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          {delito.fotos.slice(0, 6).map((foto, index) => (
-                            <Avatar
-                              key={index}
-                              src={foto}
-                              variant="rounded"
-                              sx={{
-                                width: 60,
-                                height: 60,
-                                cursor: 'pointer',
-                                border: '2px solid #ddd',
-                                '&:hover': { opacity: 0.8 },
-                              }}
-                              onClick={() =>
-                                setViewDialog({ open: true, delito })
-                              }
-                            />
-                          ))}
-                          {delito.fotos.length > 6 && (
-                            <Avatar
-                              variant="rounded"
-                              sx={{
-                                width: 60,
-                                height: 60,
-                                bgcolor: 'grey.300',
-                                cursor: 'pointer',
-                                border: '2px solid #ddd',
-                              }}
-                              onClick={() =>
-                                setViewDialog({ open: true, delito })
-                              }
+                            <PhotoCameraIcon sx={{ color: '#ed6c02' }} />
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 600 }}
                             >
-                              +{delito.fotos.length - 6}
-                            </Avatar>
-                          )}
-                        </Box>
-                      </Grid>
-                    )}
-                  </Grid>
+                              Evidencias ({delito.fotos.length}):
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}
+                          >
+                            {delito.fotos.map((foto, index) => (
+                              <Box
+                                key={index}
+                                component="img"
+                                src={foto}
+                                alt={`Evidencia ${index + 1}`}
+                                sx={{
+                                  width: 60,
+                                  height: 60,
+                                  objectFit: 'cover',
+                                  borderRadius: 1,
+                                  border: '2px solid #e0e0e0',
+                                  cursor: 'pointer',
+                                  '&:hover': {
+                                    border: '2px solid #1a365d',
+                                  },
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        </Grid>
+                      )}
+                    </Grid>
+                  </Box>
                 </Collapse>
               </CardContent>
 
-              <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+              <CardActions
+                sx={{
+                  justifyContent: 'flex-end',
+                  pt: 0,
+                  bgcolor: 'rgba(248, 249, 250, 0.8)',
+                  borderTop: '1px solid #dee2e6',
+                }}
+              >
                 <Button
-                  size="small"
+                  size="medium"
                   startIcon={<VisibilityIcon />}
                   onClick={() => setViewDialog({ open: true, delito })}
+                  sx={{
+                    color: '#1a365d',
+                    fontWeight: 600,
+                    '&:hover': {
+                      bgcolor: 'rgba(26, 54, 93, 0.1)',
+                    },
+                  }}
                 >
-                  Ver
+                  REVISAR
                 </Button>
-                {/* <Button
-                  size="small"
-                  startIcon={<EditIcon />}
-                  onClick={() => handleEdit(delito)}
-                >
-                  Editar
-                </Button> */}
                 <Button
-                  size="small"
+                  size="medium"
                   color="error"
                   startIcon={<DeleteIcon />}
                   onClick={() => setDeleteDialog({ open: true, delito })}
+                  sx={{
+                    fontWeight: 600,
+                    '&:hover': {
+                      bgcolor: 'rgba(211, 47, 47, 0.1)',
+                    },
+                  }}
                 >
-                  Eliminar
+                  ELIMINAR
                 </Button>
               </CardActions>
             </Card>
@@ -692,27 +731,35 @@ export default function ListaAntecedentesPersonales({
 
   return (
     <Box>
-      {/* Header con estadísticas y controles */}
+      {/* Header con estilo policial mejorado */}
       <Box
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           mb: 3,
-          p: 2,
-          bgcolor: 'grey.50',
+          p: 3,
+          background: 'linear-gradient(135deg, #1a365d 0%, #2c5282 100%)',
           borderRadius: 2,
+          color: 'white',
+          boxShadow: '0 4px 12px rgba(26, 54, 93, 0.3)',
         }}
       >
         <Box>
           <Typography
-            variant="h6"
-            sx={{ fontWeight: 600, color: 'text.primary' }}
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              color: 'white',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              mb: 0.5,
+            }}
           >
-            Antecedentes Personales ({delitos.length})
+            📋 ANTECEDENTES PERSONALES ({delitos.length})
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Historial específico independiente de registros oficiales
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+            Historial específico de delitos registrados
           </Typography>
         </Box>
 
@@ -722,6 +769,14 @@ export default function ListaAntecedentesPersonales({
               variant={viewMode === 'cards' ? 'contained' : 'outlined'}
               size="small"
               onClick={() => setViewMode('cards')}
+              sx={{
+                color: viewMode === 'cards' ? '#1a365d' : 'white',
+                borderColor: 'white',
+                bgcolor: viewMode === 'cards' ? 'white' : 'transparent',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                },
+              }}
             >
               Tarjetas
             </Button>
@@ -729,6 +784,14 @@ export default function ListaAntecedentesPersonales({
               variant={viewMode === 'table' ? 'contained' : 'outlined'}
               size="small"
               onClick={() => setViewMode('table')}
+              sx={{
+                color: viewMode === 'table' ? '#1a365d' : 'white',
+                borderColor: 'white',
+                bgcolor: viewMode === 'table' ? 'white' : 'transparent',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                },
+              }}
             >
               Tabla
             </Button>
@@ -736,161 +799,100 @@ export default function ListaAntecedentesPersonales({
         )}
       </Box>
 
-      {/* Resumen estadístico */}
-      {delitos.length > 0 && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-            <Typography variant="body2">
-              <strong>Resueltos:</strong>{' '}
-              {delitos.filter(d => d.estado === 'resuelto').length}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Último registro:</strong>{' '}
-              {formatFecha(
-                Math.max(...delitos.map(d => new Date(d.createdAt)))
-              )}
-            </Typography>
-          </Box>
-        </Alert>
-      )}
-
       {/* Contenido principal */}
       {viewMode === 'table' ? renderTableView() : renderCardView()}
 
-      {/* Dialog de edición */}
+      {/* Dialog de vista detallada */}
       <Dialog
-        open={editDialog.open}
-        onClose={() => setEditDialog({ open: false, delito: null })}
+        open={viewDialog.open}
+        onClose={() => setViewDialog({ open: false, delito: null })}
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Editar Antecedente Personal</DialogTitle>
-        <DialogContent dividers>
-          {editError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {editError}
-            </Alert>
+        <DialogTitle sx={{ bgcolor: '#1a365d', color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <span style={{ fontSize: '1.5em' }}>
+              {viewDialog.delito && getTipoIcon(viewDialog.delito.tipo)}
+            </span>
+            <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>
+              Detalle del Antecedente
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {viewDialog.delito && (
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="primary">
+                  <strong>Tipo:</strong>
+                </Typography>
+                <Typography variant="body2">
+                  {viewDialog.delito.tipo.charAt(0).toUpperCase() +
+                    viewDialog.delito.tipo.slice(1).replace('_', ' ')}
+                </Typography>
+              </Grid>
+              {viewDialog.delito.modalidad && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="primary">
+                    <strong>Modalidad:</strong>
+                  </Typography>
+                  <Typography variant="body2">
+                    {viewDialog.delito.modalidad.replace('_', ' ')}
+                  </Typography>
+                </Grid>
+              )}
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="primary">
+                  <strong>Estado:</strong>
+                </Typography>
+                <Chip
+                  label={formatEstado(viewDialog.delito.estado)}
+                  color={getEstadoColor(viewDialog.delito.estado)}
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="primary">
+                  <strong>Fecha del hecho:</strong>
+                </Typography>
+                <Typography variant="body2">
+                  {formatFecha(viewDialog.delito.fecha_hecho)}
+                </Typography>
+              </Grid>
+              {viewDialog.delito.lugar && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="primary">
+                    <strong>Lugar:</strong>
+                  </Typography>
+                  <Typography variant="body2">
+                    {viewDialog.delito.lugar}
+                  </Typography>
+                </Grid>
+              )}
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" color="primary">
+                  <strong>Descripción:</strong>
+                </Typography>
+                <Typography variant="body2">
+                  {viewDialog.delito.descripcion}
+                </Typography>
+              </Grid>
+              {viewDialog.delito.observaciones && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="primary">
+                    <strong>Observaciones:</strong>
+                  </Typography>
+                  <Typography variant="body2">
+                    {viewDialog.delito.observaciones}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
           )}
-
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                select
-                label="Tipo de delito"
-                fullWidth
-                value={editForm.tipo || ''}
-                onChange={e =>
-                  setEditForm(prev => ({ ...prev, tipo: e.target.value }))
-                }
-                sx={{ mb: 2 }}
-              >
-                <MenuItem value="robo">Robo</MenuItem>
-                <MenuItem value="hurto">Hurto</MenuItem>
-                <MenuItem value="estafa">Estafa</MenuItem>
-                <MenuItem value="amenazas">Amenazas</MenuItem>
-                <MenuItem value="lesiones">Lesiones</MenuItem>
-                <MenuItem value="otros">Otros</MenuItem>
-              </TextField>
-
-              <TextField
-                select
-                label="Estado"
-                fullWidth
-                value={editForm.estado || ''}
-                onChange={e =>
-                  setEditForm(prev => ({ ...prev, estado: e.target.value }))
-                }
-                sx={{ mb: 2 }}
-              >
-                <MenuItem value="en_proceso">En Proceso</MenuItem>
-                <MenuItem value="resuelto">Resuelto</MenuItem>
-                <MenuItem value="archivado">Archivado</MenuItem>
-                <MenuItem value="suspendido">Suspendido</MenuItem>
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Lugar"
-                fullWidth
-                value={editForm.lugar || ''}
-                onChange={e =>
-                  setEditForm(prev => ({ ...prev, lugar: e.target.value }))
-                }
-                sx={{ mb: 2 }}
-              />
-
-              <TextField
-                type="date"
-                label="Fecha del hecho"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={editForm.fecha_hecho || ''}
-                onChange={e =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    fecha_hecho: e.target.value,
-                  }))
-                }
-                sx={{ mb: 2 }}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                label="Comisaría del hecho"
-                fullWidth
-                value={editForm.comisaria_hecho || ''}
-                onChange={e =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    comisaria_hecho: e.target.value,
-                  }))
-                }
-                sx={{ mb: 2 }}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                label="Descripción"
-                fullWidth
-                multiline
-                rows={4}
-                value={editForm.descripcion || ''}
-                onChange={e =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    descripcion: e.target.value,
-                  }))
-                }
-                sx={{ mb: 2 }}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                label="Observaciones"
-                fullWidth
-                multiline
-                rows={3}
-                value={editForm.observaciones || ''}
-                onChange={e =>
-                  setEditForm(prev => ({
-                    ...prev,
-                    observaciones: e.target.value,
-                  }))
-                }
-              />
-            </Grid>
-          </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialog({ open: false, delito: null })}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSaveEdit} variant="contained">
-            Guardar Cambios
+          <Button onClick={() => setViewDialog({ open: false, delito: null })}>
+            Cerrar
           </Button>
         </DialogActions>
       </Dialog>
@@ -899,32 +901,13 @@ export default function ListaAntecedentesPersonales({
       <Dialog
         open={deleteDialog.open}
         onClose={() => setDeleteDialog({ open: false, delito: null })}
-        maxWidth="sm"
       >
-        <DialogTitle sx={{ color: 'error.main' }}>
-          Confirmar Eliminación
-        </DialogTitle>
+        <DialogTitle>Confirmar eliminación</DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Esta acción no se puede deshacer. El antecedente se eliminará
-            permanentemente.
-          </Alert>
-          <Typography>
-            ¿Está seguro que desea eliminar este antecedente personal?
-          </Typography>
-          {deleteDialog.delito && (
-            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {getTipoIcon(deleteDialog.delito.tipo)}{' '}
-                {deleteDialog.delito.tipo.toUpperCase()} -{' '}
-                {formatFecha(deleteDialog.delito.fecha_hecho)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {deleteDialog.delito.descripcion.substring(0, 100)}
-                {deleteDialog.delito.descripcion.length > 100 && '...'}
-              </Typography>
-            </Box>
-          )}
+          <DialogContentText>
+            ¿Está seguro que desea eliminar este antecedente personal? Esta
+            acción no se puede deshacer.
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
@@ -933,247 +916,10 @@ export default function ListaAntecedentesPersonales({
             Cancelar
           </Button>
           <Button onClick={handleDelete} color="error" variant="contained">
-            Eliminar Definitivamente
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Dialog de visualización completa */}
-      <Dialog
-        open={viewDialog.open}
-        onClose={() => setViewDialog({ open: false, delito: null })}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            bgcolor: 'primary.main',
-            color: 'white',
-          }}
-        >
-          <Typography variant="h6">Detalle del Antecedente Personal</Typography>
-          <IconButton
-            onClick={() => setViewDialog({ open: false, delito: null })}
-            sx={{ color: 'white' }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          {viewDialog.delito && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}
-                >
-                  <Box sx={{ fontSize: '2em' }}>
-                    {getTipoIcon(viewDialog.delito.tipo)}
-                  </Box>
-                  <Box>
-                    <Typography variant="h5" gutterBottom>
-                      {viewDialog.delito.tipo.charAt(0).toUpperCase() +
-                        viewDialog.delito.tipo.slice(1).replace('_', ' ')}
-                      {viewDialog.delito.modalidad &&
-                        ` - ${viewDialog.delito.modalidad.replace('_', ' ')}`}
-                    </Typography>
-                    <Stack direction="row" spacing={1}>
-                      <Chip
-                        label={formatEstado(viewDialog.delito.estado)}
-                        color={getEstadoColor(viewDialog.delito.estado)}
-                      />
-                      <Chip
-                        icon={<DateIcon />}
-                        label={formatFecha(viewDialog.delito.fecha_hecho)}
-                        variant="outlined"
-                      />
-                    </Stack>
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
-                  <Typography
-                    variant="subtitle2"
-                    gutterBottom
-                    sx={{ fontWeight: 600 }}
-                  >
-                    Descripción del Hecho
-                  </Typography>
-                  <Typography variant="body1">
-                    {viewDialog.delito.descripcion}
-                  </Typography>
-                </Paper>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Typography
-                  variant="subtitle2"
-                  gutterBottom
-                  sx={{ fontWeight: 600 }}
-                >
-                  <LocationIcon
-                    fontSize="small"
-                    sx={{ verticalAlign: 'middle', mr: 1 }}
-                  />
-                  Información del Lugar
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Lugar:</strong>{' '}
-                  {viewDialog.delito.lugar || 'No especificado'}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Comisaría:</strong>{' '}
-                  {viewDialog.delito.comisaria_hecho || 'No especificada'}
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Typography
-                  variant="subtitle2"
-                  gutterBottom
-                  sx={{ fontWeight: 600 }}
-                >
-                  <DateIcon
-                    fontSize="small"
-                    sx={{ verticalAlign: 'middle', mr: 1 }}
-                  />
-                  Información Temporal
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Fecha del hecho:</strong>{' '}
-                  {formatFecha(viewDialog.delito.fecha_hecho)}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Registrado:</strong>{' '}
-                  {formatFecha(viewDialog.delito.createdAt)}
-                </Typography>
-              </Grid>
-
-              {viewDialog.delito.juzgado && (
-                <Grid item xs={12}>
-                  <Typography
-                    variant="subtitle2"
-                    gutterBottom
-                    sx={{ fontWeight: 600 }}
-                  >
-                    <GavelIcon
-                      fontSize="small"
-                      sx={{ verticalAlign: 'middle', mr: 1 }}
-                    />
-                    Información Judicial
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Juzgado:</strong> {viewDialog.delito.juzgado}
-                  </Typography>
-                </Grid>
-              )}
-
-              {viewDialog.delito.observaciones && (
-                <Grid item xs={12}>
-                  <Typography
-                    variant="subtitle2"
-                    gutterBottom
-                    sx={{ fontWeight: 600 }}
-                  >
-                    <DescriptionIcon
-                      fontSize="small"
-                      sx={{ verticalAlign: 'middle', mr: 1 }}
-                    />
-                    Observaciones Adicionales
-                  </Typography>
-                  <Paper
-                    sx={{ p: 2, bgcolor: 'info.light', color: 'info.dark' }}
-                  >
-                    <Typography variant="body2">
-                      {viewDialog.delito.observaciones}
-                    </Typography>
-                  </Paper>
-                </Grid>
-              )}
-
-              {viewDialog.delito.fotos?.length > 0 && (
-                <Grid item xs={12}>
-                  <Typography
-                    variant="subtitle2"
-                    gutterBottom
-                    sx={{ fontWeight: 600 }}
-                  >
-                    <PhotoCameraIcon
-                      fontSize="small"
-                      sx={{ verticalAlign: 'middle', mr: 1 }}
-                    />
-                    Evidencia Fotográfica ({viewDialog.delito.fotos.length})
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns:
-                        'repeat(auto-fit, minmax(200px, 1fr))',
-                      gap: 2,
-                    }}
-                  >
-                    {viewDialog.delito.fotos.map((foto, index) => (
-                      <Box key={index} sx={{ position: 'relative' }}>
-                        <img
-                          src={foto}
-                          alt={`Evidencia ${index + 1}`}
-                          style={{
-                            width: '100%',
-                            height: 200,
-                            objectFit: 'cover',
-                            borderRadius: 8,
-                            border: '2px solid #ddd',
-                          }}
-                        />
-                        <Chip
-                          label={`Foto ${index + 1}`}
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            top: 8,
-                            left: 8,
-                            bgcolor: 'rgba(0,0,0,0.7)',
-                            color: 'white',
-                          }}
-                        />
-                      </Box>
-                    ))}
-                  </Box>
-                </Grid>
-              )}
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button
-            startIcon={<EditIcon />}
-            onClick={() => {
-              setViewDialog({ open: false, delito: null });
-              handleEdit(viewDialog.delito);
-            }}
-          >
-            Editar
-          </Button>
-          <Button
-            onClick={() => setViewDialog({ open: false, delito: null })}
-            variant="contained"
-          >
-            Cerrar
+            Eliminar
           </Button>
         </DialogActions>
       </Dialog>
     </Box>
   );
 }
-//           >
-//             Cerrar
-//           </Button>
-//         </DialogActions>
-//       </Dialog>
-//     </Box>
-//   );
-// }
