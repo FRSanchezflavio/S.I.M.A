@@ -11,6 +11,7 @@ export default function CardResult({ item, onDetail }) {
   return (
     <Card
       className="card"
+      data-testid="card-result"
       sx={{
         display: 'flex',
         height: '330px',

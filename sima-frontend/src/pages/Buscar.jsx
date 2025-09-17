@@ -24,6 +24,7 @@ import Footer from '../components/Footer';
 import CardResult from '../components/CardResult';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { useSIMAGridMetrics } from '../utils/gridMetrics';
 import DownloadIcon from '@mui/icons-material/Download';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InfoIcon from '@mui/icons-material/Info';
@@ -37,6 +38,40 @@ export default function Buscar() {
   const [error, setError] = useState('');
   const nav = useNavigate();
   const { showToast } = useToast();
+
+  // Integrar métricas específicas de S.I.M.A.
+  const gridMetrics = useSIMAGridMetrics();
+
+  // Efecto para actualizar indicador de scroll y métricas
+  useEffect(() => {
+    const gridElement = document.querySelector('[data-grid="search-results"]');
+    if (!gridElement) return;
+
+    const updateScrollIndicator = () => {
+      const hasScroll = gridElement.scrollHeight > gridElement.clientHeight;
+      gridElement.setAttribute('data-has-scroll', hasScroll.toString());
+
+      // Actualizar métricas cuando cambie el scroll
+      if (items.length > 0) {
+        setTimeout(() => gridMetrics.analizarGrid(), 100);
+      }
+    };
+
+    // Verificar al montar y cuando cambie el contenido
+    updateScrollIndicator();
+
+    // Observer para cambios en el tamaño
+    const resizeObserver = new ResizeObserver(updateScrollIndicator);
+    resizeObserver.observe(gridElement);
+
+    // Listener para cambios de ventana
+    window.addEventListener('resize', updateScrollIndicator);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateScrollIndicator);
+    };
+  }, [items, gridMetrics]);
 
   const opcionesCampos = [
     { value: 'tipo_delito', label: 'Tipo de delito' },
@@ -67,6 +102,10 @@ export default function Buscar() {
 
   const onBuscar = async () => {
     setError('');
+
+    // Iniciar tracking de métricas S.I.M.A.
+    gridMetrics.iniciarBusqueda();
+
     try {
       let params = {};
 
@@ -82,8 +121,14 @@ export default function Buscar() {
 
       const { data } = await api.get('/personas', { params });
       setItems(data.items || []);
+
+      // Finalizar tracking después de renderizado
+      setTimeout(() => {
+        gridMetrics.finalizarBusqueda();
+      }, 100);
     } catch (e) {
       setError('Error en la búsqueda');
+      gridMetrics.finalizarBusqueda(); // También trackear errores
     }
   };
 
@@ -322,12 +367,68 @@ export default function Buscar() {
               </Grid>
             </Grid>
             <Box
+              data-grid="search-results"
+              data-testid="search-results-grid"
               sx={{
                 mt: 2,
                 display: 'grid',
-                height: '700px',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 2fr))',
+                // FIX: Reemplazar altura fija por altura automática responsive para operaciones policiales
+                minHeight: '400px', // Altura mínima para UX consistente
+                height: 'auto', // Altura automática basada en contenido
+                maxHeight: {
+                  // Máxima altura responsive por dispositivo
+                  xs: 'calc(100vh - 300px)', // Móvil: más espacio vertical para patrullaje
+                  sm: 'calc(100vh - 350px)', // Tablet: balance óptimo
+                  md: 'calc(100vh - 400px)', // Desktop: altura controlada para comisarías
+                  lg: 'calc(100vh - 400px)', // Desktop grande: consistencia
+                  xl: 'calc(100vh - 450px)', // Pantallas muy grandes
+                },
+                overflowY: 'auto', // Scroll vertical cuando necesario
+                overflowX: 'hidden', // Prevenir scroll horizontal
+                gridTemplateColumns: {
+                  // Grid responsive mejorado
+                  xs: '1fr', // Móvil: 1 columna para patrullaje
+                  sm: 'repeat(auto-fill, minmax(300px, 1fr))', // Tablet: flexible
+                  md: 'repeat(auto-fill, minmax(350px, 1fr))', // Desktop: original optimizado
+                  lg: 'repeat(auto-fill, minmax(350px, 1fr))', // Consistencia
+                },
                 gap: 2,
+                pr: 1, // Espacio para scrollbar
+                // Transición suave para cambios de altura
+                transition: 'all 0.3s ease-in-out',
+                // Estilos de scrollbar personalizados para S.I.M.A.
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'rgba(21, 77, 113, 0.1)',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'rgba(21, 77, 113, 0.5)',
+                  borderRadius: '4px',
+                  '&:hover': {
+                    background: 'rgba(21, 77, 113, 0.7)',
+                  },
+                },
+                // Indicador visual cuando hay scroll disponible
+                position: 'relative',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: '2px',
+                  background:
+                    'linear-gradient(90deg, transparent, rgba(21, 77, 113, 0.3), transparent)',
+                  opacity: 0,
+                  transition: 'opacity 0.3s ease',
+                  pointerEvents: 'none',
+                },
+                '&[data-has-scroll="true"]::after': {
+                  opacity: 1,
+                },
               }}
             >
               {items.length === 0 && (
