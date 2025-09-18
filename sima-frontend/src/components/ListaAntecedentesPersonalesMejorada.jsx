@@ -60,6 +60,7 @@ export default function ListaAntecedentesPersonales({
   onEliminar,
   loading,
   showTableView = false,
+  isPDFMode = false, // NUEVO: detectar modo PDF
 }) {
   const { showToast } = useToast();
   const [viewMode, setViewMode] = useState(showTableView ? 'table' : 'cards');
@@ -157,6 +158,312 @@ export default function ListaAntecedentesPersonales({
       year: 'numeric',
     });
   };
+
+  const formatEstado = estado => {
+    switch (estado) {
+      case 'activo':
+        return '🟢 Activo';
+      case 'en_proceso':
+        return '🟡 En Proceso';
+      case 'archivado':
+        return '🔴 Archivado';
+      case 'resuelto':
+        return '✅ Resuelto';
+      default:
+        return '⚪ Sin Estado';
+    }
+  };
+
+  // Estilos específicos para PDF
+  const pdfStyles = {
+    container: {
+      backgroundColor: '#ffffff',
+      fontFamily: 'Arial, sans-serif !important',
+      fontSize: '12px',
+      lineHeight: '1.4',
+      color: '#000000',
+      padding: '10px',
+      pageBreakInside: 'avoid',
+    },
+    header: {
+      backgroundColor: '#1a365d',
+      color: '#ffffff',
+      padding: '15px',
+      marginBottom: '15px',
+      textAlign: 'center',
+      fontSize: '16px',
+      fontWeight: 'bold',
+      pageBreakAfter: 'avoid',
+    },
+    card: {
+      border: '2px solid #1a365d',
+      borderRadius: '8px',
+      marginBottom: '15px',
+      padding: '12px',
+      backgroundColor: '#ffffff',
+      pageBreakInside: 'avoid',
+      display: 'block',
+      width: '100%',
+      boxSizing: 'border-box',
+    },
+    cardHeader: {
+      borderBottom: '1px solid #e0e0e0',
+      paddingBottom: '8px',
+      marginBottom: '10px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+    },
+    icon: {
+      width: '30px',
+      height: '30px',
+      backgroundColor: '#1a365d',
+      borderRadius: '50%',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: '#ffffff',
+      fontSize: '16px',
+      marginRight: '10px',
+    },
+    chipContainer: {
+      display: 'flex',
+      gap: '8px',
+      marginBottom: '10px',
+      flexWrap: 'wrap',
+    },
+    chip: {
+      display: 'inline-block',
+      padding: '4px 8px',
+      backgroundColor: '#f0f0f0',
+      border: '1px solid #ddd',
+      borderRadius: '12px',
+      fontSize: '11px',
+      fontWeight: '500',
+    },
+    chipEstado: {
+      backgroundColor: '#e3f2fd',
+      borderColor: '#2196f3',
+      color: '#1976d2',
+    },
+    chipEvidencia: {
+      backgroundColor: '#fff3e0',
+      borderColor: '#ff9800',
+      color: '#f57c00',
+    },
+    descripcion: {
+      backgroundColor: '#f8f9fa',
+      padding: '10px',
+      borderRadius: '4px',
+      border: '1px solid #dee2e6',
+      marginBottom: '10px',
+    },
+    photoGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gap: '8px',
+      marginTop: '10px',
+    },
+    photo: {
+      width: '100%',
+      height: '80px',
+      objectFit: 'cover',
+      border: '1px solid #ddd',
+      borderRadius: '4px',
+    },
+  };
+
+  // Renderizado específico para PDF
+  const renderPDFView = () => (
+    <div style={pdfStyles.container} className="antecedentes-pdf-content">
+      {/* Header */}
+      <div style={pdfStyles.header}>
+        📋 ANTECEDENTES PERSONALES ({delitos.length})
+        <div style={{ fontSize: '12px', marginTop: '5px', opacity: 0.8 }}>
+          Historial específico de delitos registrados
+        </div>
+      </div>
+
+      {/* Cards optimizadas para PDF */}
+      {delitos.map((delito, index) => (
+        <div key={delito.id} style={pdfStyles.card}>
+          {/* Header del delito */}
+          <div style={pdfStyles.cardHeader}>
+            <div style={pdfStyles.icon}>{getTipoIcon(delito.tipo)}</div>
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#1a365d',
+                  marginBottom: '2px',
+                }}
+              >
+                {delito.tipo.charAt(0).toUpperCase() +
+                  delito.tipo.slice(1).replace('_', ' ')}
+              </div>
+              {delito.modalidad && (
+                <div
+                  style={{
+                    fontSize: '11px',
+                    color: '#666',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  {delito.modalidad.charAt(0).toUpperCase() +
+                    delito.modalidad.slice(1).replace('_', ' ')}
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: '11px', color: '#666' }}>
+              Caso #{index + 1}
+            </div>
+          </div>
+
+          {/* Chips de estado */}
+          <div style={pdfStyles.chipContainer}>
+            <span style={{ ...pdfStyles.chip, ...pdfStyles.chipEstado }}>
+              {formatEstado(delito.estado)}
+            </span>
+            <span style={pdfStyles.chip}>
+              📅 {formatFecha(delito.fecha_hecho)}
+            </span>
+            {delito.comisaria_hecho && (
+              <span style={pdfStyles.chip}>📍 {delito.comisaria_hecho}</span>
+            )}
+            {delito.fotos?.length > 0 && (
+              <span style={{ ...pdfStyles.chip, ...pdfStyles.chipEvidencia }}>
+                📷 {delito.fotos.length} evidencia
+                {delito.fotos.length > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+
+          {/* Descripción */}
+          <div style={pdfStyles.descripcion}>
+            <strong>Descripción:</strong> {delito.descripcion}
+          </div>
+
+          {/* Información adicional en formato de tabla simple */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '10px',
+              fontSize: '11px',
+            }}
+          >
+            {delito.lugar_hecho && (
+              <div>
+                <strong>Lugar:</strong> {delito.lugar_hecho}
+              </div>
+            )}
+            {delito.victima && (
+              <div>
+                <strong>Víctima:</strong> {delito.victima}
+              </div>
+            )}
+            {delito.testigos && (
+              <div>
+                <strong>Testigos:</strong> {delito.testigos}
+              </div>
+            )}
+            {delito.evidencias && (
+              <div>
+                <strong>Evidencias:</strong> {delito.evidencias}
+              </div>
+            )}
+          </div>
+
+          {/* Fotos en grid simple */}
+          {delito.fotos && delito.fotos.length > 0 && (
+            <div>
+              <div
+                style={{
+                  fontWeight: 'bold',
+                  marginTop: '10px',
+                  marginBottom: '5px',
+                  fontSize: '11px',
+                }}
+              >
+                📷 Evidencia Fotográfica:
+              </div>
+              <div style={pdfStyles.photoGrid}>
+                {delito.fotos.slice(0, 6).map((foto, fotoIndex) => (
+                  <div key={fotoIndex} style={{ textAlign: 'center' }}>
+                    <img
+                      src={foto}
+                      alt={`Evidencia ${fotoIndex + 1}`}
+                      style={pdfStyles.photo}
+                      onError={e => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontSize: '10px',
+                        color: '#666',
+                        marginTop: '2px',
+                      }}
+                    >
+                      Foto {fotoIndex + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {delito.fotos.length > 6 && (
+                <div
+                  style={{
+                    fontSize: '10px',
+                    color: '#666',
+                    textAlign: 'center',
+                    marginTop: '5px',
+                  }}
+                >
+                  +{delito.fotos.length - 6} evidencias adicionales
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Footer con timestamps */}
+          <div
+            style={{
+              marginTop: '10px',
+              paddingTop: '8px',
+              borderTop: '1px solid #e0e0e0',
+              fontSize: '10px',
+              color: '#666',
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>Creado: {formatFecha(delito.createdAt)}</span>
+            {delito.updatedAt && delito.updatedAt !== delito.createdAt && (
+              <span>Actualizado: {formatFecha(delito.updatedAt)}</span>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {/* Footer del documento */}
+      <div
+        style={{
+          marginTop: '20px',
+          padding: '10px',
+          borderTop: '2px solid #1a365d',
+          fontSize: '10px',
+          color: '#666',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ marginBottom: '5px' }}>
+          CONFIDENCIAL - S.I.M.A - SISTEMA DE INFORMACIÓN POLICIAL
+        </div>
+        <div>Documento generado el {new Date().toLocaleString('es-AR')}</div>
+      </div>
+    </div>
+  );
 
   // Paginación para tabla
   const handleChangePage = (event, newPage) => {
@@ -676,186 +983,198 @@ export default function ListaAntecedentesPersonales({
   );
 
   return (
-    <Box>
-      {/* Header con estilo policial mejorado */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
-          p: 3,
-          background: 'linear-gradient(135deg, #1a365d 0%, #2c5282 100%)',
-          borderRadius: 2,
-          color: 'white',
-          boxShadow: '0 4px 12px rgba(26, 54, 93, 0.3)',
-        }}
-      >
+    <>
+      {/* Renderizado específico para PDF */}
+      {isPDFMode ? (
+        renderPDFView()
+      ) : (
         <Box>
-          <Typography
-            variant="h5"
+          {/* Header con estilo policial mejorado */}
+          <Box
             sx={{
-              fontWeight: 700,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 3,
+              p: 3,
+              background: 'linear-gradient(135deg, #1a365d 0%, #2c5282 100%)',
+              borderRadius: 2,
               color: 'white',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              mb: 0.5,
+              boxShadow: '0 4px 12px rgba(26, 54, 93, 0.3)',
             }}
           >
-            📋 ANTECEDENTES PERSONALES ({delitos.length})
-          </Typography>
-          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-            Historial específico de delitos registrados
-          </Typography>
-        </Box>
+            <Box>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 700,
+                  color: 'white',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                  mb: 0.5,
+                }}
+              >
+                📋 ANTECEDENTES PERSONALES ({delitos.length})
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ color: 'rgba(255,255,255,0.8)' }}
+              >
+                Historial específico de delitos registrados
+              </Typography>
+            </Box>
 
-        {delitos.length > 5 && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant={viewMode === 'cards' ? 'contained' : 'outlined'}
-              size="small"
-              onClick={() => setViewMode('cards')}
-              sx={{
-                color: viewMode === 'cards' ? '#1a365d' : 'white',
-                borderColor: 'white',
-                bgcolor: viewMode === 'cards' ? 'white' : 'transparent',
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.1)',
-                },
-              }}
-            >
-              Tarjetas
-            </Button>
-            <Button
-              variant={viewMode === 'table' ? 'contained' : 'outlined'}
-              size="small"
-              onClick={() => setViewMode('table')}
-              sx={{
-                color: viewMode === 'table' ? '#1a365d' : 'white',
-                borderColor: 'white',
-                bgcolor: viewMode === 'table' ? 'white' : 'transparent',
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.1)',
-                },
-              }}
-            >
-              Tabla
-            </Button>
+            {delitos.length > 5 && (
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant={viewMode === 'cards' ? 'contained' : 'outlined'}
+                  size="small"
+                  onClick={() => setViewMode('cards')}
+                  sx={{
+                    color: viewMode === 'cards' ? '#1a365d' : 'white',
+                    borderColor: 'white',
+                    bgcolor: viewMode === 'cards' ? 'white' : 'transparent',
+                    '&:hover': {
+                      bgcolor: 'rgba(255,255,255,0.1)',
+                    },
+                  }}
+                >
+                  Tarjetas
+                </Button>
+                <Button
+                  variant={viewMode === 'table' ? 'contained' : 'outlined'}
+                  size="small"
+                  onClick={() => setViewMode('table')}
+                  sx={{
+                    color: viewMode === 'table' ? '#1a365d' : 'white',
+                    borderColor: 'white',
+                    bgcolor: viewMode === 'table' ? 'white' : 'transparent',
+                    '&:hover': {
+                      bgcolor: 'rgba(255,255,255,0.1)',
+                    },
+                  }}
+                >
+                  Tabla
+                </Button>
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
 
-      {/* Contenido principal */}
-      {viewMode === 'table' ? renderTableView() : renderCardView()}
+          {/* Contenido principal */}
+          {viewMode === 'table' ? renderTableView() : renderCardView()}
 
-      {/* Dialog de vista detallada */}
-      <Dialog
-        open={viewDialog.open}
-        onClose={() => setViewDialog({ open: false, delito: null })}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ bgcolor: '#1a365d', color: 'white' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <span style={{ fontSize: '1.5em' }}>
-              {viewDialog.delito && getTipoIcon(viewDialog.delito.tipo)}
-            </span>
-            <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>
-              Detalle del Antecedente
-            </Typography>
-          </Box>
-        </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
-          {viewDialog.delito && (
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="primary">
-                  <strong>Tipo:</strong>
-                </Typography>
-                <Typography variant="body2">
-                  {viewDialog.delito.tipo.charAt(0).toUpperCase() +
-                    viewDialog.delito.tipo.slice(1).replace('_', ' ')}
-                </Typography>
-              </Grid>
-              {viewDialog.delito.modalidad && (
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="primary">
-                    <strong>Modalidad:</strong>
-                  </Typography>
-                  <Typography variant="body2">
-                    {viewDialog.delito.modalidad.replace('_', ' ')}
-                  </Typography>
-                </Grid>
-              )}
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="primary">
-                  <strong>Fecha del hecho:</strong>
-                </Typography>
-                <Typography variant="body2">
-                  {formatFecha(viewDialog.delito.fecha_hecho)}
-                </Typography>
-              </Grid>
-              {viewDialog.delito.lugar && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="primary">
-                    <strong>Lugar:</strong>
-                  </Typography>
-                  <Typography variant="body2">
-                    {viewDialog.delito.lugar}
-                  </Typography>
-                </Grid>
-              )}
-              <Grid item xs={12}>
-                <Typography variant="subtitle2" color="primary">
-                  <strong>Descripción:</strong>
-                </Typography>
-                <Typography variant="body2">
-                  {viewDialog.delito.descripcion}
-                </Typography>
-              </Grid>
-              {viewDialog.delito.observaciones && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="primary">
-                    <strong>Observaciones:</strong>
-                  </Typography>
-                  <Typography variant="body2">
-                    {viewDialog.delito.observaciones}
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setViewDialog({ open: false, delito: null })}>
-            Cerrar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Dialog de confirmación de eliminación */}
-      <Dialog
-        open={deleteDialog.open}
-        onClose={() => setDeleteDialog({ open: false, delito: null })}
-      >
-        <DialogTitle>Confirmar eliminación</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            ¿Está seguro que desea eliminar este antecedente personal? Esta
-            acción no se puede deshacer.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => setDeleteDialog({ open: false, delito: null })}
+          {/* Dialog de vista detallada */}
+          <Dialog
+            open={viewDialog.open}
+            onClose={() => setViewDialog({ open: false, delito: null })}
+            maxWidth="md"
+            fullWidth
           >
-            Cancelar
-          </Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
-            Eliminar
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+            <DialogTitle sx={{ bgcolor: '#1a365d', color: 'white' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <span style={{ fontSize: '1.5em' }}>
+                  {viewDialog.delito && getTipoIcon(viewDialog.delito.tipo)}
+                </span>
+                <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>
+                  Detalle del Antecedente
+                </Typography>
+              </Box>
+            </DialogTitle>
+            <DialogContent sx={{ mt: 2 }}>
+              {viewDialog.delito && (
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="primary">
+                      <strong>Tipo:</strong>
+                    </Typography>
+                    <Typography variant="body2">
+                      {viewDialog.delito.tipo.charAt(0).toUpperCase() +
+                        viewDialog.delito.tipo.slice(1).replace('_', ' ')}
+                    </Typography>
+                  </Grid>
+                  {viewDialog.delito.modalidad && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" color="primary">
+                        <strong>Modalidad:</strong>
+                      </Typography>
+                      <Typography variant="body2">
+                        {viewDialog.delito.modalidad.replace('_', ' ')}
+                      </Typography>
+                    </Grid>
+                  )}
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="primary">
+                      <strong>Fecha del hecho:</strong>
+                    </Typography>
+                    <Typography variant="body2">
+                      {formatFecha(viewDialog.delito.fecha_hecho)}
+                    </Typography>
+                  </Grid>
+                  {viewDialog.delito.lugar && (
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" color="primary">
+                        <strong>Lugar:</strong>
+                      </Typography>
+                      <Typography variant="body2">
+                        {viewDialog.delito.lugar}
+                      </Typography>
+                    </Grid>
+                  )}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="primary">
+                      <strong>Descripción:</strong>
+                    </Typography>
+                    <Typography variant="body2">
+                      {viewDialog.delito.descripcion}
+                    </Typography>
+                  </Grid>
+                  {viewDialog.delito.observaciones && (
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" color="primary">
+                        <strong>Observaciones:</strong>
+                      </Typography>
+                      <Typography variant="body2">
+                        {viewDialog.delito.observaciones}
+                      </Typography>
+                    </Grid>
+                  )}
+                </Grid>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => setViewDialog({ open: false, delito: null })}
+              >
+                Cerrar
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Dialog de confirmación de eliminación */}
+          <Dialog
+            open={deleteDialog.open}
+            onClose={() => setDeleteDialog({ open: false, delito: null })}
+          >
+            <DialogTitle>Confirmar eliminación</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                ¿Está seguro que desea eliminar este antecedente personal? Esta
+                acción no se puede deshacer.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => setDeleteDialog({ open: false, delito: null })}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleDelete} color="error" variant="contained">
+                Eliminar
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Box>
+      )}
+    </>
   );
 }

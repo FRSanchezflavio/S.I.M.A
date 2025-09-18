@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Container,
@@ -32,6 +32,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AgregarDelitoEspecifico from '../components/AgregarDelitoEspecifico';
@@ -41,9 +43,6 @@ import useDelitosEspecificos from '../hooks/useDelitosEspecificos';
 import api from '../services/api';
 import { useToast } from '../components/ToastProvider';
 import * as XLSX from 'xlsx';
-import html2pdf from 'html2pdf.js';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 export default function PersonaDetalle() {
   const { id } = useParams();
@@ -67,7 +66,7 @@ export default function PersonaDetalle() {
   // Estados para antecedentes personales
   const [showAntecedentePersonalDialog, setShowAntecedentePersonalDialog] =
     useState(false);
-  const [tabValue, setTabValue] = useState(1); // Cambiar a 1: Solo Antecedentes personales
+  const [tabValue, setTabValue] = useState(0); // CORREGIDO: Solo Antecedentes personales (tab 0)
 
   // Hook para gestión de antecedentes personales
   const {
@@ -122,6 +121,13 @@ export default function PersonaDetalle() {
     let mounted = true;
     (async () => {
       try {
+        // Verificar token antes de hacer llamadas
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          nav('/login');
+          return;
+        }
+
         const [personaRes, registrosRes] = await Promise.all([
           api.get(`/personas/${id}`),
           api.get('/registros', { params: { persona_id: id, page, pageSize } }),
@@ -157,21 +163,39 @@ export default function PersonaDetalle() {
           alias: personaRes.data.alias || '',
         });
       } catch (e) {
+        if (!mounted) return;
+        if (e.response?.status === 401) {
+          // Token expirado, redirigir al login
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          showToast(
+            'Sesión expirada. Por favor, inicia sesión nuevamente.',
+            'error'
+          );
+          nav('/login');
+          return;
+        }
         setError('No se pudo cargar el detalle');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, nav, showToast]);
 
   // Recarga de registros al cambiar paginación
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          nav('/login');
+          return;
+        }
+
         const res = await api.get('/registros', {
           params: { persona_id: id, page, pageSize },
         });
@@ -187,14 +211,25 @@ export default function PersonaDetalle() {
             )
           );
         }
-      } catch (_) {
+      } catch (e) {
+        if (!mounted) return;
+        if (e.response?.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          showToast(
+            'Sesión expirada. Por favor, inicia sesión nuevamente.',
+            'error'
+          );
+          nav('/login');
+          return;
+        }
         // ignorar errores silenciosos aquí; la vista principal ya maneja errores
       }
     })();
     return () => {
       mounted = false;
     };
-  }, [id, page, pageSize]);
+  }, [id, page, pageSize, nav, showToast]);
 
   const fotos = useMemo(() => {
     if (!item) return [];
@@ -253,32 +288,9 @@ export default function PersonaDetalle() {
   };
 
   // Función unificada para manejar el botón AGREGAR DELITO
-  // Detecta el contexto (pestaña activa) para determinar qué acción realizar
+  // Como solo tenemos antecedentes personales, siempre abrir el dialog
   const handleAgregarDelitoUnificado = () => {
-    if (tabValue === 0) {
-      // Pestaña "Antecedentes Oficiales" - navegar a página de agregar delito
-      nav('/agregar-delito', {
-        state: {
-          sujetoId: item.id,
-          prefilledData: {
-            apellido: item.apellido,
-            nombre: item.nombre,
-            dni: item.dni,
-            fecha_nacimiento: item.fecha_nacimiento,
-            edad: item.edad,
-            genero: item.genero,
-            nacionalidad: item.nacionalidad,
-            direccion: item.direccion,
-            telefono: item.telefono,
-            comisaria: item.comisaria,
-            comisaria_hecho: item.comisaria_hecho,
-          },
-        },
-      });
-    } else if (tabValue === 1) {
-      // Pestaña "Antecedentes Personales" - abrir dialog
-      setShowAntecedentePersonalDialog(true);
-    }
+    setShowAntecedentePersonalDialog(true);
   };
 
   const handleActualizarAntecedentePersonal = async (
@@ -509,13 +521,12 @@ export default function PersonaDetalle() {
   // Función para descargar datos de la persona en formato PDF
   const handleDownloadPDF = async () => {
     try {
-      // Validar que existan datos de la persona
+      // Validaciones existentes...
       if (!item) {
         showToast('No hay datos de la persona para exportar', 'error');
         return;
       }
 
-      // Validar permisos de usuario
       if (!canEdit) {
         showToast('No tienes permisos para descargar este reporte', 'error');
         return;
@@ -524,13 +535,416 @@ export default function PersonaDetalle() {
       setIsGeneratingPDF(true);
       showToast('Generando PDF, esto puede tomar unos momentos...', 'info');
 
-      // Buscar el contenido a exportar
-      const contentElement = document.querySelector('.card');
-      if (!contentElement) {
-        throw new Error('No se encontró el contenido a exportar');
+      // CSS específico para PDF - Estilos optimizados para impresión
+      const pdfCSS = `
+        <style>
+          .pdf-container {
+            font-family: 'Arial', 'Helvetica', sans-serif !important;
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+            color: #000000 !important;
+            background-color: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          
+          .pdf-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-bottom: 3px solid #1a365d;
+            background-color: #f8f9fa !important;
+            page-break-after: avoid;
+          }
+          
+          .pdf-title {
+            color: #1a365d !important;
+            margin: 0;
+            font-size: 20px !important;
+            font-weight: bold !important;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+          }
+          
+          .pdf-subtitle {
+            margin: 8px 0 0 0 !important;
+            font-size: 12px !important;
+            color: #666666 !important;
+            font-style: italic;
+          }
+          
+          .pdf-section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+          }
+          
+          .pdf-personal-data {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fafafa;
+          }
+          
+          .pdf-photo-container {
+            flex-shrink: 0;
+            text-align: center;
+          }
+          
+          .pdf-photo {
+            width: 130px !important;
+            height: 170px !important;
+            object-fit: cover !important;
+            border: 3px solid #1a365d !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 8px rgba(26, 54, 93, 0.2) !important;
+          }
+          
+          .pdf-photo-label {
+            margin-top: 8px;
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+          }
+          
+          .pdf-info-container {
+            flex-grow: 1;
+          }
+          
+          .pdf-person-name {
+            color: #1a365d !important;
+            margin: 0 0 15px 0 !important;
+            font-size: 18px !important;
+            font-weight: bold !important;
+            border-bottom: 2px solid #1a365d;
+            padding-bottom: 5px;
+          }
+          
+          .pdf-info-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 12px !important;
+            font-size: 11px !important;
+          }
+          
+          .pdf-info-item {
+            padding: 8px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+          }
+          
+          .pdf-info-label {
+            font-weight: bold !important;
+            color: #1a365d !important;
+            display: block;
+            margin-bottom: 3px;
+          }
+          
+          .pdf-info-value {
+            color: #333333 !important;
+            font-size: 11px !important;
+          }
+          
+          .pdf-full-width {
+            grid-column: 1 / -1 !important;
+          }
+          
+          .pdf-antecedentes {
+            margin-top: 30px;
+            page-break-before: auto;
+          }
+          
+          .pdf-antecedentes-title {
+            color: #1a365d !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            margin-bottom: 15px !important;
+            padding: 10px;
+            background-color: #f0f4f8;
+            border-left: 5px solid #1a365d;
+          }
+          
+          .pdf-footer {
+            margin-top: 30px;
+            padding: 15px;
+            border-top: 2px solid #1a365d;
+            background-color: #f8f9fa;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            page-break-inside: avoid;
+          }
+          
+          .pdf-confidential {
+            font-weight: bold;
+            color: #1a365d !important;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+          }
+          
+          .pdf-generation-info {
+            font-size: 9px;
+            color: #888;
+          }
+          
+          /* Optimización para antecedentes */
+          .antecedentes-pdf-content {
+            font-family: 'Arial', sans-serif !important;
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+          }
+          
+          .antecedentes-pdf-content * {
+            box-sizing: border-box !important;
+            page-break-inside: avoid !important;
+          }
+          
+          .antecedentes-pdf-content img {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+          
+          /* Asegurar que las fotos no se desborden */
+          .antecedentes-pdf-content [style*="grid"] {
+            display: grid !important;
+            gap: 8px !important;
+          }
+          
+          /* Media print optimizations */
+          @media print {
+            .pdf-container {
+              font-size: 12px !important;
+            }
+            .pdf-photo {
+              width: 120px !important;
+              height: 160px !important;
+            }
+          }
+        </style>
+      `;
+
+      // Crear contenedor temporal optimizado para PDF
+      const tempDiv = document.createElement('div');
+      tempDiv.className = 'pdf-container';
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '210mm'; // A4 width
+      tempDiv.style.minHeight = '297mm'; // A4 height
+      tempDiv.style.backgroundColor = '#ffffff';
+      tempDiv.style.padding = '15mm';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '12px';
+      tempDiv.style.lineHeight = '1.4';
+      tempDiv.style.color = '#000000';
+      tempDiv.style.boxSizing = 'border-box';
+
+      // Inyectar CSS específico para PDF
+      const styleElement = document.createElement('div');
+      styleElement.innerHTML = pdfCSS;
+      tempDiv.appendChild(styleElement);
+
+      // Header del documento con clases CSS
+      const header = document.createElement('div');
+      header.className = 'pdf-header';
+      header.innerHTML = `
+        <h1 class="pdf-title">S.I.M.A - Sistema de Información Policial</h1>
+        <p class="pdf-subtitle">Ficha Personal Completa - Generado el ${new Date().toLocaleString(
+          'es-AR'
+        )}</p>
+      `;
+
+      // Sección de datos personales optimizada con CSS
+      const datosPersonales = document.createElement('div');
+      datosPersonales.className = 'pdf-section pdf-personal-data';
+      datosPersonales.innerHTML = `
+        <div class="pdf-photo-container">
+          <img 
+            src="${
+              item.foto_principal ||
+              'https://via.placeholder.com/150x200/f5f5f5/999999?text=Sin+Foto'
+            }" 
+            alt="Fotografía Personal" 
+            class="pdf-photo"
+            onerror="this.src='https://via.placeholder.com/150x200/f5f5f5/999999?text=Sin+Foto'"
+          />
+          <div class="pdf-photo-label">FOTOGRAFÍA OFICIAL</div>
+        </div>
+        <div class="pdf-info-container">
+          <h2 class="pdf-person-name">${item.apellido || 'N/A'}, ${
+        item.nombre || 'N/A'
+      }</h2>
+          <div class="pdf-info-grid">
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">DNI:</span>
+              <span class="pdf-info-value">${item.dni || 'N/A'}</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Fecha de Nacimiento:</span>
+              <span class="pdf-info-value">${
+                item.fecha_nacimiento
+                  ? new Date(item.fecha_nacimiento).toLocaleDateString('es-AR')
+                  : 'N/A'
+              }</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Edad:</span>
+              <span class="pdf-info-value">${item.edad || 'N/A'} años</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Género:</span>
+              <span class="pdf-info-value">${
+                item.genero
+                  ? item.genero.charAt(0).toUpperCase() + item.genero.slice(1)
+                  : 'N/A'
+              }</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Nacionalidad:</span>
+              <span class="pdf-info-value">${item.nacionalidad || 'N/A'}</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Teléfono:</span>
+              <span class="pdf-info-value">${item.telefono || 'N/A'}</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Comisaría:</span>
+              <span class="pdf-info-value">${item.comisaria || 'N/A'}</span>
+            </div>
+            <div class="pdf-info-item pdf-full-width">
+              <span class="pdf-info-label">Domicilio:</span>
+              <span class="pdf-info-value">${item.direccion || 'N/A'}</span>
+            </div>
+            ${
+              item.alias
+                ? `
+              <div class="pdf-info-item pdf-full-width">
+                <span class="pdf-info-label">Alias/Apodos:</span>
+                <span class="pdf-info-value">${item.alias}</span>
+              </div>
+            `
+                : ''
+            }
+            ${
+              item.observaciones
+                ? `
+              <div class="pdf-info-item pdf-full-width">
+                <span class="pdf-info-label">Observaciones:</span>
+                <span class="pdf-info-value">${item.observaciones}</span>
+              </div>
+            `
+                : ''
+            }
+          </div>
+        </div>
+      `;
+
+      // Título de sección de antecedentes
+      const antecedentesTitle = document.createElement('div');
+      antecedentesTitle.className = 'pdf-antecedentes-title';
+      antecedentesTitle.textContent = '📋 ANTECEDENTES PERSONALES';
+
+      // Crear contenedor para antecedentes con React
+      const antecedentesContainer = document.createElement('div');
+      antecedentesContainer.id = 'antecedentes-pdf-container';
+      antecedentesContainer.className = 'pdf-antecedentes';
+
+      // Footer profesional
+      const footer = document.createElement('div');
+      footer.className = 'pdf-footer';
+      footer.innerHTML = `
+        <div class="pdf-confidential">CONFIDENCIAL - S.I.M.A - SISTEMA DE INFORMACIÓN POLICIAL</div>
+        <div class="pdf-generation-info">
+          Documento generado el ${new Date().toLocaleString('es-AR')} | 
+          Usuario: ${me?.nombre || 'Sistema'} | 
+          ID Persona: ${item.id} | 
+          Total Antecedentes: ${antecedentesPersonales.length}
+        </div>
+      `;
+
+      // Ensamblar documento con estructura mejorada
+      tempDiv.appendChild(header);
+      tempDiv.appendChild(datosPersonales);
+      tempDiv.appendChild(antecedentesTitle);
+      tempDiv.appendChild(antecedentesContainer);
+      tempDiv.appendChild(footer);
+
+      document.body.appendChild(tempDiv);
+
+      // Renderizar antecedentes en modo PDF usando React
+      const { createRoot } = await import('react-dom/client');
+      const root = createRoot(antecedentesContainer);
+
+      await new Promise(resolve => {
+        root.render(
+          React.createElement(ListaAntecedentesPersonalesMejorada, {
+            delitos: antecedentesPersonales,
+            loading: false,
+            isPDFMode: true, // MODO PDF ACTIVADO
+            onActualizar: () => {},
+            onEliminar: () => {},
+          })
+        );
+
+        // Esperar a que se renderice
+        setTimeout(resolve, 1000);
+      });
+
+      // Generar PDF con html2canvas
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        width: tempDiv.scrollWidth,
+        height: tempDiv.scrollHeight,
+        logging: false,
+        onclone: clonedDoc => {
+          // Asegurar estilos en el documento clonado
+          const clonedElement = clonedDoc.querySelector(
+            '#antecedentes-pdf-container'
+          );
+          if (clonedElement) {
+            clonedElement.style.fontFamily = 'Arial, sans-serif';
+            clonedElement.style.fontSize = '12px';
+          }
+        },
+      });
+
+      // Crear PDF con jsPDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true,
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      // Primera página
+      pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight - 20;
+
+      // Páginas adicionales si es necesario
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight - 20;
       }
 
-      // Nombre del archivo
+      // Guardar PDF
       const filename = `SIMA_Persona_${item.apellido || 'SinApellido'}_${
         item.nombre || 'SinNombre'
       }_${item.dni || 'SinDNI'}_${new Date()
@@ -538,146 +952,13 @@ export default function PersonaDetalle() {
         .replace(/[/:]/g, '-')
         .replace(/,/g, '')}.pdf`;
 
-      // MÉTODO SIMPLIFICADO: Usar solo html2canvas + jsPDF (más confiable)
-      try {
-        // Crear contenedor temporal simplificado
-        const tempDiv = document.createElement('div');
-        tempDiv.style.position = 'absolute';
-        tempDiv.style.left = '-9999px';
-        tempDiv.style.top = '0';
-        tempDiv.style.width = '794px'; // A4 width en px a 96 DPI
-        tempDiv.style.backgroundColor = '#ffffff';
-        tempDiv.style.padding = '20px';
-        tempDiv.style.fontFamily = 'Arial, sans-serif';
-        tempDiv.style.fontSize = '14px';
-        tempDiv.style.lineHeight = '1.4';
-        tempDiv.style.color = '#000000';
+      pdf.save(filename);
 
-        // Header simple
-        const header = document.createElement('div');
-        header.innerHTML = `
-          <div style="text-align: center; margin-bottom: 20px; padding: 15px; border-bottom: 2px solid rgb(21, 77, 113);">
-            <h1 style="color: rgb(21, 77, 113); margin: 0; font-size: 20px; font-weight: bold;">
-              S.I.M.A - SISTEMA DE INFORMACIÓN POLICIAL
-            </h1>
-            <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
-              Reporte de Persona - ${new Date().toLocaleString('es-AR')}
-            </p>
-          </div>
-        `;
+      // Limpiar
+      root.unmount();
+      document.body.removeChild(tempDiv);
 
-        // Clonar y limpiar contenido
-        const clonedContent = contentElement.cloneNode(true);
-
-        // Remover todos los botones y elementos problemáticos
-        const elementsToRemove = clonedContent.querySelectorAll(`
-          button, 
-          .MuiIconButton-root, 
-          .no-print,
-          [role="button"]
-        `);
-        elementsToRemove.forEach(el => el.remove());
-
-        // Remover stacks que contengan botones
-        const stacks = clonedContent.querySelectorAll('.MuiStack-root');
-        stacks.forEach(stack => {
-          if (
-            stack.textContent.includes('Volver') ||
-            stack.textContent.includes('Editar') ||
-            stack.textContent.includes('Descargar') ||
-            stack.textContent.includes('Eliminar')
-          ) {
-            stack.remove();
-          }
-        });
-
-        // Mejorar estilos del contenido clonado
-        clonedContent.style.backgroundColor = '#ffffff';
-        clonedContent.style.boxShadow = 'none';
-        clonedContent.style.border = '1px solid #ddd';
-        clonedContent.style.borderRadius = '0';
-
-        // Footer simple
-        const footer = document.createElement('div');
-        footer.innerHTML = `
-          <div style="margin-top: 30px; padding: 15px; border-top: 1px solid #ddd; text-align: center; font-size: 10px; color: #666;">
-            <div style="display: flex; justify-content: space-between;">
-              <span>CONFIDENCIAL - USO INTERNO</span>
-              <span>S.I.M.A - Sistema Policial</span>
-              <span>${new Date().toLocaleDateString('es-AR')}</span>
-            </div>
-          </div>
-        `;
-
-        // Ensamblar contenido
-        tempDiv.appendChild(header);
-        tempDiv.appendChild(clonedContent);
-        tempDiv.appendChild(footer);
-
-        // Agregar al DOM
-        document.body.appendChild(tempDiv);
-
-        // Capturar con html2canvas
-        const canvas = await html2canvas(tempDiv, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: '#ffffff',
-          logging: false,
-          width: tempDiv.scrollWidth,
-          height: tempDiv.scrollHeight,
-          onclone: clonedDoc => {
-            // Asegurar que los estilos se apliquen en el documento clonado
-            const clonedElement = clonedDoc.querySelector('div');
-            if (clonedElement) {
-              clonedElement.style.fontFamily = 'Arial, sans-serif';
-              clonedElement.style.fontSize = '14px';
-            }
-          },
-        });
-
-        // Crear PDF con jsPDF
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-          compress: true,
-        });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pdfWidth - 20; // Margen de 10mm a cada lado
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        let heightLeft = imgHeight;
-        let position = 10; // Margen superior
-
-        // Primera página
-        pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight - 20; // Restar márgenes
-
-        // Páginas adicionales si es necesario
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight + 10;
-          pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
-          heightLeft -= pdfHeight - 20;
-        }
-
-        // Descargar PDF
-        pdf.save(filename);
-
-        // Limpiar
-        document.body.removeChild(tempDiv);
-
-        showToast('PDF descargado exitosamente', 'success');
-      } catch (canvasError) {
-        console.error('Error con html2canvas:', canvasError);
-        throw new Error(
-          'No se pudo generar el PDF. Verifique que el contenido sea válido.'
-        );
-      }
+      showToast('PDF descargado exitosamente', 'success');
     } catch (error) {
       console.error('Error al generar PDF:', error);
       showToast('Error al generar el archivo PDF: ' + error.message, 'error');
@@ -1529,8 +1810,8 @@ export default function PersonaDetalle() {
                     >
                       <Tab
                         label={`Antecedentes Personales (${estadisticasAntecedentesPersonales.total})`}
-                        id="tab-1"
-                        aria-controls="tabpanel-1"
+                        id="tab-0"
+                        aria-controls="tabpanel-0"
                       />
                     </Tabs>
                   </Box>
@@ -1538,11 +1819,11 @@ export default function PersonaDetalle() {
                   {/* Panel de Antecedentes Personales */}
                   <Box
                     role="tabpanel"
-                    hidden={tabValue !== 1}
-                    id="tabpanel-1"
-                    aria-labelledby="tab-1"
+                    hidden={tabValue !== 0}
+                    id="tabpanel-0"
+                    aria-labelledby="tab-0"
                   >
-                    {tabValue === 1 && (
+                    {tabValue === 0 && (
                       <Box>
                         <Box
                           sx={{
@@ -1598,6 +1879,7 @@ export default function PersonaDetalle() {
                           onEliminar={handleEliminarAntecedentePersonal}
                           loading={loadingAntecedentesPersonales}
                           showTableView={antecedentesPersonales.length > 5}
+                          isPDFMode={isGeneratingPDF}
                         />
                       </Box>
                     )}
