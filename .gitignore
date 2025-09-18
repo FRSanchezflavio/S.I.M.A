@@ -15,3 +15,6 @@ dist/
 .vscode/
 *.log
 .DS_Store
+
+# Frontend build files
+sima-frontend/build/
