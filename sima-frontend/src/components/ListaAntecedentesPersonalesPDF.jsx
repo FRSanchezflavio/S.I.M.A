@@ -64,8 +64,8 @@ export default function ListaAntecedentesPersonalesPDF({
     return (
       <div className="antecedentes-pdf-container">
         <div className="pdf-header-policial">
-          <h2>📋 ANTECEDENTES PERSONALES</h2>
-          <p>Historial específico de delitos registrados</p>
+          {/* <h2>📋 ANTECEDENTES PERSONALES</h2>
+          <p>Historial específico de delitos registrados</p> */}
         </div>
         <div className="pdf-empty-state">
           <p>No hay antecedentes personales registrados</p>
@@ -82,8 +82,8 @@ export default function ListaAntecedentesPersonalesPDF({
     <div className="antecedentes-pdf-container">
       {/* Header policial optimizado para PDF */}
       <div className="pdf-header-policial">
-        <h2>📋 ANTECEDENTES PERSONALES ({delitos.length})</h2>
-        <p>Historial específico de delitos registrados</p>
+        {/* <h2>📋 ANTECEDENTES PERSONALES ({delitos.length})</h2>
+        <p>Historial específico de delitos registrados</p> */}
       </div>
 
       {/* Container de cards optimizado para PDF */}

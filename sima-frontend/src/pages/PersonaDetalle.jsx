@@ -535,13 +535,13 @@ export default function PersonaDetalle() {
       setIsGeneratingPDF(true);
       showToast('Generando PDF, esto puede tomar unos momentos...', 'info');
 
-      // CSS específico para PDF - Estilos optimizados para impresión
+      // CSS específico para PDF - Estilos simples y serios
       const pdfCSS = `
         <style>
           .pdf-container {
-            font-family: 'Arial', 'Helvetica', sans-serif !important;
-            font-size: 12px !important;
-            line-height: 1.4 !important;
+            font-family: 'Times New Roman', 'Arial', sans-serif !important;
+            font-size: 9px !important;
+            line-height: 1.2 !important;
             color: #000000 !important;
             background-color: #ffffff !important;
             -webkit-print-color-adjust: exact !important;
@@ -550,43 +550,41 @@ export default function PersonaDetalle() {
           
           .pdf-header {
             text-align: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            border-bottom: 3px solid #1a365d;
-            background-color: #f8f9fa !important;
-            page-break-after: avoid;
+            margin-bottom: 1px;
+            padding: 8px;
+            border-bottom: 2px solid #000000;
+            background-color: #ffffff !important;
           }
           
           .pdf-title {
-            color: #1a365d !important;
+            color: #000000 !important;
             margin: 0;
-            font-size: 20px !important;
+            font-size: 14px !important;
             font-weight: bold !important;
-            letter-spacing: 1px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
           }
           
           .pdf-subtitle {
-            margin: 8px 0 0 0 !important;
-            font-size: 12px !important;
-            color: #666666 !important;
+            margin: 3px 0 0 0 !important;
+            font-size: 8px !important;
+            color: #333333 !important;
             font-style: italic;
           }
           
           .pdf-section {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             page-break-inside: avoid;
           }
           
           .pdf-personal-data {
             display: flex;
-            gap: 20px;
-            margin-bottom: 25px;
+            gap: 12px;
+            margin-bottom: 15px;
             page-break-inside: avoid;
-            border: 1px solid #e0e0e0;
-            padding: 15px;
-            border-radius: 8px;
-            background-color: #fafafa;
+            border: 1px solid #000000;
+            padding: 8px;
+            background-color: #ffffff;
           }
           
           .pdf-photo-container {
@@ -595,19 +593,19 @@ export default function PersonaDetalle() {
           }
           
           .pdf-photo {
-            width: 130px !important;
-            height: 170px !important;
+            width: 150px !important;
+            height: 180px !important;
             object-fit: cover !important;
-            border: 3px solid #1a365d !important;
-            border-radius: 8px !important;
-            box-shadow: 0 4px 8px rgba(26, 54, 93, 0.2) !important;
+            border: 2px solid #000000 !important;
+            background-color: #f5f5f5;
           }
           
           .pdf-photo-label {
-            margin-top: 8px;
-            font-size: 10px;
-            color: #666;
+            margin-top: 4px;
+            font-size: 7px;
+            color: #000000;
             font-weight: bold;
+            text-transform: uppercase;
           }
           
           .pdf-info-container {
@@ -615,38 +613,40 @@ export default function PersonaDetalle() {
           }
           
           .pdf-person-name {
-            color: #1a365d !important;
-            margin: 0 0 15px 0 !important;
-            font-size: 18px !important;
+            color: #000000 !important;
+            margin: 0 0 8px 0 !important;
+            font-size: 12px !important;
             font-weight: bold !important;
-            border-bottom: 2px solid #1a365d;
-            padding-bottom: 5px;
+            border-bottom: 1px solid #000000;
+            padding-bottom: 2px;
+            text-transform: uppercase;
           }
           
           .pdf-info-grid {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: 12px !important;
-            font-size: 11px !important;
+            gap: 6px !important;
+            font-size: 8px !important;
           }
           
           .pdf-info-item {
-            padding: 8px;
+            padding: 4px;
             background-color: #ffffff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 1px solid #cccccc;
           }
           
           .pdf-info-label {
             font-weight: bold !important;
-            color: #1a365d !important;
+            color: #000000 !important;
             display: block;
-            margin-bottom: 3px;
+            margin-bottom: 1px;
+            text-transform: uppercase;
+            font-size: 7px !important;
           }
           
           .pdf-info-value {
-            color: #333333 !important;
-            font-size: 11px !important;
+            color: #000000 !important;
+            font-size: 8px !important;
           }
           
           .pdf-full-width {
@@ -654,48 +654,39 @@ export default function PersonaDetalle() {
           }
           
           .pdf-antecedentes {
-            margin-top: 30px;
+            margin-top: 15px;
             page-break-before: auto;
           }
           
-          .pdf-antecedentes-title {
-            color: #1a365d !important;
-            font-size: 16px !important;
-            font-weight: bold !important;
-            margin-bottom: 15px !important;
-            padding: 10px;
-            background-color: #f0f4f8;
-            border-left: 5px solid #1a365d;
-          }
-          
           .pdf-footer {
-            margin-top: 30px;
-            padding: 15px;
-            border-top: 2px solid #1a365d;
-            background-color: #f8f9fa;
+            margin-top: 15px;
+            padding: 8px;
+            border-top: 1px solid #000000;
+            background-color: #ffffff;
             text-align: center;
-            font-size: 10px;
-            color: #666;
+            font-size: 7px;
+            color: #000000;
             page-break-inside: avoid;
           }
           
           .pdf-confidential {
             font-weight: bold;
-            color: #1a365d !important;
-            margin-bottom: 5px;
-            letter-spacing: 2px;
+            color: #000000 !important;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
           }
           
           .pdf-generation-info {
-            font-size: 9px;
-            color: #888;
+            font-size: 6px;
+            color: #333333;
           }
           
           /* Optimización para antecedentes */
           .antecedentes-pdf-content {
-            font-family: 'Arial', sans-serif !important;
-            font-size: 12px !important;
-            line-height: 1.4 !important;
+            font-family: 'Times New Roman', 'Arial', sans-serif !important;
+            font-size: 9px !important;
+            line-height: 1.2 !important;
           }
           
           .antecedentes-pdf-content * {
@@ -706,22 +697,23 @@ export default function PersonaDetalle() {
           .antecedentes-pdf-content img {
             max-width: 100% !important;
             height: auto !important;
+            border: 1px solid #cccccc !important;
           }
           
-          /* Asegurar que las fotos no se desborden */
+          /* Asegurar diseño limpio */
           .antecedentes-pdf-content [style*="grid"] {
             display: grid !important;
-            gap: 8px !important;
+            gap: 4px !important;
           }
           
           /* Media print optimizations */
           @media print {
             .pdf-container {
-              font-size: 12px !important;
+              font-size: 9px !important;
             }
             .pdf-photo {
               width: 120px !important;
-              height: 160px !important;
+              height: 150px !important;
             }
           }
         </style>
@@ -752,7 +744,7 @@ export default function PersonaDetalle() {
       const header = document.createElement('div');
       header.className = 'pdf-header';
       header.innerHTML = `
-        <h1 class="pdf-title">S.I.M.A - Sistema de Información Policial</h1>
+        <h1 class="pdf-title">S.I.M.A - Sistema de Identificación de Mencionados y/o Aprehendidos</h1>
         <p class="pdf-subtitle">Ficha Personal Completa - Generado el ${new Date().toLocaleString(
           'es-AR'
         )}</p>
@@ -843,11 +835,6 @@ export default function PersonaDetalle() {
         </div>
       `;
 
-      // Título de sección de antecedentes
-      const antecedentesTitle = document.createElement('div');
-      antecedentesTitle.className = 'pdf-antecedentes-title';
-      antecedentesTitle.textContent = '📋 ANTECEDENTES PERSONALES';
-
       // Crear contenedor para antecedentes con React
       const antecedentesContainer = document.createElement('div');
       antecedentesContainer.id = 'antecedentes-pdf-container';
@@ -869,7 +856,6 @@ export default function PersonaDetalle() {
       // Ensamblar documento con estructura mejorada
       tempDiv.appendChild(header);
       tempDiv.appendChild(datosPersonales);
-      tempDiv.appendChild(antecedentesTitle);
       tempDiv.appendChild(antecedentesContainer);
       tempDiv.appendChild(footer);
 
