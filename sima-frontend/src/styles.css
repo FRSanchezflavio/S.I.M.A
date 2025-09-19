@@ -382,3 +382,434 @@ h6 {
     transform: rotate(360deg);
   }
 }
+
+/* ===== ESTILOS PARA EL MAPA INTERACTIVO ===== */
+
+/* Estilos base para Leaflet */
+.leaflet-container {
+  font-family: 'Inter', 'Roboto', sans-serif;
+  font-size: 14px;
+}
+
+/* Marcadores personalizados */
+.custom-marker {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.custom-marker:hover {
+  transform: scale(1.2);
+  z-index: 1000 !important;
+}
+
+/* Popups del mapa */
+.leaflet-popup-content {
+  margin: 0 !important;
+  max-width: 300px !important;
+  font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+}
+
+.leaflet-popup-tip {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Clusters personalizados */
+.marker-cluster {
+  background: linear-gradient(
+    135deg,
+    rgb(21, 77, 113) 0%,
+    rgb(112, 159, 202) 100%
+  ) !important;
+  border: 3px solid white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 50% !important;
+}
+
+.marker-cluster div {
+  background: transparent !important;
+  color: white !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.marker-cluster:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* Controles del mapa */
+.leaflet-control-zoom a {
+  background-color: white !important;
+  color: rgb(21, 77, 113) !important;
+  border: 1px solid #ccc !important;
+  font-weight: bold !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: rgb(21, 77, 113) !important;
+  color: white !important;
+}
+
+/* Atribución del mapa */
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Círculos de zona de búsqueda */
+.leaflet-interactive {
+  stroke-dasharray: 5, 5;
+  animation: dash 2s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+/* Responsive para dispositivos móviles */
+@media (max-width: 768px) {
+  .leaflet-popup-content {
+    max-width: 250px !important;
+  }
+
+  .leaflet-control-zoom {
+    margin-right: 5px !important;
+    margin-top: 5px !important;
+  }
+
+  .custom-marker {
+    transform: scale(0.9);
+  }
+
+  .custom-marker:hover {
+    transform: scale(1.1);
+  }
+}
+
+/* Estilos para pantallas táctiles */
+@media (hover: none) and (pointer: coarse) {
+  .custom-marker:hover {
+    transform: scale(1);
+  }
+
+  .marker-cluster:hover {
+    transform: scale(1);
+  }
+}
+
+/* Mejoras de accesibilidad */
+.leaflet-marker-icon:focus,
+.leaflet-control-zoom-in:focus,
+.leaflet-control-zoom-out:focus {
+  outline: 2px solid rgb(21, 77, 113);
+  outline-offset: 2px;
+}
+
+/* Estilos para modo oscuro (futuro) */
+@media (prefers-color-scheme: dark) {
+  .leaflet-popup-content-wrapper {
+    background-color: #333 !important;
+    color: white !important;
+  }
+
+  .leaflet-popup-tip {
+    background-color: #333 !important;
+  }
+}
+
+/* ===== ESTILOS ESPECÍFICOS PARA SIMBOLOGÍA POLICIAL ===== */
+
+/* Marcadores policiales */
+.marcador-policial {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.marcador-policial:hover {
+  transform: scale(1.2);
+  z-index: 1000 !important;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+/* Cluster personalizado policial */
+.marker-cluster {
+  background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%) !important;
+  border: 3px solid white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 50% !important;
+}
+
+.marker-cluster div {
+  background: transparent !important;
+  color: white !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  font-family: 'Inter', 'Roboto', sans-serif !important;
+}
+
+.marker-cluster:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* Animación para tentativas */
+.marcador-policial.tentativa {
+  animation: pulsoTentativa 2s infinite;
+}
+
+@keyframes pulsoTentativa {
+  0% {
+    filter: drop-shadow(0 2px 4px rgba(255, 0, 0, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 2px 8px rgba(255, 0, 0, 0.7));
+  }
+  100% {
+    filter: drop-shadow(0 2px 4px rgba(255, 0, 0, 0.3));
+  }
+}
+
+/* Estilos específicos por tipo de delito */
+.marcador-policial.robo_agravado_asaltante {
+  animation: alertaRoja 3s infinite;
+}
+
+.marcador-policial.robo_agravado_asaltante_banda {
+  animation: alertaRoja 3s infinite;
+}
+
+@keyframes alertaRoja {
+  0%,
+  100% {
+    filter: drop-shadow(0 2px 4px rgba(255, 0, 0, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 2px 8px rgba(255, 0, 0, 0.8));
+  }
+}
+
+/* Leyenda responsiva */
+.leyenda-policial {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .leyenda-policial {
+    bottom: 60px !important;
+    left: 5px !important;
+    right: 5px !important;
+    max-width: none !important;
+    max-height: 40vh !important;
+  }
+
+  .marcador-policial {
+    transform: scale(0.85);
+  }
+
+  .marcador-policial:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Mejoras para la leyenda */
+.simbolos-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.simbolos-leyenda .simbolo-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 0.75rem;
+  transition: background 0.2s ease;
+}
+
+.simbolos-leyenda .simbolo-item:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para categorías de delitos */
+.categoria-robos-agravados {
+  border-left: 4px solid #ff0000;
+  padding-left: 12px;
+  margin-bottom: 16px;
+}
+
+.categoria-robos-simples {
+  border-left: 4px solid #0066ff;
+  padding-left: 12px;
+  margin-bottom: 16px;
+}
+
+.categoria-hurtos {
+  border-left: 4px solid #00cc00;
+  padding-left: 12px;
+  margin-bottom: 16px;
+}
+
+.categoria-estafas {
+  border-left: 4px solid #0066cc;
+  padding-left: 12px;
+  margin-bottom: 16px;
+}
+
+/* Animaciones para hover en la leyenda */
+.leyenda-item:hover {
+  background: rgba(33, 150, 243, 0.1);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+/* Estilos para el botón de información de la leyenda */
+.info-leyenda-btn {
+  position: fixed;
+  bottom: 60px;
+  left: 10px;
+  z-index: 1000;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+  60% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Mejoras para accesibilidad en la simbología */
+.marcador-policial:focus {
+  outline: 3px solid #2196f3;
+  outline-offset: 2px;
+}
+
+.leyenda-policial .simbolo-svg:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+/* Animación de aparición para nuevos marcadores */
+.marcador-nuevo {
+  animation: aparicionMarcador 0.6s ease-out;
+}
+
+@keyframes aparicionMarcador {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(-20px);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Estilos para el estado de carga de la leyenda */
+.leyenda-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #666;
+}
+
+.leyenda-loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 10px;
+}
+
+/* Responsive para dispositivos móviles específico para simbología */
+@media (max-width: 480px) {
+  .leyenda-policial {
+    font-size: 0.8rem;
+  }
+
+  .categoria-robos-agravados,
+  .categoria-robos-simples,
+  .categoria-hurtos,
+  .categoria-estafas {
+    border-left-width: 2px;
+    padding-left: 8px;
+    margin-bottom: 12px;
+  }
+
+  .simbolos-leyenda .simbolo-item {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+}
+
+/* Estilos para modo de alto contraste */
+@media (prefers-contrast: high) {
+  .marcador-policial {
+    filter: contrast(1.5) brightness(1.1);
+  }
+
+  .leyenda-policial {
+    border: 2px solid #000;
+    background: #fff;
+  }
+
+  .simbolos-leyenda .simbolo-item {
+    border: 1px solid #333;
+  }
+}
+
+/* Estilos para reducir movimiento (accesibilidad) */
+@media (prefers-reduced-motion: reduce) {
+  .marcador-policial,
+  .marker-cluster,
+  .info-leyenda-btn {
+    animation: none;
+    transition: none;
+  }
+
+  .marcador-policial:hover {
+    transform: none;
+  }
+}
+
+/* ===== FIN ESTILOS SIMBOLOGÍA POLICIAL ===== */
+
+/* ===== FIN ESTILOS MAPA ===== */
