@@ -20,14 +20,18 @@ import {
   Search,
   Add,
   List as ListIcon,
+  LocationOn,
+  AccountTree,
 } from '@mui/icons-material';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Header({ showSettings = false }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const slideDown = keyframes`
     from {
@@ -44,6 +48,8 @@ export default function Header({ showSettings = false }) {
     { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
     { text: 'Buscar', icon: <Search />, path: '/buscar' },
     { text: 'Cargar', icon: <Add />, path: '/cargar' },
+    { text: 'Mapa', icon: <LocationOn />, path: '/mapa' },
+    { text: 'Inteligencia', icon: <AccountTree />, path: '/inteligencia' },
     { text: 'Registros', icon: <ListIcon />, path: '/registros' },
   ];
 
@@ -186,7 +192,7 @@ export default function Header({ showSettings = false }) {
                 key={item.text}
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  // Aquí puedes agregar navegación
+                  navigate(item.path);
                 }}
                 sx={{
                   '&:hover': {

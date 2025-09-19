@@ -29,6 +29,8 @@ import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import MapIcon from '@mui/icons-material/Map';
 import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
@@ -39,6 +41,7 @@ import Footer from '../components/Footer';
 import AgregarDelitoEspecifico from '../components/AgregarDelitoEspecifico';
 import ListaAntecedentesPersonalesMejorada from '../components/ListaAntecedentesPersonalesMejorada';
 import EstadisticasDelitos from '../components/EstadisticasDelitos';
+import MapaInteractivo from '../components/MapaInteractivo';
 import useDelitosEspecificos from '../hooks/useDelitosEspecificos';
 import api from '../services/api';
 import { useToast } from '../components/ToastProvider';
@@ -55,6 +58,7 @@ export default function PersonaDetalle() {
   const [form, setForm] = useState({});
   const [files, setFiles] = useState([]);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const { showToast } = useToast();
 
   // Estado para paginación de registros
@@ -161,6 +165,7 @@ export default function PersonaDetalle() {
           comisaria: personaRes.data.comisaria || '',
           comisaria_hecho: personaRes.data.comisaria_hecho || '',
           alias: personaRes.data.alias || '',
+          descripcion_fisica: personaRes.data.descripcion_fisica || '',
         });
       } catch (e) {
         if (!mounted) return;
@@ -316,6 +321,26 @@ export default function PersonaDetalle() {
   const estadisticasAntecedentesPersonales = useMemo(() => {
     return getEstadisticas();
   }, [getEstadisticas]);
+
+  // Preparar datos para el mapa
+  const personasParaMapa = useMemo(() => {
+    if (!item || !item.latitud || !item.longitud) return [];
+
+    return [
+      {
+        id: item.id,
+        nombre: item.nombre,
+        apellido: item.apellido,
+        dni: item.dni,
+        latitud: parseFloat(item.latitud),
+        longitud: parseFloat(item.longitud),
+        direccion: item.direccion,
+        tipo_delito: antecedentesPersonales[0]?.tipo || 'general',
+        estado: antecedentesPersonales[0]?.estado || 'activo',
+        foto_principal: item.foto_principal,
+      },
+    ];
+  }, [item, antecedentesPersonales]);
 
   // Función para descargar datos de la persona en formato Excel
   const downloadSubjectData = async () => {
@@ -764,7 +789,7 @@ export default function PersonaDetalle() {
             class="pdf-photo"
             onerror="this.src='https://via.placeholder.com/150x200/f5f5f5/999999?text=Sin+Foto'"
           />
-          <div class="pdf-photo-label">FOTOGRAFÍA OFICIAL</div>
+          <div class="pdf-photo-label">FOTOGRAFÍA DEL SUJETO</div>
         </div>
         <div class="pdf-info-container">
           <h2 class="pdf-person-name">${item.apellido || 'N/A'}, ${
@@ -804,7 +829,7 @@ export default function PersonaDetalle() {
               <span class="pdf-info-value">${item.telefono || 'N/A'}</span>
             </div>
             <div class="pdf-info-item">
-              <span class="pdf-info-label">Comisaría:</span>
+              <span class="pdf-info-label">Comisaría Juridiscional del Sujeto:</span>
               <span class="pdf-info-value">${item.comisaria || 'N/A'}</span>
             </div>
             <div class="pdf-info-item pdf-full-width">
@@ -831,7 +856,17 @@ export default function PersonaDetalle() {
             `
                 : ''
             }
-          </div>
+            ${
+              item.descripcion_fisica
+                ? `
+              <div class="pdf-info-item pdf-full-width">
+                <span class="pdf-info-label">Descripción Física:</span>
+                <span class="pdf-info-value">${item.descripcion_fisica}</span>
+              </div>
+            `
+                : ''
+            }
+            
         </div>
       `;
 
@@ -1742,6 +1777,98 @@ export default function PersonaDetalle() {
                     </Box>
                   </Grid>
                 )}
+
+                {/* Sección del mapa */}
+                {item?.latitud && item?.longitud && (
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 2 }} />
+                    <Card sx={{ mb: 3 }}>
+                      <CardContent>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: 2,
+                          }}
+                        >
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <LocationOnIcon
+                              sx={{ mr: 1, color: 'rgb(21, 77, 113)' }}
+                            />
+                            Ubicación Geográfica
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            onClick={() => setShowMap(!showMap)}
+                            startIcon={<MapIcon />}
+                            sx={{
+                              borderColor: 'rgb(21, 77, 113)',
+                              color: 'rgb(21, 77, 113)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(21, 77, 113, 0.04)',
+                                borderColor: 'rgb(21, 77, 113)',
+                              },
+                            }}
+                          >
+                            {showMap ? 'Ocultar Mapa' : 'Ver en Mapa'}
+                          </Button>
+                        </Box>
+
+                        {showMap && (
+                          <Box
+                            sx={{
+                              height: '400px',
+                              borderRadius: 1,
+                              overflow: 'hidden',
+                              border: '1px solid #e0e0e0',
+                            }}
+                          >
+                            <MapaInteractivo
+                              personas={personasParaMapa}
+                              height="400px"
+                              initialCenter={[
+                                parseFloat(item.latitud),
+                                parseFloat(item.longitud),
+                              ]}
+                              initialZoom={15}
+                              showControls={false}
+                            />
+                          </Box>
+                        )}
+
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 1 }}
+                        >
+                          <LocationOnIcon
+                            sx={{
+                              fontSize: 16,
+                              mr: 0.5,
+                              verticalAlign: 'middle',
+                            }}
+                          />
+                          Coordenadas: {item.latitud}, {item.longitud}
+                          {item.direccion && (
+                            <>
+                              <br />
+                              Dirección: {item.direccion}
+                            </>
+                          )}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
+
                 {/* Acciones */}
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />

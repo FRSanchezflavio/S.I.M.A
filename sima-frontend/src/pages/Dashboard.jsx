@@ -17,6 +17,7 @@ import {
   Search,
   Assignment,
   Dashboard as DashboardIcon,
+  LocationOn,
 } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -33,7 +34,7 @@ export default function Dashboard() {
   // Animación escalonada de las tarjetas
   useEffect(() => {
     const timer = setTimeout(() => {
-      [0, 1, 2].forEach(index => {
+      [0, 1, 2, 3].forEach(index => {
         setTimeout(() => {
           setVisibleCards(prev => [...prev, index]);
         }, index * 200);
@@ -83,6 +84,20 @@ export default function Dashboard() {
     },
     {
       id: 2,
+      title: 'MAPA',
+      subtitle: 'Vista geográfica',
+      description: 'Mapa interactivo',
+      icon: (
+        <LocationOn
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
+        />
+      ),
+      path: '/mapa',
+      color: 'var(--secondary)',
+      hoverColor: 'var(--accent)',
+    },
+    {
+      id: 3,
       title: 'REGISTROS',
       subtitle: 'Ver historial',
       description: 'Registros delictuales',
