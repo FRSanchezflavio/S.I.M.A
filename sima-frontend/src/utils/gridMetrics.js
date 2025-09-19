@@ -121,7 +121,7 @@ export class SIMAGridMetrics {
     const logEntry = {
       timestamp: new Date().toISOString(),
       tipo: 'grid_metrics',
-      datos: dados,
+      datos: datos,
       metricas: this.metrics,
       sessionId: sessionStorage.getItem('session_id') || 'unknown',
       usuario: sessionStorage.getItem('usuario_policial') || 'unknown',
