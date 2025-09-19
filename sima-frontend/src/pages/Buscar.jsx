@@ -48,12 +48,25 @@ export default function Buscar() {
     if (!gridElement) return;
 
     const updateScrollIndicator = () => {
-      const hasScroll = gridElement.scrollHeight > gridElement.clientHeight;
-      gridElement.setAttribute('data-has-scroll', hasScroll.toString());
+      try {
+        const hasScroll = gridElement.scrollHeight > gridElement.clientHeight;
+        gridElement.setAttribute('data-has-scroll', hasScroll.toString());
 
-      // Actualizar métricas cuando cambie el scroll
-      if (items.length > 0) {
-        setTimeout(() => gridMetrics.analizarGrid(), 100);
+        // Actualizar métricas cuando cambie el scroll
+        if (items.length > 0) {
+          setTimeout(() => {
+            try {
+              const result = gridMetrics.analizarGrid();
+              if (result) {
+                console.log('Grid actualizado:', result);
+              }
+            } catch (error) {
+              console.warn('Error al analizar grid:', error);
+            }
+          }, 100);
+        }
+      } catch (error) {
+        console.warn('Error en updateScrollIndicator:', error);
       }
     };
 
@@ -61,15 +74,34 @@ export default function Buscar() {
     updateScrollIndicator();
 
     // Observer para cambios en el tamaño
-    const resizeObserver = new ResizeObserver(updateScrollIndicator);
+    const resizeObserver = new ResizeObserver(() => {
+      try {
+        updateScrollIndicator();
+      } catch (error) {
+        console.warn('Error en resizeObserver:', error);
+      }
+    });
+
     resizeObserver.observe(gridElement);
 
     // Listener para cambios de ventana
-    window.addEventListener('resize', updateScrollIndicator);
+    const handleResize = () => {
+      try {
+        updateScrollIndicator();
+      } catch (error) {
+        console.warn('Error en handleResize:', error);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', updateScrollIndicator);
+      try {
+        resizeObserver.disconnect();
+        window.removeEventListener('resize', handleResize);
+      } catch (error) {
+        console.warn('Error en cleanup:', error);
+      }
     };
   }, [items, gridMetrics]);
 
@@ -103,10 +135,10 @@ export default function Buscar() {
   const onBuscar = async () => {
     setError('');
 
-    // Iniciar tracking de métricas S.I.M.A.
-    gridMetrics.iniciarBusqueda();
-
     try {
+      // Iniciar tracking de métricas S.I.M.A.
+      gridMetrics.iniciarBusqueda();
+
       let params = {};
 
       if (modo === 'campo_especifico' && campoBusqueda) {
@@ -124,11 +156,22 @@ export default function Buscar() {
 
       // Finalizar tracking después de renderizado
       setTimeout(() => {
-        gridMetrics.finalizarBusqueda();
+        try {
+          gridMetrics.finalizarBusqueda();
+        } catch (error) {
+          console.warn('Error al finalizar métricas:', error);
+        }
       }, 100);
     } catch (e) {
       setError('Error en la búsqueda');
-      gridMetrics.finalizarBusqueda(); // También trackear errores
+      showToast('Error en la búsqueda', 'error');
+
+      // También trackear errores
+      try {
+        gridMetrics.finalizarBusqueda();
+      } catch (metricsError) {
+        console.warn('Error al finalizar métricas en catch:', metricsError);
+      }
     }
   };
 
@@ -372,31 +415,35 @@ export default function Buscar() {
               sx={{
                 mt: 2,
                 display: 'grid',
-                // FIX: Reemplazar altura fija por altura automática responsive para operaciones policiales
-                minHeight: '400px', // Altura mínima para UX consistente
-                height: 'auto', // Altura automática basada en contenido
-                maxHeight: {
-                  // Máxima altura responsive por dispositivo
-                  xs: 'calc(100vh - 300px)', // Móvil: más espacio vertical para patrullaje
-                  sm: 'calc(100vh - 350px)', // Tablet: balance óptimo
-                  md: 'calc(100vh - 400px)', // Desktop: altura controlada para comisarías
-                  lg: 'calc(100vh - 400px)', // Desktop grande: consistencia
-                  xl: 'calc(100vh - 450px)', // Pantallas muy grandes
-                },
-                overflowY: 'auto', // Scroll vertical cuando necesario
-                overflowX: 'hidden', // Prevenir scroll horizontal
+                minHeight: '600px',
+                height: 'auto',
+                maxHeight: { xs: '80vh', sm: '85vh', md: '90vh' },
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                p: 2,
+                backgroundColor: '#f8f9fa',
+                borderRadius: 2,
+                border: '2px solid #e9ecef',
+                position: 'relative',
+
+                // Grid con alturas fijas para alineación
                 gridTemplateColumns: {
-                  // Grid responsive mejorado
-                  xs: '1fr', // Móvil: 1 columna para patrullaje
-                  sm: 'repeat(auto-fill, minmax(300px, 1fr))', // Tablet: flexible
-                  md: 'repeat(auto-fill, minmax(350px, 1fr))', // Desktop: original optimizado
-                  lg: 'repeat(auto-fill, minmax(350px, 1fr))', // Consistencia
+                  xs: '1fr',
+                  sm: 'repeat(2, 1fr)',
+                  md: 'repeat(3, 1fr)',
+                  lg: 'repeat(4, 1fr)',
+                  xl: 'repeat(5, 1fr)',
                 },
                 gap: 2,
-                pr: 1, // Espacio para scrollbar
-                // Transición suave para cambios de altura
-                transition: 'all 0.3s ease-in-out',
-                // Estilos de scrollbar personalizados para S.I.M.A.
+                alignContent: 'start',
+
+                // IMPORTANTE: Asegurar que todas las cards tengan la misma altura
+                '& > *': {
+                  minHeight: '350px',
+                  maxHeight: '400px',
+                },
+
+                // Scrollbar personalizado
                 '&::-webkit-scrollbar': {
                   width: '8px',
                 },
@@ -411,29 +458,46 @@ export default function Buscar() {
                     background: 'rgba(21, 77, 113, 0.7)',
                   },
                 },
-                // Indicador visual cuando hay scroll disponible
-                position: 'relative',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  background:
-                    'linear-gradient(90deg, transparent, rgba(21, 77, 113, 0.3), transparent)',
-                  opacity: 0,
-                  transition: 'opacity 0.3s ease',
-                  pointerEvents: 'none',
-                },
-                '&[data-has-scroll="true"]::after': {
-                  opacity: 1,
-                },
               }}
             >
+              {/* Estado vacío mejorado */}
               {items.length === 0 && (
-                <Alert severity="info">No hay resultados para mostrar</Alert>
+                <Box
+                  sx={{
+                    gridColumn: '1 / -1',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '400px',
+                    textAlign: 'center',
+                    p: 4,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(21, 77, 113, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 3,
+                    }}
+                  >
+                    <Typography sx={{ fontSize: '3rem' }}>🔍</Typography>
+                  </Box>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No hay resultados para mostrar
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Realice una búsqueda para ver los resultados aquí
+                  </Typography>
+                </Box>
               )}
+
+              {/* Cards de resultados */}
               {items.map(it => (
                 <CardResult
                   key={it.id}
@@ -442,6 +506,29 @@ export default function Buscar() {
                 />
               ))}
             </Box>
+
+            {/* Información de resultados */}
+            {items.length > 0 && (
+              <Box
+                sx={{
+                  mt: 3,
+                  p: 2,
+                  backgroundColor: 'rgba(21, 77, 113, 0.05)',
+                  borderRadius: 1,
+                  border: '1px solid rgba(21, 77, 113, 0.1)',
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  textAlign="center"
+                >
+                  📊 Mostrando <strong>{items.length}</strong> resultado
+                  {items.length !== 1 ? 's' : ''} encontrado
+                  {items.length !== 1 ? 's' : ''}
+                </Typography>
+              </Box>
+            )}
           </CardContent>
         </Card>
       </Container>

@@ -4,7 +4,7 @@ import {
   CardMedia,
   Typography,
   Button,
-  Stack,
+  Box,
 } from '@mui/material';
 
 export default function CardResult({ item, onDetail }) {
@@ -12,138 +12,187 @@ export default function CardResult({ item, onDetail }) {
     <Card
       className="card"
       data-testid="card-result"
+      elevation={2}
       sx={{
         display: 'flex',
-        height: '330px',
-        gap: 1,
-        p: 0,
-        backgroundColor: '#ffffff',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: '350px',
+        maxHeight: '400px',
+        cursor: 'pointer',
         transition: 'all 0.3s ease',
-        position: 'relative',
+        borderRadius: 2,
         overflow: 'hidden',
-        '&:before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
-          background: 'linear-gradient(90deg, #333 0%, #555 100%)',
-        },
+        border: '1px solid #e0e0e0',
+        position: 'relative',
+
         '&:hover': {
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
-          transform: 'translateY(-2px)',
-          border: '1px solid #888',
+          transform: 'translateY(-4px)',
+          boxShadow: '0 12px 24px rgba(21, 77, 113, 0.15)',
+          borderColor: '#1a365d',
         },
       }}
+      onClick={onDetail}
     >
-      <CardMedia
-        component="img"
+      {/* Imagen de la persona - CONTENEDOR FIJO */}
+      <Box
         sx={{
-          width: 170,
+          width: '100%',
           height: 180,
-          margin: '20px auto',
-          ml: 2,
-          objectFit: 'cover',
-          borderRadius: 1,
-          border: '2px solid #666',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+          backgroundColor: '#f5f5f5',
+          overflow: 'hidden',
+          position: 'relative',
         }}
-        image={
-          item.foto_principal || 'https://via.placeholder.com/150?text=Sin+foto'
-        }
-        alt={item.nombre}
-        onError={e => {
-          e.currentTarget.src = 'https://via.placeholder.com/150?text=Sin+foto';
+      >
+        <CardMedia
+          component="img"
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+          image={
+            item.foto_principal ||
+            'https://via.placeholder.com/300x180/f5f5f5/999999?text=Sin+Foto'
+          }
+          alt={`${item.nombre} ${item.apellido}`}
+          onError={e => {
+            e.currentTarget.src =
+              'https://via.placeholder.com/300x180/f5f5f5/999999?text=Sin+Foto';
+          }}
+        />
+      </Box>
+
+      {/* Contenido de la tarjeta - FLEXIBLE */}
+      <CardContent
+        sx={{
+          p: 2,
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          minHeight: 0,
         }}
-      />
-      <CardContent sx={{ flex: 1, backgroundColor: 'transparent' }}>
-        <Typography
-          variant="h2"
-          sx={{
-            fontWeight: 700,
-            color: '#2c2c2c',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            borderBottom: '2px solid #ccc',
-            pb: 1,
-            mb: 1,
-            fontSize: '1.5rem',
-          }}
-        >
-          {item.apellido}, {item.nombre}
-        </Typography>
-        <Typography
-          variant="body1"
-          sx={{
-            fontWeight: 600,
-            color: '#333',
-            backgroundColor: '#f5f5f5',
-            padding: '4px 8px',
-            borderRadius: '2px',
-            display: 'inline-block',
-            mb: 0.5,
-            fontSize: '1rem',
-            border: '1px solid #ddd',
-          }}
-        >
-          DNI: {item.dni}
-        </Typography>
-        <Typography
-          variant="body1"
-          sx={{
-            color: '#555',
-            fontWeight: 800,
-            mb: 0.5,
-            fontSize: '1rem',
-          }}
-        >
-          Jurisdicción: {item.comisaria || '-'}
-        </Typography>
-        {item.direccion && (
+      >
+        {/* Información principal - FIJA */}
+        <Box sx={{ mb: 1 }}>
+          {/* Nombre completo */}
           <Typography
-            variant="body1"
+            variant="h6"
             sx={{
-              color: '#212421ff',
-              fontWeight: 800,
-              mb: 0.5,
+              fontWeight: 700,
+              color: '#1a365d',
               fontSize: '1rem',
+              mb: 1,
+              lineHeight: 1.2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              minHeight: '1.2em',
             }}
           >
-            Domicilio: {item.direccion}
+            {item.apellido ? `${item.apellido}, ${item.nombre}` : item.nombre}
           </Typography>
-        )}
-        <Stack direction="row" mt={1}>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => onDetail?.(item)}
+
+          {/* Información en grid fijo */}
+          <Box
             sx={{
-              height: '55px',
-              bgcolor: 'rgb(21, 77, 113)',
-              color: 'white',
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: '0.9px',
-              borderRadius: '4px',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-              fontSize: '0.95rem',
-              padding: '6px 16px 8px 16px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              '&:hover': {
-                bgcolor: '#154d71',
-                boxShadow: '0 3px 6px rgba(0, 0, 0, 0.4)',
-                transform: 'translateY(-1px)',
-              },
-              transition: 'all 0.2s ease',
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              gap: 0.5,
+              mb: 1,
             }}
           >
-            VER DETALLE
-          </Button>
-        </Stack>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'text.secondary',
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: '1.2em',
+              }}
+            >
+              <Box component="span" sx={{ fontWeight: 700, minWidth: '35px' }}>
+                DNI:
+              </Box>
+              <Box component="span" sx={{ ml: 1 }}>
+                {item.dni || 'No especificado'}
+              </Box>
+            </Typography>
+
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'text.secondary',
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: '1.2em',
+              }}
+            >
+              <Box component="span" sx={{ fontWeight: 700, minWidth: '80px' }}>
+                Jurisdicción:
+              </Box>
+              <Box component="span" sx={{ ml: 1 }}>
+                {item.comisaria || '-'}
+              </Box>
+            </Typography>
+
+            {item.direccion && (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: '0.8rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minHeight: '1.2em',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 700, minWidth: '65px' }}
+                >
+                  Domicilio:
+                </Box>
+                <Box
+                  component="span"
+                  sx={{ ml: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
+                  {item.direccion}
+                </Box>
+              </Typography>
+            )}
+          </Box>
+        </Box>
+
+        {/* Botón de detalle - SIEMPRE AL FINAL */}
+        <Button
+          variant="contained"
+          fullWidth
+          size="medium"
+          sx={{
+            bgcolor: '#1a365d',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '0.85rem',
+            py: 1,
+            mt: 'auto',
+            '&:hover': {
+              bgcolor: '#2c5282',
+              transform: 'translateY(-1px)',
+            },
+            transition: 'all 0.2s ease',
+          }}
+        >
+          VER DETALLE
+        </Button>
       </CardContent>
     </Card>
   );
