@@ -22,6 +22,7 @@ import {
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CardResult from '../components/CardResult';
+import FormularioVinculacionAvanzado from '../components/inteligencia/FormularioVinculacionAvanzado';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useSIMAGridMetrics } from '../utils/gridMetrics';
@@ -36,8 +37,21 @@ export default function Buscar() {
   const [texto, setTexto] = useState('');
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
+  const [dialogVinculacion, setDialogVinculacion] = useState(false);
+  const [personaSeleccionada, setPersonaSeleccionada] = useState(null);
   const nav = useNavigate();
   const { showToast } = useToast();
+
+  const handleVinculacion = persona => {
+    setPersonaSeleccionada(persona);
+    setDialogVinculacion(true);
+  };
+
+  const handleVinculacionCreada = () => {
+    setDialogVinculacion(false);
+    setPersonaSeleccionada(null);
+    showToast('Vinculación creada exitosamente', 'success');
+  };
 
   // Integrar métricas específicas de S.I.M.A.
   const gridMetrics = useSIMAGridMetrics();
@@ -503,6 +517,7 @@ export default function Buscar() {
                   key={it.id}
                   item={it}
                   onDetail={() => nav(`/personas/${it.id}`)}
+                  onVinculacion={() => handleVinculacion(it)}
                 />
               ))}
             </Box>
@@ -532,6 +547,16 @@ export default function Buscar() {
           </CardContent>
         </Card>
       </Container>
+
+      {/* Dialog para crear vinculación */}
+      {dialogVinculacion && personaSeleccionada && (
+        <FormularioVinculacionAvanzado
+          open={dialogVinculacion}
+          onClose={() => setDialogVinculacion(false)}
+          personaInicial={personaSeleccionada}
+          onGuardado={handleVinculacionCreada}
+        />
+      )}
 
       <Box sx={{ mt: 'auto' }}>
         <Footer />

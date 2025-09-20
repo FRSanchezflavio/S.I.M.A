@@ -1,311 +1,389 @@
 import React, { useState, useEffect, useRef } from 'react';
-import * as d3 from 'd3';
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  Switch,
-  FormControlLabel,
+  Grid,
   IconButton,
   Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Switch,
+  FormControlLabel,
+  Slider,
   Chip,
+  Alert,
+  CircularProgress,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Button,
   Dialog,
   DialogTitle,
   DialogContent,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Slider,
-  Button,
-  Alert,
+  DialogActions,
 } from '@mui/material';
 import {
   ZoomIn,
   ZoomOut,
   Refresh,
-  Download,
   Settings,
-  Info,
-  FilterList,
+  Download,
   Fullscreen,
+  CenterFocusStrong,
+  Timeline,
+  AccountTree,
+  Group,
 } from '@mui/icons-material';
+import * as d3 from 'd3';
+import api from '../../services/api';
+import { useToast } from '../ToastProvider';
+
+// Configuración de colores para tipos de nodos
+const NODE_COLORS = {
+  persona_principal: '#1976d2', // Azul principal
+  persona_secundaria: '#42a5f5', // Azul claro
+  persona_investigada: '#f44336', // Rojo
+  banda_detectada: '#9c27b0', // Púrpura
+  ubicacion: '#4caf50', // Verde
+  evento: '#ff9800', // Naranja
+};
+
+// Configuración de tipos de enlaces
+const LINK_STYLES = {
+  complice_directo: { color: '#f44336', width: 3, dasharray: 'none' },
+  familiar_sangre: { color: '#2196f3', width: 2, dasharray: 'none' },
+  comunicacion_frecuente: { color: '#ff9800', width: 1, dasharray: '5,5' },
+  socio_comercial: { color: '#4caf50', width: 2, dasharray: 'none' },
+  jerarquia_comando: { color: '#9c27b0', width: 4, dasharray: 'none' },
+  conflicto_territorial: { color: '#f44336', width: 2, dasharray: '10,5' },
+  otro_criminal: { color: '#757575', width: 1, dasharray: '3,3' },
+};
 
 const VisualizadorRedCriminal = ({
-  personaId,
-  onPersonaSelect,
-  configuracion = {},
-  altura = 600,
+  vinculacionesData = null,
+  personaFocal = null,
+  onPersonaSeleccionada = null,
+  height = 600,
 }) => {
-  const svgRef = useRef();
-  const containerRef = useRef();
-  const [datosRed, setDatosRed] = useState({ nodos: [], vinculos: [] });
+  const svgRef = useRef(null);
+  const containerRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [configuracionLocal, setConfiguracionLocal] = useState({
-    profundidad: 3,
-    nivelConfianzaMin: 0.3,
-    mostrarEtiquetas: true,
-    colorearPorTipo: true,
-    mostrarFuerza: true,
-    algoritmoLayout: 'force',
-    escalaFuerza: 1.0,
-    ...configuracion,
+  const [networkData, setNetworkData] = useState({ nodes: [], links: [] });
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [centralityMetrics, setCentralityMetrics] = useState({});
+  const [detectedCommunities, setDetectedCommunities] = useState([]);
+  const { showToast } = useToast();
+
+  // Estados de configuración
+  const [config, setConfig] = useState({
+    algoritmo_layout: 'force_directed',
+    mostrar_etiquetas: true,
+    filtrar_por_confianza: 0.3,
+    agrupar_comunidades: true,
+    resaltar_caminos: false,
+    mostrar_centralidad: false,
+    tamano_nodo_por_grado: true,
   });
-  const [dialogoConfig, setDialogoConfig] = useState(false);
-  const [nodoSeleccionado, setNodoSeleccionado] = useState(null);
-  const [zoom, setZoom] = useState(null);
 
-  // Cargar datos de la red
+  const [dialogConfig, setDialogConfig] = useState(false);
+
   useEffect(() => {
-    if (personaId) {
-      cargarDatosRed();
+    if (vinculacionesData) {
+      processNetworkData(vinculacionesData);
+    } else if (personaFocal) {
+      fetchNetworkData();
     }
-  }, [
-    personaId,
-    configuracionLocal.profundidad,
-    configuracionLocal.nivelConfianzaMin,
-  ]);
+  }, [vinculacionesData, personaFocal, config.filtrar_por_confianza]);
 
-  // Inicializar visualización cuando cambien los datos
   useEffect(() => {
-    if (datosRed.nodos.length > 0) {
-      inicializarVisualizacion();
+    if (networkData.nodes.length > 0) {
+      renderNetwork();
     }
-  }, [
-    datosRed,
-    configuracionLocal.algoritmoLayout,
-    configuracionLocal.escalaFuerza,
-  ]);
+  }, [networkData, config]);
 
-  const cargarDatosRed = async () => {
+  const fetchNetworkData = async () => {
     try {
       setLoading(true);
-      setError(null);
+      const params = {
+        persona_id: personaFocal?.id,
+        profundidad: 2,
+        min_confianza: config.filtrar_por_confianza,
+        incluir_metricas: true,
+      };
 
-      const response = await fetch(
-        `/api/inteligencia/vinculaciones/analisis/red/${personaId}?` +
-          `profundidad=${configuracionLocal.profundidad}&` +
-          `nivel_confianza_min=${configuracionLocal.nivelConfianzaMin}&` +
-          `incluir_metricas=true&incluir_clusters=true`
+      const response = await api.get(
+        '/api/inteligencia/vinculaciones/network-visualization',
+        { params }
       );
-
-      if (!response.ok) {
-        throw new Error('Error al cargar datos de la red');
-      }
-
-      const datos = await response.json();
-      setDatosRed(datos.red_completa);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error cargando red criminal:', err);
+      setNetworkData(response.data.networkData);
+      setCentralityMetrics(response.data.metricas);
+      setDetectedCommunities(response.data.comunidades || []);
+    } catch (error) {
+      console.error('Error cargando datos de red:', error);
+      showToast('Error al cargar la visualización de red', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const inicializarVisualizacion = () => {
+  const processNetworkData = data => {
+    // Procesar datos de vinculaciones para formato D3
+    const nodesMap = new Map();
+    const links = [];
+
+    // Crear nodos únicos
+    data.forEach(vinculacion => {
+      if (!nodesMap.has(vinculacion.persona_origen_id)) {
+        nodesMap.set(vinculacion.persona_origen_id, {
+          id: vinculacion.persona_origen_id,
+          nombre: `${vinculacion.persona_origen?.apellido}, ${vinculacion.persona_origen?.nombre}`,
+          tipo: 'persona_principal',
+          grado: 0,
+          foto: vinculacion.persona_origen?.foto_principal,
+          dni: vinculacion.persona_origen?.dni,
+        });
+      }
+
+      if (!nodesMap.has(vinculacion.persona_destino_id)) {
+        nodesMap.set(vinculacion.persona_destino_id, {
+          id: vinculacion.persona_destino_id,
+          nombre: `${vinculacion.persona_destino?.apellido}, ${vinculacion.persona_destino?.nombre}`,
+          tipo: 'persona_secundaria',
+          grado: 0,
+          foto: vinculacion.persona_destino?.foto_principal,
+          dni: vinculacion.persona_destino?.dni,
+        });
+      }
+
+      // Incrementar grado de conexiones
+      const origenNode = nodesMap.get(vinculacion.persona_origen_id);
+      const destinoNode = nodesMap.get(vinculacion.persona_destino_id);
+      origenNode.grado++;
+      destinoNode.grado++;
+
+      // Crear enlace
+      if (vinculacion.nivel_confianza >= config.filtrar_por_confianza) {
+        links.push({
+          source: vinculacion.persona_origen_id,
+          target: vinculacion.persona_destino_id,
+          tipo: vinculacion.tipo_vinculacion,
+          confianza: vinculacion.nivel_confianza,
+          descripcion: vinculacion.descripcion,
+          estado: vinculacion.estado_vinculacion,
+        });
+      }
+    });
+
+    setNetworkData({
+      nodes: Array.from(nodesMap.values()),
+      links: links,
+    });
+  };
+
+  const renderNetwork = () => {
     const svg = d3.select(svgRef.current);
     const container = d3.select(containerRef.current);
 
     // Limpiar SVG anterior
     svg.selectAll('*').remove();
 
-    const containerRect = container.node().getBoundingClientRect();
-    const width = containerRect.width;
-    const height = altura;
+    const width = container.node()?.getBoundingClientRect().width || 800;
+    const height_actual = height;
 
-    svg.attr('width', width).attr('height', height);
+    // Configurar SVG
+    svg.attr('width', width).attr('height', height_actual);
+
+    // Crear grupo principal con zoom
+    const g = svg.append('g');
 
     // Configurar zoom
-    const zoomBehavior = d3
+    const zoom = d3
       .zoom()
-      .scaleExtent([0.1, 10])
+      .scaleExtent([0.1, 4])
       .on('zoom', event => {
         g.attr('transform', event.transform);
       });
 
-    svg.call(zoomBehavior);
-    setZoom(zoomBehavior);
-
-    // Grupo principal para elementos zoomables
-    const g = svg.append('g');
+    svg.call(zoom);
 
     // Configurar simulación de fuerzas
-    const simulacion = configurarSimulacion(width, height);
-
-    // Crear elementos visuales
-    const { enlaces, nodos, etiquetas } = crearElementosVisuales(g, simulacion);
-
-    // Configurar interacciones
-    configurarInteracciones(nodos, enlaces, etiquetas, simulacion);
-
-    // Inicializar simulación
-    simulacion.nodes(datosRed.nodos);
-    simulacion.force('link').links(datosRed.vinculos);
-    simulacion.alpha(1).restart();
-  };
-
-  const configurarSimulacion = (width, height) => {
-    const simulacion = d3
-      .forceSimulation()
+    const simulation = d3
+      .forceSimulation(networkData.nodes)
       .force(
         'link',
         d3
-          .forceLink()
+          .forceLink(networkData.links)
           .id(d => d.id)
-          .distance(d => calcularDistanciaEnlace(d))
-          .strength(
-            d => configuracionLocal.escalaFuerza * calcularFuerzaEnlace(d)
-          )
+          .distance(d => 100 - d.confianza * 50)
+          .strength(d => d.confianza)
       )
       .force(
         'charge',
-        d3.forceManyBody().strength(d => calcularCargaNodo(d))
+        d3
+          .forceManyBody()
+          .strength(d => (config.agrupar_comunidades ? -200 : -100))
       )
-      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('center', d3.forceCenter(width / 2, height_actual / 2))
       .force(
         'collision',
-        d3.forceCollide().radius(d => calcularRadioNodo(d) + 5)
+        d3
+          .forceCollide()
+          .radius(d =>
+            config.tamano_nodo_por_grado
+              ? Math.max(8, Math.min(25, d.grado * 3))
+              : 15
+          )
       );
 
-    // Algoritmos adicionales según configuración
-    if (configuracionLocal.algoritmoLayout === 'radial') {
-      simulacion.force(
-        'radial',
-        d3.forceRadial(d => d.nivel * 80 + 50, width / 2, height / 2)
-      );
-    }
+    // Crear escalas
+    const nodeColorScale = d3
+      .scaleOrdinal()
+      .domain(Object.keys(NODE_COLORS))
+      .range(Object.values(NODE_COLORS));
 
-    return simulacion;
-  };
-
-  const crearElementosVisuales = (g, simulacion) => {
-    // Definir marcadores para las flechas
-    const defs = g.append('defs');
-
-    Object.keys(TIPOS_VINCULACION).forEach(tipo => {
-      defs
-        .append('marker')
-        .attr('id', `flecha-${tipo}`)
-        .attr('viewBox', '0 -5 10 10')
-        .attr('refX', 15)
-        .attr('refY', 0)
-        .attr('markerWidth', 6)
-        .attr('markerHeight', 6)
-        .attr('orient', 'auto')
-        .append('path')
-        .attr('d', 'M0,-5L10,0L0,5')
-        .attr('fill', TIPOS_VINCULACION[tipo].color);
-    });
+    const nodeSizeScale = d3
+      .scaleLinear()
+      .domain(d3.extent(networkData.nodes, d => d.grado))
+      .range([8, 25]);
 
     // Crear enlaces
-    const enlaces = g
+    const links = g
       .append('g')
-      .attr('class', 'enlaces')
       .selectAll('line')
-      .data(datosRed.vinculos)
-      .enter()
-      .append('line')
-      .attr('class', 'enlace')
-      .attr('stroke', d => obtenerColorEnlace(d))
-      .attr('stroke-width', d => calcularAnchoEnlace(d))
-      .attr('stroke-opacity', d => calcularOpacidadEnlace(d))
-      .attr('marker-end', d => `url(#flecha-${d.tipo})`)
-      .style('cursor', 'pointer');
+      .data(networkData.links)
+      .join('line')
+      .attr('stroke', d => LINK_STYLES[d.tipo]?.color || '#999')
+      .attr('stroke-width', d => LINK_STYLES[d.tipo]?.width || 1)
+      .attr('stroke-dasharray', d => LINK_STYLES[d.tipo]?.dasharray || 'none')
+      .attr('opacity', d => 0.3 + d.confianza * 0.7);
 
     // Crear nodos
-    const nodos = g
+    const nodes = g
       .append('g')
-      .attr('class', 'nodos')
       .selectAll('circle')
-      .data(datosRed.nodos)
-      .enter()
-      .append('circle')
-      .attr('class', 'nodo')
-      .attr('r', d => calcularRadioNodo(d))
-      .attr('fill', d => obtenerColorNodo(d))
-      .attr('stroke', d => obtenerBordeNodo(d))
-      .attr('stroke-width', d => calcularAnchobordeNodo(d))
+      .data(networkData.nodes)
+      .join('circle')
+      .attr('r', d =>
+        config.tamano_nodo_por_grado
+          ? Math.max(8, Math.min(25, d.grado * 3))
+          : 15
+      )
+      .attr('fill', d => {
+        if (config.mostrar_centralidad && centralityMetrics[d.id]) {
+          const centralityValue = centralityMetrics[d.id].betweenness || 0;
+          return d3.interpolateReds(centralityValue);
+        }
+        return nodeColorScale(d.tipo);
+      })
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 2)
       .style('cursor', 'pointer')
       .call(
         d3
           .drag()
-          .on('start', dragStarted)
+          .on('start', dragstarted)
           .on('drag', dragged)
-          .on('end', dragEnded)
-      );
-
-    // Crear etiquetas (si están habilitadas)
-    let etiquetas = null;
-    if (configuracionLocal.mostrarEtiquetas) {
-      etiquetas = g
-        .append('g')
-        .attr('class', 'etiquetas')
-        .selectAll('text')
-        .data(datosRed.nodos)
-        .enter()
-        .append('text')
-        .attr('class', 'etiqueta')
-        .attr('dx', d => calcularRadioNodo(d) + 8)
-        .attr('dy', '0.35em')
-        .style('font-size', '12px')
-        .style('font-family', 'Arial, sans-serif')
-        .style('fill', '#333')
-        .style('pointer-events', 'none')
-        .text(d => truncarTexto(d.nombre, 15));
-    }
-
-    // Configurar animación de la simulación
-    simulacion.on('tick', () => {
-      enlaces
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
-
-      nodos.attr('cx', d => d.x).attr('cy', d => d.y);
-
-      if (etiquetas) {
-        etiquetas.attr('x', d => d.x).attr('y', d => d.y);
-      }
-    });
-
-    return { enlaces, nodos, etiquetas };
-  };
-
-  const configurarInteracciones = (nodos, enlaces, etiquetas, simulacion) => {
-    // Click en nodo
-    nodos.on('click', (event, d) => {
-      event.stopPropagation();
-      setNodoSeleccionado(d);
-      if (onPersonaSelect) {
-        onPersonaSelect(d.id);
-      }
-      resaltarConexiones(d, nodos, enlaces);
-    });
-
-    // Hover en nodo
-    nodos
-      .on('mouseover', (event, d) => {
-        mostrarTooltipNodo(event, d);
-        resaltarConexiones(d, nodos, enlaces);
+          .on('end', dragended)
+      )
+      .on('click', (event, d) => {
+        setSelectedNode(d);
+        onPersonaSeleccionada?.(d);
       })
-      .on('mouseout', () => {
-        ocultarTooltip();
-        restablecerEstilos(nodos, enlaces);
+      .on('mouseover', function (event, d) {
+        // Resaltar nodo y conexiones
+        d3.select(this).attr('stroke-width', 4);
+
+        // Mostrar tooltip
+        const tooltip = d3
+          .select('body')
+          .append('div')
+          .attr('class', 'tooltip')
+          .style('position', 'absolute')
+          .style('background', 'rgba(0,0,0,0.8)')
+          .style('color', 'white')
+          .style('padding', '10px')
+          .style('border-radius', '5px')
+          .style('pointer-events', 'none')
+          .style('z-index', 1000);
+
+        tooltip
+          .html(
+            `
+          <strong>${d.nombre}</strong><br/>
+          DNI: ${d.dni}<br/>
+          Conexiones: ${d.grado}<br/>
+          ${
+            centralityMetrics[d.id]
+              ? `Centralidad: ${(
+                  centralityMetrics[d.id].betweenness * 100
+                ).toFixed(1)}%`
+              : ''
+          }
+        `
+          )
+          .style('left', event.pageX + 10 + 'px')
+          .style('top', event.pageY - 10 + 'px');
+      })
+      .on('mouseout', function (event, d) {
+        d3.select(this).attr('stroke-width', 2);
+        d3.selectAll('.tooltip').remove();
       });
 
-    // Click en enlace
-    enlaces.on('click', (event, d) => {
-      event.stopPropagation();
-      mostrarInfoEnlace(d);
-    });
+    // Agregar etiquetas si está habilitado
+    if (config.mostrar_etiquetas) {
+      const labels = g
+        .append('g')
+        .selectAll('text')
+        .data(networkData.nodes)
+        .join('text')
+        .text(d => d.nombre.split(',')[0]) // Solo apellido
+        .attr('font-size', '10px')
+        .attr('text-anchor', 'middle')
+        .attr('dy', '0.3em')
+        .attr('fill', '#333')
+        .style('pointer-events', 'none');
+
+      simulation.on('tick', () => {
+        links
+          .attr('x1', d => d.source.x)
+          .attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x)
+          .attr('y2', d => d.target.y);
+
+        nodes.attr('cx', d => d.x).attr('cy', d => d.y);
+
+        labels
+          .attr('x', d => d.x)
+          .attr(
+            'y',
+            d =>
+              d.y +
+              (config.tamano_nodo_por_grado
+                ? Math.max(8, Math.min(25, d.grado * 3)) + 15
+                : 25)
+          );
+      });
+    } else {
+      simulation.on('tick', () => {
+        links
+          .attr('x1', d => d.source.x)
+          .attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x)
+          .attr('y2', d => d.target.y);
+
+        nodes.attr('cx', d => d.x).attr('cy', d => d.y);
+      });
+    }
 
     // Funciones de drag
-    function dragStarted(event, d) {
-      if (!event.active) simulacion.alphaTarget(0.3).restart();
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
@@ -315,420 +393,399 @@ const VisualizadorRedCriminal = ({
       d.fy = event.y;
     }
 
-    function dragEnded(event, d) {
-      if (!event.active) simulacion.alphaTarget(0);
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
       d.fx = null;
       d.fy = null;
     }
-  };
 
-  // Funciones de cálculo de estilos
-  const calcularRadioNodo = nodo => {
-    const baseSize = 8;
-    const factorNivel = Math.max(1, 4 - nodo.nivel);
-    const factorCentralidad = nodo.centralidad || 1;
-    return baseSize + factorNivel * 2 + factorCentralidad * 3;
-  };
-
-  const obtenerColorNodo = nodo => {
-    if (!configuracionLocal.colorearPorTipo) {
-      return '#69b3a2';
-    }
-
-    if (nodo.nivel === 0) return '#ff6b6b'; // Persona central
-    if (nodo.es_lider_banda) return '#4ecdc4';
-    if (nodo.en_banda) return '#45b7d1';
-    return '#96ceb4'; // Por defecto
-  };
-
-  const obtenerBordeNodo = nodo => {
-    if (nodoSeleccionado && nodoSeleccionado.id === nodo.id) {
-      return '#ff4757';
-    }
-    return '#fff';
-  };
-
-  const calcularAnchobordeNodo = nodo => {
-    if (nodoSeleccionado && nodoSeleccionado.id === nodo.id) {
-      return 3;
-    }
-    return 1.5;
-  };
-
-  const obtenerColorEnlace = enlace => {
-    if (!configuracionLocal.colorearPorTipo) {
-      return '#999';
-    }
-
-    const colores = {
-      familiar_sangre: '#e74c3c',
-      complice_directo: '#e67e22',
-      socio_comercial: '#f39c12',
-      jerarquia_comando: '#9b59b6',
-      coordinacion_operativa: '#3498db',
-      amistad_personal: '#2ecc71',
+    // Funciones de control de zoom
+    window.zoomIn = () => {
+      svg.transition().call(zoom.scaleBy, 1.5);
     };
 
-    return colores[enlace.tipo] || '#95a5a6';
-  };
+    window.zoomOut = () => {
+      svg.transition().call(zoom.scaleBy, 1 / 1.5);
+    };
 
-  const calcularAnchoEnlace = enlace => {
-    const factorConfianza = enlace.nivel_confianza || 0.5;
-    const factorFuerza = FACTORES_FUERZA[enlace.fuerza] || 0.5;
-    return 1 + factorConfianza * factorFuerza * 4;
-  };
+    window.resetZoom = () => {
+      svg.transition().call(zoom.transform, d3.zoomIdentity);
+    };
 
-  const calcularOpacidadEnlace = enlace => {
-    return 0.3 + enlace.nivel_confianza * 0.7;
-  };
+    window.centerView = () => {
+      const bounds = g.node().getBBox();
+      const fullWidth = width;
+      const fullHeight = height_actual;
+      const widthRatio = fullWidth / bounds.width;
+      const heightRatio = fullHeight / bounds.height;
+      const scale = Math.min(widthRatio, heightRatio) * 0.8;
+      const translate = [
+        fullWidth / 2 - scale * (bounds.x + bounds.width / 2),
+        fullHeight / 2 - scale * (bounds.y + bounds.height / 2),
+      ];
 
-  const calcularDistanciaEnlace = enlace => {
-    const baseDistance = 100;
-    const factorFuerza = FACTORES_FUERZA[enlace.fuerza] || 0.5;
-    return baseDistance * (1.5 - factorFuerza);
-  };
-
-  const calcularFuerzaEnlace = enlace => {
-    const factorConfianza = enlace.nivel_confianza || 0.5;
-    const factorFuerza = FACTORES_FUERZA[enlace.fuerza] || 0.5;
-    return factorConfianza * factorFuerza;
-  };
-
-  const calcularCargaNodo = nodo => {
-    const baseCarga = -300;
-    const factorNivel = Math.max(0.5, 2 - nodo.nivel * 0.3);
-    return baseCarga * factorNivel;
-  };
-
-  // Funciones de interacción
-  const resaltarConexiones = (nodoFoco, nodos, enlaces) => {
-    const nodosConectados = new Set();
-    nodosConectados.add(nodoFoco.id);
-
-    // Encontrar nodos conectados
-    enlaces.each(function (d) {
-      if (d.source.id === nodoFoco.id) {
-        nodosConectados.add(d.target.id);
-      } else if (d.target.id === nodoFoco.id) {
-        nodosConectados.add(d.source.id);
-      }
-    });
-
-    // Aplicar estilos de resaltado
-    nodos
-      .style('opacity', d => (nodosConectados.has(d.id) ? 1.0 : 0.3))
-      .attr('stroke-width', d => (nodosConectados.has(d.id) ? 2 : 1));
-
-    enlaces
-      .style('opacity', d =>
-        d.source.id === nodoFoco.id || d.target.id === nodoFoco.id ? 1.0 : 0.1
-      )
-      .attr('stroke-width', d =>
-        d.source.id === nodoFoco.id || d.target.id === nodoFoco.id
-          ? calcularAnchoEnlace(d) * 1.5
-          : calcularAnchoEnlace(d)
-      );
-  };
-
-  const restablecerEstilos = (nodos, enlaces) => {
-    nodos.style('opacity', 1.0).attr('stroke-width', 1.5);
-
-    enlaces
-      .style('opacity', calcularOpacidadEnlace)
-      .attr('stroke-width', calcularAnchoEnlace);
-  };
-
-  const mostrarTooltipNodo = (event, nodo) => {
-    // Implementar tooltip usando biblioteca como Tippy.js o tooltip nativo
-    console.log('Tooltip nodo:', nodo);
-  };
-
-  const ocultarTooltip = () => {
-    // Ocultar tooltip
-  };
-
-  const mostrarInfoEnlace = enlace => {
-    console.log('Info enlace:', enlace);
-  };
-
-  const truncarTexto = (texto, maxLength) => {
-    return texto.length > maxLength
-      ? texto.substring(0, maxLength - 3) + '...'
-      : texto;
-  };
-
-  // Controles de zoom
-  const zoomIn = () => {
-    if (zoom) {
-      d3.select(svgRef.current).transition().call(zoom.scaleBy, 1.5);
-    }
-  };
-
-  const zoomOut = () => {
-    if (zoom) {
-      d3.select(svgRef.current)
+      svg
         .transition()
-        .call(zoom.scaleBy, 1 / 1.5);
-    }
+        .duration(750)
+        .call(
+          zoom.transform,
+          d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+        );
+    };
   };
 
-  const resetearZoom = () => {
-    if (zoom) {
-      d3.select(svgRef.current)
-        .transition()
-        .call(zoom.transform, d3.zoomIdentity);
-    }
+  const exportNetworkImage = () => {
+    const svgElement = svgRef.current;
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svgElement);
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = function () {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      context.drawImage(img, 0, 0);
+
+      const link = document.createElement('a');
+      link.download = `red_criminal_${
+        new Date().toISOString().split('T')[0]
+      }.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    };
+
+    img.src =
+      'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(source)));
   };
-
-  const actualizarConfiguracion = nuevaConfig => {
-    setConfiguracionLocal(prev => ({
-      ...prev,
-      ...nuevaConfig,
-    }));
-  };
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent>
-          <Typography>Cargando red criminal...</Typography>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent>
-          <Alert severity="error">{error}</Alert>
-          <Button onClick={cargarDatosRed} variant="outlined">
-            Reintentar
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
-    <Card>
-      <CardContent>
-        {/* Barra de herramientas */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
-          <Typography variant="h6">
-            Red Criminal - {datosRed.nodos.length} personas,{' '}
-            {datosRed.vinculos.length} vínculos
-          </Typography>
+    <Box>
+      {/* Barra de herramientas */}
+      <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item>
+            <Typography variant="h6">Visualización de Red Criminal</Typography>
+          </Grid>
 
-          <Box display="flex" gap={1}>
+          <Grid item xs />
+
+          {/* Controles de zoom */}
+          <Grid item>
             <Tooltip title="Acercar">
-              <IconButton onClick={zoomIn} size="small">
+              <IconButton onClick={() => window.zoomIn?.()}>
                 <ZoomIn />
               </IconButton>
             </Tooltip>
-
             <Tooltip title="Alejar">
-              <IconButton onClick={zoomOut} size="small">
+              <IconButton onClick={() => window.zoomOut?.()}>
                 <ZoomOut />
               </IconButton>
             </Tooltip>
-
-            <Tooltip title="Resetear zoom">
-              <IconButton onClick={resetearZoom} size="small">
+            <Tooltip title="Centrar vista">
+              <IconButton onClick={() => window.centerView?.()}>
+                <CenterFocusStrong />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Reiniciar zoom">
+              <IconButton onClick={() => window.resetZoom?.()}>
                 <Refresh />
               </IconButton>
             </Tooltip>
+          </Grid>
 
+          {/* Controles de configuración */}
+          <Grid item>
             <Tooltip title="Configuración">
-              <IconButton onClick={() => setDialogoConfig(true)} size="small">
+              <IconButton onClick={() => setDialogConfig(true)}>
                 <Settings />
               </IconButton>
             </Tooltip>
-          </Box>
-        </Box>
+            <Tooltip title="Exportar imagen">
+              <IconButton onClick={exportNetworkImage}>
+                <Download />
+              </IconButton>
+            </Tooltip>
+          </Grid>
+        </Grid>
 
-        {/* Controles rápidos */}
-        <Box display="flex" gap={2} mb={2} flexWrap="wrap">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={configuracionLocal.mostrarEtiquetas}
-                onChange={e =>
-                  actualizarConfiguracion({
-                    mostrarEtiquetas: e.target.checked,
-                  })
-                }
-              />
-            }
-            label="Mostrar nombres"
-          />
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={configuracionLocal.colorearPorTipo}
-                onChange={e =>
-                  actualizarConfiguracion({ colorearPorTipo: e.target.checked })
-                }
-              />
-            }
-            label="Colorear por tipo"
-          />
-        </Box>
-
-        {/* Contenedor del SVG */}
-        <Box
-          ref={containerRef}
-          sx={{
-            width: '100%',
-            height: altura,
-            border: '1px solid #ddd',
-            borderRadius: 1,
-            overflow: 'hidden',
-          }}
-        >
-          <svg ref={svgRef} style={{ width: '100%', height: '100%' }} />
-        </Box>
-
-        {/* Información del nodo seleccionado */}
-        {nodoSeleccionado && (
-          <Box
-            mt={2}
-            p={2}
-            bgcolor="background.paper"
-            borderRadius={1}
-            border="1px solid #ddd"
-          >
-            <Typography variant="subtitle1" gutterBottom>
-              {nodoSeleccionado.nombre}
+        {/* Filtros rápidos */}
+        <Grid container spacing={2} sx={{ mt: 1 }} alignItems="center">
+          <Grid item xs={12} md={3}>
+            <Typography gutterBottom>
+              Confianza mínima:{' '}
+              {(config.filtrar_por_confianza * 100).toFixed(0)}%
             </Typography>
-            <Box display="flex" gap={1} flexWrap="wrap">
-              <Chip label={`Nivel: ${nodoSeleccionado.nivel}`} size="small" />
-              <Chip label={`DNI: ${nodoSeleccionado.dni}`} size="small" />
-              {nodoSeleccionado.en_banda && (
-                <Chip label="En banda" color="warning" size="small" />
-              )}
-              {nodoSeleccionado.es_lider_banda && (
-                <Chip label="Líder" color="error" size="small" />
-              )}
-            </Box>
-          </Box>
-        )}
-      </CardContent>
+            <Slider
+              value={config.filtrar_por_confianza}
+              onChange={(e, value) =>
+                setConfig(prev => ({
+                  ...prev,
+                  filtrar_por_confianza: value,
+                }))
+              }
+              min={0.1}
+              max={1.0}
+              step={0.1}
+              valueLabelDisplay="auto"
+              valueLabelFormat={value => `${(value * 100).toFixed(0)}%`}
+            />
+          </Grid>
 
-      {/* Diálogo de configuración */}
+          <Grid item xs={12} md={9}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={config.mostrar_etiquetas}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      mostrar_etiquetas: e.target.checked,
+                    }))
+                  }
+                />
+              }
+              label="Mostrar nombres"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={config.mostrar_centralidad}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      mostrar_centralidad: e.target.checked,
+                    }))
+                  }
+                />
+              }
+              label="Colorear por centralidad"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={config.tamano_nodo_por_grado}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      tamano_nodo_por_grado: e.target.checked,
+                    }))
+                  }
+                />
+              }
+              label="Tamaño por conexiones"
+            />
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Área de visualización */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={selectedNode ? 9 : 12}>
+          <Card>
+            <CardContent sx={{ p: 1 }}>
+              {loading && (
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  height={height}
+                >
+                  <CircularProgress />
+                </Box>
+              )}
+
+              <div ref={containerRef} style={{ width: '100%' }}>
+                <svg
+                  ref={svgRef}
+                  style={{ display: loading ? 'none' : 'block' }}
+                />
+              </div>
+
+              {networkData.nodes.length === 0 && !loading && (
+                <Alert severity="info" sx={{ m: 2 }}>
+                  No hay datos de red para mostrar. Ajuste los filtros o
+                  seleccione una persona focal.
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Panel de información del nodo seleccionado */}
+        {selectedNode && (
+          <Grid item xs={12} md={3}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Información del Nodo
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                  Nombre:
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  {selectedNode.nombre}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                  DNI:
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  {selectedNode.dni}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                  Conexiones:
+                </Typography>
+                <Chip label={selectedNode.grado} color="primary" size="small" />
+
+                {centralityMetrics[selectedNode.id] && (
+                  <Box mt={2}>
+                    <Typography variant="body2" color="text.secondary">
+                      Métricas de Centralidad:
+                    </Typography>
+                    <Typography variant="caption" display="block">
+                      Intermediación:{' '}
+                      {(
+                        centralityMetrics[selectedNode.id].betweenness * 100
+                      ).toFixed(1)}
+                      %
+                    </Typography>
+                    <Typography variant="caption" display="block">
+                      Cercanía:{' '}
+                      {(
+                        centralityMetrics[selectedNode.id].closeness * 100
+                      ).toFixed(1)}
+                      %
+                    </Typography>
+                    <Typography variant="caption" display="block">
+                      Grado:{' '}
+                      {(
+                        centralityMetrics[selectedNode.id].degree * 100
+                      ).toFixed(1)}
+                      %
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+      </Grid>
+
+      {/* Dialog de configuración avanzada */}
       <Dialog
-        open={dialogoConfig}
-        onClose={() => setDialogoConfig(false)}
+        open={dialogConfig}
+        onClose={() => setDialogConfig(false)}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle>Configuración de Visualización</DialogTitle>
         <DialogContent>
-          <Box display="flex" flexDirection="column" gap={3} pt={1}>
-            <FormControl fullWidth>
-              <InputLabel>Algoritmo de Layout</InputLabel>
-              <Select
-                value={configuracionLocal.algoritmoLayout}
-                onChange={e =>
-                  actualizarConfiguracion({ algoritmoLayout: e.target.value })
-                }
-                label="Algoritmo de Layout"
-              >
-                <MenuItem value="force">Fuerzas dirigidas</MenuItem>
-                <MenuItem value="radial">Radial</MenuItem>
-              </Select>
-            </FormControl>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Algoritmo de Layout</InputLabel>
+                <Select
+                  value={config.algoritmo_layout}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      algoritmo_layout: e.target.value,
+                    }))
+                  }
+                  label="Algoritmo de Layout"
+                >
+                  <MenuItem value="force_directed">
+                    Dirigido por Fuerzas
+                  </MenuItem>
+                  <MenuItem value="circular">Circular</MenuItem>
+                  <MenuItem value="hierarchical">Jerárquico</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
-            <Box>
-              <Typography gutterBottom>
-                Profundidad de la red: {configuracionLocal.profundidad}
-              </Typography>
-              <Slider
-                value={configuracionLocal.profundidad}
-                onChange={(e, value) =>
-                  actualizarConfiguracion({ profundidad: value })
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={config.agrupar_comunidades}
+                    onChange={e =>
+                      setConfig(prev => ({
+                        ...prev,
+                        agrupar_comunidades: e.target.checked,
+                      }))
+                    }
+                  />
                 }
-                min={1}
-                max={5}
-                step={1}
-                marks
-                valueLabelDisplay="auto"
+                label="Agrupar comunidades detectadas"
               />
-            </Box>
+            </Grid>
 
-            <Box>
-              <Typography gutterBottom>
-                Nivel mínimo de confianza:{' '}
-                {configuracionLocal.nivelConfianzaMin}
-              </Typography>
-              <Slider
-                value={configuracionLocal.nivelConfianzaMin}
-                onChange={(e, value) =>
-                  actualizarConfiguracion({ nivelConfianzaMin: value })
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={config.resaltar_caminos}
+                    onChange={e =>
+                      setConfig(prev => ({
+                        ...prev,
+                        resaltar_caminos: e.target.checked,
+                      }))
+                    }
+                  />
                 }
-                min={0}
-                max={1}
-                step={0.1}
-                marks
-                valueLabelDisplay="auto"
+                label="Resaltar caminos críticos"
               />
-            </Box>
+            </Grid>
+          </Grid>
 
-            <Box>
-              <Typography gutterBottom>
-                Escala de fuerza: {configuracionLocal.escalaFuerza}
+          {detectedCommunities.length > 0 && (
+            <Box mt={3}>
+              <Typography variant="h6" gutterBottom>
+                Comunidades Detectadas ({detectedCommunities.length})
               </Typography>
-              <Slider
-                value={configuracionLocal.escalaFuerza}
-                onChange={(e, value) =>
-                  actualizarConfiguracion({ escalaFuerza: value })
-                }
-                min={0.1}
-                max={3}
-                step={0.1}
-                marks
-                valueLabelDisplay="auto"
-              />
+              <List dense>
+                {detectedCommunities.map((comunidad, index) => (
+                  <ListItem key={index}>
+                    <ListItemText
+                      primary={`Comunidad ${index + 1}`}
+                      secondary={`${
+                        comunidad.miembros.length
+                      } miembros - Densidad: ${(
+                        comunidad.densidad * 100
+                      ).toFixed(1)}%`}
+                    />
+                    <ListItemSecondaryAction>
+                      <Chip
+                        label={comunidad.miembros.length}
+                        size="small"
+                        color="primary"
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
             </Box>
-
-            <Button
-              variant="contained"
-              onClick={() => setDialogoConfig(false)}
-              fullWidth
-            >
-              Aplicar configuración
-            </Button>
-          </Box>
+          )}
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogConfig(false)}>Cerrar</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setDialogConfig(false);
+              renderNetwork();
+            }}
+          >
+            Aplicar Cambios
+          </Button>
+        </DialogActions>
       </Dialog>
-    </Card>
+    </Box>
   );
-};
-
-// Constantes de configuración
-const TIPOS_VINCULACION = {
-  familiar_sangre: { color: '#e74c3c', label: 'Familiar (Sangre)' },
-  familiar_politico: { color: '#e67e22', label: 'Familiar (Político)' },
-  complice_directo: { color: '#f39c12', label: 'Cómplice Directo' },
-  socio_comercial: { color: '#f1c40f', label: 'Socio Comercial' },
-  jerarquia_comando: { color: '#9b59b6', label: 'Jerarquía/Comando' },
-  coordinacion_operativa: { color: '#3498db', label: 'Coordinación Operativa' },
-  amistad_personal: { color: '#2ecc71', label: 'Amistad Personal' },
-  rival_competencia: { color: '#e74c3c', label: 'Rival/Competencia' },
-};
-
-const FACTORES_FUERZA = {
-  muy_fuerte: 1.0,
-  fuerte: 0.8,
-  moderada: 0.6,
-  debil: 0.4,
-  muy_debil: 0.2,
 };
 
 export default VisualizadorRedCriminal;

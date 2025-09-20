@@ -5,9 +5,11 @@ import {
   Typography,
   Button,
   Box,
+  Grid,
 } from '@mui/material';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
-export default function CardResult({ item, onDetail }) {
+export default function CardResult({ item, onDetail, onVinculacion }) {
   return (
     <Card
       className="card"
@@ -172,27 +174,61 @@ export default function CardResult({ item, onDetail }) {
           </Box>
         </Box>
 
-        {/* Botón de detalle - SIEMPRE AL FINAL */}
-        <Button
-          variant="contained"
-          fullWidth
-          size="medium"
-          sx={{
-            bgcolor: '#1a365d',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: '0.85rem',
-            py: 1,
-            mt: 'auto',
-            '&:hover': {
-              bgcolor: '#2c5282',
-              transform: 'translateY(-1px)',
-            },
-            transition: 'all 0.2s ease',
-          }}
-        >
-          VER DETALLE
-        </Button>
+        {/* Botones de acción */}
+        <Grid container spacing={1} sx={{ mt: 'auto' }}>
+          <Grid item xs={7}>
+            <Button
+              variant="contained"
+              fullWidth
+              size="small"
+              sx={{
+                bgcolor: '#1a365d',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                py: 0.8,
+                '&:hover': {
+                  bgcolor: '#2c5282',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease',
+              }}
+              onClick={e => {
+                e.stopPropagation();
+                onDetail();
+              }}
+            >
+              VER DETALLE
+            </Button>
+          </Grid>
+          <Grid item xs={5}>
+            <Button
+              variant="outlined"
+              fullWidth
+              size="small"
+              startIcon={<AccountTreeIcon />}
+              sx={{
+                color: '#d32f2f',
+                borderColor: '#d32f2f',
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                py: 0.8,
+                '&:hover': {
+                  bgcolor: '#d32f2f',
+                  color: 'white',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease',
+              }}
+              onClick={e => {
+                e.stopPropagation();
+                if (onVinculacion) onVinculacion(item);
+              }}
+            >
+              VINCULAR
+            </Button>
+          </Grid>
+        </Grid>
       </CardContent>
     </Card>
   );

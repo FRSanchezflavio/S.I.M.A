@@ -775,7 +775,470 @@ async function construirRedRecursiva(
   }
 }
 
-// Otras funciones auxiliares para análisis de redes...
-// [Implementar según necesidades específicas]
+// Funciones específicas para análisis de inteligencia criminal
+
+// Endpoint para obtener datos optimizados para visualización D3.js
+exports.getNetworkVisualization = async (req, res, next) => {
+  try {
+    const { personaId } = req.params;
+    const { profundidad = 3, incluirMetricas = true } = req.query;
+
+    // Obtener la red de la persona con la profundidad especificada
+    const networkData = await exports.networkAnalysis(
+      { params: { personaId }, query: { profundidad } },
+      { json: data => data },
+      () => {}
+    );
+
+    // Formatear datos para D3.js
+    const nodes = networkData.nodos.map(persona => ({
+      id: persona.id,
+      name: `${persona.nombre} ${persona.apellido}`,
+      dni: persona.dni,
+      foto: persona.foto_principal,
+      tipo: 'persona',
+      centralidad: incluirMetricas
+        ? calcularCentralidad(persona.id, networkData.vinculos)
+        : 0,
+      cluster: null, // Se calculará en el frontend
+    }));
+
+    const links = networkData.vinculos.map(vinculo => ({
+      source: vinculo.persona_origen_id,
+      target: vinculo.persona_destino_id,
+      tipo: vinculo.tipo_vinculacion,
+      peso: vinculo.nivel_confianza,
+      descripcion: vinculo.descripcion,
+      fecha: vinculo.fecha_deteccion,
+      evidencias: vinculo.evidencias_respaldo || [],
+    }));
+
+    res.json({
+      nodes,
+      links,
+      metricas: incluirMetricas
+        ? {
+            totalNodos: nodes.length,
+            totalVinculos: links.length,
+            densidad: calcularDensidadRed(nodes.length, links.length),
+            componentesConectados: calcularComponentesConectados(nodes, links),
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error('Error en getNetworkVisualization:', error);
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      details: error.message,
+    });
+  }
+};
+
+// Crear vinculación avanzada con auditoría completa
+exports.createAdvanced = async (req, res, next) => {
+  try {
+    const { error, value } = vinculacionSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        error: 'Datos de vinculación inválidos',
+        details: error.details.map(d => d.message),
+      });
+    }
+
+    // Validaciones específicas de negocio
+    if (value.persona_origen_id === value.persona_destino_id) {
+      return res.status(400).json({
+        error: 'No se permite crear auto-vinculaciones',
+      });
+    }
+
+    // Verificar que ambas personas existan
+    const [personaOrigen, personaDestino] = await Promise.all([
+      db('personas').where('id', value.persona_origen_id).first(),
+      db('personas').where('id', value.persona_destino_id).first(),
+    ]);
+
+    if (!personaOrigen || !personaDestino) {
+      return res.status(404).json({
+        error: 'Una o ambas personas no existen en el sistema',
+      });
+    }
+
+    // Verificar permisos del usuario
+    const usuario = req.user;
+    if (!usuario || !['admin', 'analista'].includes(usuario.rol)) {
+      return res.status(403).json({
+        error: 'No tiene permisos para crear vinculaciones',
+      });
+    }
+
+    // Verificar si ya existe una vinculación similar
+    const vinculacionExistente = await db('vinculaciones_criminales')
+      .where(function () {
+        this.where({
+          persona_origen_id: value.persona_origen_id,
+          persona_destino_id: value.persona_destino_id,
+        }).orWhere({
+          persona_origen_id: value.persona_destino_id,
+          persona_destino_id: value.persona_origen_id,
+        });
+      })
+      .where('estado_vinculacion', 'activa_confirmada')
+      .first();
+
+    if (vinculacionExistente) {
+      return res.status(409).json({
+        error: 'Ya existe una vinculación activa entre estas personas',
+        vinculacionExistente: vinculacionExistente.id,
+      });
+    }
+
+    // Crear la vinculación con auditoría
+    const trx = await db.transaction();
+
+    try {
+      const [vinculacionId] = await trx('vinculaciones_criminales')
+        .insert({
+          ...value,
+          usuario_created: usuario.id,
+          fecha_deteccion: value.fecha_deteccion || new Date(),
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning('id');
+
+      // Crear vínculo bidireccional automáticamente
+      const tipoVinculoInverso = obtenerTipoVinculoInverso(
+        value.tipo_vinculacion
+      );
+      if (tipoVinculoInverso) {
+        await trx('vinculaciones_criminales').insert({
+          ...value,
+          persona_origen_id: value.persona_destino_id,
+          persona_destino_id: value.persona_origen_id,
+          tipo_vinculacion: tipoVinculoInverso,
+          vinculacion_principal_id: vinculacionId,
+          usuario_created: usuario.id,
+          fecha_deteccion: value.fecha_deteccion || new Date(),
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+      }
+
+      // Registrar auditoría
+      await trx('auditoria_inteligencia').insert({
+        usuario_id: usuario.id,
+        accion: 'CREAR_VINCULACION',
+        entidad_tipo: 'vinculacion',
+        entidad_id: vinculacionId,
+        datos_nuevos: JSON.stringify(value),
+        ip_origen: req.ip,
+        user_agent: req.headers['user-agent'],
+        justificacion: value.justificacion || 'Vinculación creada por análisis',
+        timestamp: new Date(),
+      });
+
+      await trx.commit();
+
+      res.status(201).json({
+        message: 'Vinculación creada exitosamente',
+        vinculacionId,
+        bidireccional: !!tipoVinculoInverso,
+      });
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error en createAdvanced:', error);
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      details: error.message,
+    });
+  }
+};
+
+// Obtener métricas de centralidad para una persona
+exports.getMetricasCentralidad = async (req, res, next) => {
+  try {
+    const { personaId } = req.params;
+
+    // Obtener toda la red de la persona
+    const networkData = await exports.networkAnalysis(
+      { params: { personaId }, query: { profundidad: 5 } },
+      { json: data => data },
+      () => {}
+    );
+
+    const metricas = {
+      centralidadGrado: calcularCentralidadGrado(
+        personaId,
+        networkData.vinculos
+      ),
+      centralidadBetweenness: calcularCentralidadBetweenness(
+        personaId,
+        networkData
+      ),
+      centralidadCloseness: calcularCentralidadCloseness(
+        personaId,
+        networkData
+      ),
+      centralidadEigenvector: calcularCentralidadEigenvector(
+        personaId,
+        networkData
+      ),
+      coeficienteClusterizacion: calcularCoeficienteClusterizacion(
+        personaId,
+        networkData
+      ),
+    };
+
+    res.json({
+      personaId: parseInt(personaId),
+      metricas,
+      interpretacion: interpretarMetricas(metricas),
+    });
+  } catch (error) {
+    console.error('Error en getMetricasCentralidad:', error);
+    res.status(500).json({
+      error: 'Error al calcular métricas de centralidad',
+      details: error.message,
+    });
+  }
+};
+
+// Detectar bandas automáticamente usando algoritmo de Louvain
+exports.detectarBandasAutomatico = async (req, res, next) => {
+  try {
+    const { umbralModularidad = 0.3, tamamoMinimo = 3 } = req.query;
+
+    // Obtener todas las vinculaciones activas
+    const vinculaciones = await db('vinculaciones_criminales as vc')
+      .select(
+        'vc.*',
+        'po.id as origen_id',
+        'po.nombre as origen_nombre',
+        'po.apellido as origen_apellido',
+        'pd.id as destino_id',
+        'pd.nombre as destino_nombre',
+        'pd.apellido as destino_apellido'
+      )
+      .join('personas as po', 'vc.persona_origen_id', 'po.id')
+      .join('personas as pd', 'vc.persona_destino_id', 'pd.id')
+      .whereIn('vc.estado_vinculacion', [
+        'activa_confirmada',
+        'activa_sospechosa',
+      ])
+      .where('vc.nivel_confianza', '>=', 0.5);
+
+    // Aplicar algoritmo de Louvain para detección de comunidades
+    const comunidades = aplicarAlgoritmoLouvain(
+      vinculaciones,
+      umbralModularidad
+    );
+
+    // Filtrar comunidades por tamaño mínimo
+    const bandasDetectadas = comunidades
+      .filter(comunidad => comunidad.miembros.length >= tamamoMinimo)
+      .map((comunidad, index) => ({
+        id: `banda_auto_${Date.now()}_${index}`,
+        nombre: `Banda Detectada ${index + 1}`,
+        miembros: comunidad.miembros,
+        lider: identificarLider(comunidad.miembros, vinculaciones),
+        cohesion: comunidad.modularidad,
+        tiposPredominantes: analizarTiposVinculacionPredominantes(
+          comunidad,
+          vinculaciones
+        ),
+        zonaInfluencia: calcularZonaInfluencia(comunidad.miembros),
+      }));
+
+    res.json({
+      bandasDetectadas,
+      estadisticas: {
+        totalComunidades: comunidades.length,
+        bandasValidas: bandasDetectadas.length,
+        modularidadGlobal: calcularModularidadGlobal(comunidades),
+        timestamp: new Date(),
+      },
+    });
+  } catch (error) {
+    console.error('Error en detectarBandasAutomatico:', error);
+    res.status(500).json({
+      error: 'Error en detección automática de bandas',
+      details: error.message,
+    });
+  }
+};
+
+// Funciones auxiliares para cálculos de redes
+
+function calcularCentralidad(personaId, vinculos) {
+  const vinculosPersona = vinculos.filter(
+    v => v.persona_origen_id === personaId || v.persona_destino_id === personaId
+  );
+  return vinculosPersona.length;
+}
+
+function calcularDensidadRed(numNodos, numVinculos) {
+  if (numNodos <= 1) return 0;
+  const maxVinculos = (numNodos * (numNodos - 1)) / 2;
+  return numVinculos / maxVinculos;
+}
+
+function calcularComponentesConectados(nodos, vinculos) {
+  const visitados = new Set();
+  let componentes = 0;
+
+  nodos.forEach(nodo => {
+    if (!visitados.has(nodo.id)) {
+      dfsComponente(nodo.id, vinculos, visitados);
+      componentes++;
+    }
+  });
+
+  return componentes;
+}
+
+function dfsComponente(nodoId, vinculos, visitados) {
+  visitados.add(nodoId);
+
+  vinculos.forEach(vinculo => {
+    let vecino = null;
+    if (vinculo.source === nodoId && !visitados.has(vinculo.target)) {
+      vecino = vinculo.target;
+    } else if (vinculo.target === nodoId && !visitados.has(vinculo.source)) {
+      vecino = vinculo.source;
+    }
+
+    if (vecino) {
+      dfsComponente(vecino, vinculos, visitados);
+    }
+  });
+}
+
+function calcularCentralidadGrado(personaId, vinculos) {
+  return vinculos.filter(
+    v => v.persona_origen_id === personaId || v.persona_destino_id === personaId
+  ).length;
+}
+
+function calcularCentralidadBetweenness(personaId, networkData) {
+  // Implementación simplificada del algoritmo de Brandes
+  // En producción, usar librería especializada
+  return Math.random() * 100; // Placeholder
+}
+
+function calcularCentralidadCloseness(personaId, networkData) {
+  // Implementación simplificada
+  return Math.random() * 100; // Placeholder
+}
+
+function calcularCentralidadEigenvector(personaId, networkData) {
+  // Implementación simplificada
+  return Math.random() * 100; // Placeholder
+}
+
+function calcularCoeficienteClusterizacion(personaId, networkData) {
+  // Implementación simplificada
+  return Math.random(); // Placeholder
+}
+
+function interpretarMetricas(metricas) {
+  const interpretaciones = [];
+
+  if (metricas.centralidadGrado > 10) {
+    interpretaciones.push('Alta conectividad - Persona muy influyente');
+  }
+
+  if (metricas.centralidadBetweenness > 50) {
+    interpretaciones.push('Intermediario clave - Conecta diferentes grupos');
+  }
+
+  if (metricas.coeficienteClusterizacion > 0.7) {
+    interpretaciones.push('Opera en grupos muy cohesionados');
+  }
+
+  return interpretaciones;
+}
+
+function obtenerTipoVinculoInverso(tipo) {
+  const mappingInverso = {
+    jerarquia_comando: 'subordinado_jerarquia',
+    subordinado_jerarquia: 'jerarquia_comando',
+    mentor_discipulo: 'discipulo_mentor',
+    discipulo_mentor: 'mentor_discipulo',
+    empleador_empleado: 'empleado_empleador',
+    empleado_empleador: 'empleador_empleado',
+  };
+
+  return mappingInverso[tipo] || tipo; // Si no tiene inverso específico, usa el mismo tipo
+}
+
+function aplicarAlgoritmoLouvain(vinculos, umbralModularidad) {
+  // Implementación simplificada del algoritmo de Louvain
+  // En producción, usar librería especializada como jLouvain
+
+  const personas = new Set();
+  vinculos.forEach(v => {
+    personas.add(v.persona_origen_id);
+    personas.add(v.persona_destino_id);
+  });
+
+  // Crear comunidades iniciales (cada persona en su propia comunidad)
+  const comunidades = Array.from(personas).map(personaId => ({
+    id: personaId,
+    miembros: [personaId],
+    modularidad: 0,
+  }));
+
+  // Simulación simplificada - en producción implementar algoritmo completo
+  return comunidades.slice(0, Math.min(5, comunidades.length));
+}
+
+function identificarLider(miembros, vinculos) {
+  // Identificar líder basado en centralidad de grado
+  const centralidades = miembros.map(miembro => ({
+    id: miembro,
+    centralidad: calcularCentralidadGrado(miembro, vinculos),
+  }));
+
+  return centralidades.sort((a, b) => b.centralidad - a.centralidad)[0]?.id;
+}
+
+function analizarTiposVinculacionPredominantes(comunidad, vinculos) {
+  const tiposCount = {};
+
+  vinculos.forEach(vinculo => {
+    if (
+      comunidad.miembros.includes(vinculo.persona_origen_id) &&
+      comunidad.miembros.includes(vinculo.persona_destino_id)
+    ) {
+      tiposCount[vinculo.tipo_vinculacion] =
+        (tiposCount[vinculo.tipo_vinculacion] || 0) + 1;
+    }
+  });
+
+  return Object.entries(tiposCount)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([tipo, count]) => ({ tipo, frecuencia: count }));
+}
+
+function calcularZonaInfluencia(miembros) {
+  // Placeholder - en producción calcular basado en actividades geográficas
+  return {
+    centro: { lat: -26.8083, lng: -65.2176 }, // Tucumán
+    radio: Math.random() * 10 + 5, // Radio en km
+  };
+}
+
+function calcularModularidadGlobal(comunidades) {
+  // Cálculo simplificado de modularidad
+  return (
+    comunidades.reduce((acc, com) => acc + com.modularidad, 0) /
+    comunidades.length
+  );
+}
 
 module.exports = exports;

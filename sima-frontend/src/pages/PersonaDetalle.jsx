@@ -34,10 +34,12 @@ import MapIcon from '@mui/icons-material/Map';
 import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import FormularioVinculacionAvanzado from '../components/inteligencia/FormularioVinculacionAvanzado';
 import AgregarDelitoEspecifico from '../components/AgregarDelitoEspecifico';
 import ListaAntecedentesPersonalesMejorada from '../components/ListaAntecedentesPersonalesMejorada';
 import EstadisticasDelitos from '../components/EstadisticasDelitos';
@@ -71,6 +73,7 @@ export default function PersonaDetalle() {
   const [showAntecedentePersonalDialog, setShowAntecedentePersonalDialog] =
     useState(false);
   const [tabValue, setTabValue] = useState(0); // CORREGIDO: Solo Antecedentes personales (tab 0)
+  const [dialogVinculacion, setDialogVinculacion] = useState(false);
 
   // Hook para gestión de antecedentes personales
   const {
@@ -315,6 +318,12 @@ export default function PersonaDetalle() {
     } catch (error) {
       throw error;
     }
+  };
+
+  // Manejador para crear vinculación criminal
+  const handleVinculacionCreada = () => {
+    setDialogVinculacion(false);
+    showToast('Vinculación criminal creada exitosamente', 'success');
   };
 
   // Obtener estadísticas de antecedentes personales
@@ -1039,6 +1048,18 @@ export default function PersonaDetalle() {
                 sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#111' } }}
               >
                 Editar
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AccountTreeIcon />}
+                onClick={() => setDialogVinculacion(true)}
+                sx={{
+                  bgcolor: '#d32f2f',
+                  '&:hover': { bgcolor: '#b71c1c' },
+                  borderRadius: '4px',
+                }}
+              >
+                Crear Vinculación
               </Button>
               <Button
                 variant="contained"
@@ -2036,6 +2057,14 @@ export default function PersonaDetalle() {
             : null
         }
         loading={loadingAntecedentesPersonales}
+      />
+
+      {/* Dialog para crear vinculación criminal */}
+      <FormularioVinculacionAvanzado
+        open={dialogVinculacion}
+        onClose={() => setDialogVinculacion(false)}
+        onGuardado={handleVinculacionCreada}
+        personaInicial={item}
       />
 
       <Footer />
