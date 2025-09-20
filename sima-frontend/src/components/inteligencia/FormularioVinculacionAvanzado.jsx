@@ -25,10 +25,6 @@ import {
   CardContent,
 } from '@mui/material';
 import { debounce } from '@mui/material/utils';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { es } from 'date-fns/locale';
 import api from '../../services/api';
 import { useToast } from '../ToastProvider';
 
@@ -149,74 +145,82 @@ const FormularioVinculacionAvanzado = ({
 
   // Función de búsqueda con debounce para personas origen
   const debouncedSearchOrigen = useMemo(
-    () => debounce(async (searchText) => {
-      if (!searchText || searchText.length < 2) {
-        setPersonasOrigen(personaInicial ? [personaInicial] : []);
-        return;
-      }
+    () =>
+      debounce(async searchText => {
+        if (!searchText || searchText.length < 2) {
+          setPersonasOrigen(personaInicial ? [personaInicial] : []);
+          return;
+        }
 
-      setLoadingOrigen(true);
-      try {
-        const response = await api.get('/personas', {
-          params: { 
-            q: searchText,
-            pageSize: 10 
-          }
-        });
-        
-        const resultados = response.data.data || [];
-        
-        // Si hay persona inicial, incluirla en los resultados si no está ya
-        if (personaInicial) {
-          const yaIncluida = resultados.find(p => p.id === personaInicial.id);
-          if (!yaIncluida) {
-            setPersonasOrigen([personaInicial, ...resultados]);
+        setLoadingOrigen(true);
+        try {
+          console.log('🔍 Buscando personas origen:', searchText);
+          const response = await api.get('/personas', {
+            params: {
+              q: searchText,
+              pageSize: 10,
+            },
+          });
+
+          console.log('📡 Respuesta del servidor (origen):', response.data);
+          const resultados = response.data.items || [];
+          console.log('👥 Personas encontradas (origen):', resultados.length);
+
+          // Si hay persona inicial, incluirla en los resultados si no está ya
+          if (personaInicial) {
+            const yaIncluida = resultados.find(p => p.id === personaInicial.id);
+            if (!yaIncluida) {
+              setPersonasOrigen([personaInicial, ...resultados]);
+            } else {
+              setPersonasOrigen(resultados);
+            }
           } else {
             setPersonasOrigen(resultados);
           }
-        } else {
-          setPersonasOrigen(resultados);
+        } catch (error) {
+          console.error('Error buscando personas origen:', error);
+          setPersonasOrigen(personaInicial ? [personaInicial] : []);
+        } finally {
+          setLoadingOrigen(false);
         }
-      } catch (error) {
-        console.error('Error buscando personas origen:', error);
-        setPersonasOrigen(personaInicial ? [personaInicial] : []);
-      } finally {
-        setLoadingOrigen(false);
-      }
-    }, 300),
+      }, 300),
     [personaInicial]
   );
 
   // Función de búsqueda con debounce para personas destino
   const debouncedSearchDestino = useMemo(
-    () => debounce(async (searchText) => {
-      if (!searchText || searchText.length < 2) {
-        setPersonasDestino([]);
-        return;
-      }
+    () =>
+      debounce(async searchText => {
+        if (!searchText || searchText.length < 2) {
+          setPersonasDestino([]);
+          return;
+        }
 
-      setLoadingDestino(true);
-      try {
-        const response = await api.get('/personas', {
-          params: { 
-            q: searchText,
-            pageSize: 10 
-          }
-        });
-        
-        // Filtrar para no mostrar la persona origen
-        const resultados = (response.data.data || []).filter(
-          persona => persona.id !== formData.persona_origen_id
-        );
-        
-        setPersonasDestino(resultados);
-      } catch (error) {
-        console.error('Error buscando personas destino:', error);
-        setPersonasDestino([]);
-      } finally {
-        setLoadingDestino(false);
-      }
-    }, 300),
+        setLoadingDestino(true);
+        try {
+          console.log('🔍 Buscando personas destino:', searchText);
+          const response = await api.get('/personas', {
+            params: {
+              q: searchText,
+              pageSize: 10,
+            },
+          });
+
+          console.log('📡 Respuesta del servidor (destino):', response.data);
+          // Filtrar para no mostrar la persona origen
+          const resultados = (response.data.items || []).filter(
+            persona => persona.id !== formData.persona_origen_id
+          );
+          console.log('👥 Personas encontradas (destino):', resultados.length);
+
+          setPersonasDestino(resultados);
+        } catch (error) {
+          console.error('Error buscando personas destino:', error);
+          setPersonasDestino([]);
+        } finally {
+          setLoadingDestino(false);
+        }
+      }, 300),
     [formData.persona_origen_id]
   );
 
@@ -259,7 +263,8 @@ const FormularioVinculacionAvanzado = ({
           newErrors.persona_destino_id = 'Debe seleccionar una persona destino';
         }
         if (formData.persona_origen_id === formData.persona_destino_id) {
-          newErrors.persona_destino_id = 'No puede vincular una persona consigo misma';
+          newErrors.persona_destino_id =
+            'No puede vincular una persona consigo misma';
         }
         break;
 
@@ -329,20 +334,20 @@ const FormularioVinculacionAvanzado = ({
   };
 
   // Función helper para encontrar persona por ID en ambas listas
-  const getPersonaById = (id) => {
+  const getPersonaById = id => {
     if (!id) return null;
-    
+
     // Buscar en personasOrigen primero
     let persona = personasOrigen.find(p => p.id === id);
     if (persona) return persona;
-    
+
     // Luego buscar en personasDestino
     persona = personasDestino.find(p => p.id === id);
     if (persona) return persona;
-    
+
     // Si es personaInicial, retornarla
     if (personaInicial && personaInicial.id === id) return personaInicial;
-    
+
     return null;
   };
 
@@ -351,7 +356,11 @@ const FormularioVinculacionAvanzado = ({
       case 0:
         return (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ color: '#1565c0', mb: 3 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: '#1565c0', mb: 3 }}
+            >
               🔍 Seleccionar Personas para Vinculación
             </Typography>
 
@@ -362,19 +371,19 @@ const FormularioVinculacionAvanzado = ({
                   Persona Origen *
                 </Typography>
                 {personaInicial ? (
-                  <Box 
-                    sx={{ 
-                      p: 2, 
+                  <Box
+                    sx={{
+                      p: 2,
                       border: '2px solid #e3f2fd',
                       borderRadius: 2,
                       bgcolor: '#f8f9fa',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 2
+                      gap: 2,
                     }}
                   >
-                    <Avatar 
-                      src={personaInicial.foto_principal} 
+                    <Avatar
+                      src={personaInicial.foto_principal}
                       sx={{ width: 50, height: 50 }}
                     >
                       {personaInicial.nombre?.[0]}
@@ -386,9 +395,9 @@ const FormularioVinculacionAvanzado = ({
                       <Typography variant="body2" color="text.secondary">
                         DNI: {personaInicial.dni}
                       </Typography>
-                      <Chip 
-                        label={personaInicial.comisaria || 'Sin comisaría'} 
-                        size="small" 
+                      <Chip
+                        label={personaInicial.comisaria || 'Sin comisaría'}
+                        size="small"
                         color="primary"
                         sx={{ mt: 0.5 }}
                       />
@@ -409,44 +418,51 @@ const FormularioVinculacionAvanzado = ({
                     onInputChange={(event, newInputValue) => {
                       setInputOrigenValue(newInputValue);
                     }}
-                    getOptionLabel={(option) => 
+                    getOptionLabel={option =>
                       `${option.apellido}, ${option.nombre} (DNI: ${option.dni})`
                     }
-                    isOptionEqualToValue={(option, value) => option.id === value?.id}
-                    filterOptions={(x) => x}
-                    renderInput={(params) => (
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === value?.id
+                    }
+                    filterOptions={x => x}
+                    renderInput={params => (
                       <TextField
                         {...params}
                         placeholder="Escriba para buscar personas..."
                         variant="outlined"
                         fullWidth
                         error={!!errors.persona_origen_id}
-                        helperText={errors.persona_origen_id || "Mínimo 2 caracteres para buscar"}
+                        helperText={
+                          errors.persona_origen_id ||
+                          'Mínimo 2 caracteres para buscar'
+                        }
                         InputProps={{
                           ...params.InputProps,
                           startAdornment: (
-                            <Box sx={{ mr: 1, color: 'text.secondary' }}>🔍</Box>
+                            <Box sx={{ mr: 1, color: 'text.secondary' }}>
+                              🔍
+                            </Box>
                           ),
                         }}
                       />
                     )}
                     renderOption={(props, persona) => (
-                      <Box 
-                        component="li" 
+                      <Box
+                        component="li"
                         {...props}
-                        sx={{ 
-                          display: 'flex !important', 
+                        sx={{
+                          display: 'flex !important',
                           alignItems: 'center',
                           gap: 2,
                           p: 2,
                           minHeight: '80px',
                           '&:hover': {
                             bgcolor: 'rgba(21, 77, 113, 0.08)',
-                          }
+                          },
                         }}
                       >
-                        <Avatar 
-                          src={persona.foto_principal} 
+                        <Avatar
+                          src={persona.foto_principal}
                           sx={{ width: 40, height: 40 }}
                         >
                           {persona.nombre?.[0]}
@@ -456,12 +472,13 @@ const FormularioVinculacionAvanzado = ({
                             {persona.apellido}, {persona.nombre}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            DNI: {persona.dni} • {persona.comisaria || 'Sin comisaría'}
+                            DNI: {persona.dni} •{' '}
+                            {persona.comisaria || 'Sin comisaría'}
                           </Typography>
                           {persona.tipo_delito && (
-                            <Chip 
-                              label={persona.tipo_delito} 
-                              size="small" 
+                            <Chip
+                              label={persona.tipo_delito}
+                              size="small"
                               variant="outlined"
                               sx={{ mt: 0.5, fontSize: '0.7rem' }}
                             />
@@ -470,17 +487,17 @@ const FormularioVinculacionAvanzado = ({
                       </Box>
                     )}
                     noOptionsText={
-                      inputOrigenValue.length < 2 
-                        ? "Escriba al menos 2 caracteres"
-                        : loadingOrigen 
-                          ? "Buscando..."
-                          : "No se encontraron personas"
+                      inputOrigenValue.length < 2
+                        ? 'Escriba al menos 2 caracteres'
+                        : loadingOrigen
+                        ? 'Buscando...'
+                        : 'No se encontraron personas'
                     }
                     loadingText="Buscando personas..."
                     sx={{
                       '& .MuiAutocomplete-listbox': {
                         maxHeight: '300px',
-                      }
+                      },
                     }}
                   />
                 )}
@@ -505,19 +522,24 @@ const FormularioVinculacionAvanzado = ({
                   onInputChange={(event, newInputValue) => {
                     setInputDestinoValue(newInputValue);
                   }}
-                  getOptionLabel={(option) => 
+                  getOptionLabel={option =>
                     `${option.apellido}, ${option.nombre} (DNI: ${option.dni})`
                   }
-                  isOptionEqualToValue={(option, value) => option.id === value?.id}
-                  filterOptions={(x) => x}
-                  renderInput={(params) => (
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value?.id
+                  }
+                  filterOptions={x => x}
+                  renderInput={params => (
                     <TextField
                       {...params}
                       placeholder="Escriba para buscar personas..."
                       variant="outlined"
                       fullWidth
                       error={!!errors.persona_destino_id}
-                      helperText={errors.persona_destino_id || "Mínimo 2 caracteres para buscar"}
+                      helperText={
+                        errors.persona_destino_id ||
+                        'Mínimo 2 caracteres para buscar'
+                      }
                       InputProps={{
                         ...params.InputProps,
                         startAdornment: (
@@ -527,22 +549,22 @@ const FormularioVinculacionAvanzado = ({
                     />
                   )}
                   renderOption={(props, persona) => (
-                    <Box 
-                      component="li" 
+                    <Box
+                      component="li"
                       {...props}
-                      sx={{ 
-                        display: 'flex !important', 
+                      sx={{
+                        display: 'flex !important',
                         alignItems: 'center',
                         gap: 2,
                         p: 2,
                         minHeight: '80px',
                         '&:hover': {
                           bgcolor: 'rgba(21, 77, 113, 0.08)',
-                        }
+                        },
                       }}
                     >
-                      <Avatar 
-                        src={persona.foto_principal} 
+                      <Avatar
+                        src={persona.foto_principal}
                         sx={{ width: 40, height: 40 }}
                       >
                         {persona.nombre?.[0]}
@@ -552,12 +574,13 @@ const FormularioVinculacionAvanzado = ({
                           {persona.apellido}, {persona.nombre}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          DNI: {persona.dni} • {persona.comisaria || 'Sin comisaría'}
+                          DNI: {persona.dni} •{' '}
+                          {persona.comisaria || 'Sin comisaría'}
                         </Typography>
                         {persona.tipo_delito && (
-                          <Chip 
-                            label={persona.tipo_delito} 
-                            size="small" 
+                          <Chip
+                            label={persona.tipo_delito}
+                            size="small"
                             variant="outlined"
                             sx={{ mt: 0.5, fontSize: '0.7rem' }}
                           />
@@ -566,17 +589,17 @@ const FormularioVinculacionAvanzado = ({
                     </Box>
                   )}
                   noOptionsText={
-                    inputDestinoValue.length < 2 
-                      ? "Escriba al menos 2 caracteres"
-                      : loadingDestino 
-                        ? "Buscando..."
-                        : "No se encontraron personas"
+                    inputDestinoValue.length < 2
+                      ? 'Escriba al menos 2 caracteres'
+                      : loadingDestino
+                      ? 'Buscando...'
+                      : 'No se encontraron personas'
                   }
                   loadingText="Buscando personas..."
                   sx={{
                     '& .MuiAutocomplete-listbox': {
                       maxHeight: '300px',
-                    }
+                    },
                   }}
                 />
               </Grid>
@@ -584,53 +607,97 @@ const FormularioVinculacionAvanzado = ({
               {/* Preview de la vinculación */}
               {formData.persona_origen_id && formData.persona_destino_id && (
                 <Grid item xs={12}>
-                  <Box 
-                    sx={{ 
-                      mt: 2, 
-                      p: 3, 
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 3,
                       border: '2px dashed #4caf50',
                       borderRadius: 2,
-                      bgcolor: 'rgba(76, 175, 80, 0.05)'
+                      bgcolor: 'rgba(76, 175, 80, 0.05)',
                     }}
                   >
-                    <Typography variant="subtitle2" sx={{ mb: 2, color: '#4caf50', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        mb: 2,
+                        color: '#4caf50',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
                       ✅ Preview de Vinculación:
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
                       <Box sx={{ textAlign: 'center' }}>
-                        <Avatar 
-                          src={getPersonaById(formData.persona_origen_id)?.foto_principal} 
+                        <Avatar
+                          src={
+                            getPersonaById(formData.persona_origen_id)
+                              ?.foto_principal
+                          }
                           sx={{ width: 60, height: 60, mx: 'auto', mb: 1 }}
                         >
-                          {getPersonaById(formData.persona_origen_id)?.nombre?.[0]}
+                          {
+                            getPersonaById(formData.persona_origen_id)
+                              ?.nombre?.[0]
+                          }
                         </Avatar>
                         <Typography variant="body2" fontWeight="bold">
-                          {getPersonaById(formData.persona_origen_id)?.apellido}, {getPersonaById(formData.persona_origen_id)?.nombre}
+                          {getPersonaById(formData.persona_origen_id)?.apellido}
+                          , {getPersonaById(formData.persona_origen_id)?.nombre}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           DNI: {getPersonaById(formData.persona_origen_id)?.dni}
                         </Typography>
                       </Box>
-                      
+
                       <Box sx={{ mx: 3, textAlign: 'center' }}>
-                        <Typography variant="h3" color="primary" sx={{ lineHeight: 1 }}>⟷</Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant="h3"
+                          color="primary"
+                          sx={{ lineHeight: 1 }}
+                        >
+                          ⟷
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 600 }}
+                        >
                           VINCULACIÓN
                         </Typography>
                       </Box>
-                      
+
                       <Box sx={{ textAlign: 'center' }}>
-                        <Avatar 
-                          src={getPersonaById(formData.persona_destino_id)?.foto_principal} 
+                        <Avatar
+                          src={
+                            getPersonaById(formData.persona_destino_id)
+                              ?.foto_principal
+                          }
                           sx={{ width: 60, height: 60, mx: 'auto', mb: 1 }}
                         >
-                          {getPersonaById(formData.persona_destino_id)?.nombre?.[0]}
+                          {
+                            getPersonaById(formData.persona_destino_id)
+                              ?.nombre?.[0]
+                          }
                         </Avatar>
                         <Typography variant="body2" fontWeight="bold">
-                          {getPersonaById(formData.persona_destino_id)?.apellido}, {getPersonaById(formData.persona_destino_id)?.nombre}
+                          {
+                            getPersonaById(formData.persona_destino_id)
+                              ?.apellido
+                          }
+                          ,{' '}
+                          {getPersonaById(formData.persona_destino_id)?.nombre}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          DNI: {getPersonaById(formData.persona_destino_id)?.dni}
+                          DNI:{' '}
+                          {getPersonaById(formData.persona_destino_id)?.dni}
                         </Typography>
                       </Box>
                     </Box>
@@ -644,7 +711,11 @@ const FormularioVinculacionAvanzado = ({
       case 1:
         return (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ color: '#1565c0', mb: 3 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: '#1565c0', mb: 3 }}
+            >
               🔗 Definir Tipo de Vínculo
             </Typography>
             <Grid container spacing={3}>
@@ -722,7 +793,8 @@ const FormularioVinculacionAvanzado = ({
 
               <Grid item xs={12}>
                 <Typography gutterBottom>
-                  Nivel de Confianza: {NIVELES_CONFIANZA[formData.nivel_confianza]}
+                  Nivel de Confianza:{' '}
+                  {NIVELES_CONFIANZA[formData.nivel_confianza]}
                 </Typography>
                 <Slider
                   value={formData.nivel_confianza}
@@ -750,24 +822,44 @@ const FormularioVinculacionAvanzado = ({
       case 2:
         return (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ color: '#1565c0', mb: 3 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: '#1565c0', mb: 3 }}
+            >
               📋 Evidencias y Confirmación
             </Typography>
             <Grid container spacing={3}>
               <Grid item xs={12}>
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
-                  <DatePicker
-                    label="Fecha de Detección"
-                    value={formData.fecha_deteccion}
-                    onChange={newValue =>
-                      setFormData(prev => ({
-                        ...prev,
-                        fecha_deteccion: newValue,
-                      }))
-                    }
-                    renderInput={params => <TextField {...params} fullWidth />}
-                  />
-                </LocalizationProvider>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Fecha de Detección"
+                  value={
+                    formData.fecha_deteccion
+                      ? new Date(formData.fecha_deteccion)
+                          .toISOString()
+                          .split('T')[0]
+                      : new Date().toISOString().split('T')[0]
+                  }
+                  onChange={e => {
+                    const newDate = e.target.value
+                      ? new Date(e.target.value)
+                      : new Date();
+                    setFormData(prev => ({
+                      ...prev,
+                      fecha_deteccion: newDate,
+                    }));
+                  }}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  error={!!errors.fecha_deteccion}
+                  helperText={
+                    errors.fecha_deteccion ||
+                    'Fecha en que se detectó la vinculación'
+                  }
+                />
               </Grid>
 
               <Grid item xs={12}>
@@ -810,9 +902,10 @@ const FormularioVinculacionAvanzado = ({
                     />
                     <Button
                       onClick={() => {
-                        const newEvidencias = formData.evidencias_respaldo.filter(
-                          (_, i) => i !== index
-                        );
+                        const newEvidencias =
+                          formData.evidencias_respaldo.filter(
+                            (_, i) => i !== index
+                          );
                         setFormData(prev => ({
                           ...prev,
                           evidencias_respaldo: newEvidencias,
@@ -846,27 +939,39 @@ const FormularioVinculacionAvanzado = ({
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2">Persona Origen:</Typography>
+                        <Typography variant="subtitle2">
+                          Persona Origen:
+                        </Typography>
                         <Typography>
                           {getPersonaById(formData.persona_origen_id)?.apellido}
                           , {getPersonaById(formData.persona_origen_id)?.nombre}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2">Persona Destino:</Typography>
+                        <Typography variant="subtitle2">
+                          Persona Destino:
+                        </Typography>
                         <Typography>
-                          {getPersonaById(formData.persona_destino_id)?.apellido}
-                          , {getPersonaById(formData.persona_destino_id)?.nombre}
+                          {
+                            getPersonaById(formData.persona_destino_id)
+                              ?.apellido
+                          }
+                          ,{' '}
+                          {getPersonaById(formData.persona_destino_id)?.nombre}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2">Tipo de Vínculo:</Typography>
+                        <Typography variant="subtitle2">
+                          Tipo de Vínculo:
+                        </Typography>
                         <Typography>
                           {TIPOS_VINCULO[formData.tipo_vinculacion]}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2">Nivel de Confianza:</Typography>
+                        <Typography variant="subtitle2">
+                          Nivel de Confianza:
+                        </Typography>
                         <Typography>
                           {NIVELES_CONFIANZA[formData.nivel_confianza]}
                         </Typography>
@@ -885,42 +990,48 @@ const FormularioVinculacionAvanzado = ({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Typography variant="h6" component="div">
-          🔗 Crear Nueva Vinculación Criminal
-        </Typography>
-      </DialogTitle>
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Typography variant="h6" component="div">
+            🔗 Crear Nueva Vinculación Criminal
+          </Typography>
+        </DialogTitle>
 
-      <DialogContent>
-        <Stepper activeStep={activeStep} sx={{ pt: 3, pb: 5 }}>
-          {steps.map(label => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+        <DialogContent>
+          <Stepper activeStep={activeStep} sx={{ pt: 3, pb: 5 }}>
+            {steps.map(label => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
 
-        <Box sx={{ mt: 3 }}>{renderStepContent(activeStep)}</Box>
-      </DialogContent>
+          <Box sx={{ mt: 3 }}>{renderStepContent(activeStep)}</Box>
+        </DialogContent>
 
-      <DialogActions>
-        <Button onClick={handleClose}>Cancelar</Button>
-        <Box sx={{ flex: '1 1 auto' }} />
-        <Button onClick={handleBack} disabled={activeStep === 0}>
-          Anterior
-        </Button>
-        {activeStep === steps.length - 1 ? (
-          <Button variant="contained" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Guardando...' : 'Crear Vinculación'}
+        <DialogActions>
+          <Button onClick={handleClose}>Cancelar</Button>
+          <Box sx={{ flex: '1 1 auto' }} />
+          <Button onClick={handleBack} disabled={activeStep === 0}>
+            Anterior
           </Button>
-        ) : (
-          <Button variant="contained" onClick={handleNext}>
-            Siguiente
-          </Button>
-        )}
-      </DialogActions>
-    </Dialog>
+          {activeStep === steps.length - 1 ? (
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? 'Guardando...' : 'Crear Vinculación'}
+            </Button>
+          ) : (
+            <Button variant="contained" onClick={handleNext}>
+              Siguiente
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+    </LocalizationProvider>
   );
 };
 

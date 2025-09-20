@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug Personas API</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; }
+      .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+      .error { background: #ffebee; color: #c62828; }
+      .success { background: #e8f5e8; color: #2e7d32; }
+      input { padding: 8px; margin: 5px; width: 200px; }
+      button { padding: 8px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <h1>🔍 Debug Búsqueda de Personas</h1>
+
+    <div>
+      <input type="text" id="searchInput" placeholder="Buscar persona..." />
+      <button onclick="buscarPersonas()">Buscar</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+      async function buscarPersonas() {
+          const searchText = document.getElementById('searchInput').value;
+          const resultsDiv = document.getElementById('results');
+
+          if (!searchText || searchText.length < 2) {
+              resultsDiv.innerHTML = '<div class="result">Ingresa al menos 2 caracteres para buscar</div>';
+              return;
+          }
+
+          resultsDiv.innerHTML = '<div class="result">🔄 Buscando...</div>';
+
+          try {
+              // Simular la misma llamada que hace el frontend
+              const response = await fetch(`/api/personas?q=${encodeURIComponent(searchText)}&pageSize=10`, {
+                  headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+                      'Content-Type': 'application/json'
+                  }
+              });
+
+              console.log('📡 Respuesta del servidor:', response);
+
+              if (!response.ok) {
+                  throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+              }
+
+              const data = await response.json();
+              console.log('📋 Datos recibidos:', data);
+
+              resultsDiv.innerHTML = `
+                  <div class="result success">
+                      <h3>✅ Búsqueda exitosa</h3>
+                      <p><strong>Estructura de respuesta:</strong></p>
+                      <pre>${JSON.stringify(data, null, 2)}</pre>
+                      <p><strong>Personas encontradas:</strong> ${data.items ? data.items.length : 0}</p>
+                      ${data.items ? `
+                          <ul>
+                              ${data.items.map(p => `<li>${p.nombre} ${p.apellido} (ID: ${p.id})</li>`).join('')}
+                          </ul>
+                      ` : '<p>No se encontraron personas</p>'}
+                  </div>
+              `;
+
+          } catch (error) {
+              console.error('❌ Error:', error);
+              resultsDiv.innerHTML = `
+                  <div class="result error">
+                      <h3>❌ Error en la búsqueda</h3>
+                      <p><strong>Error:</strong> ${error.message}</p>
+                      <p><strong>Verifica:</strong></p>
+                      <ul>
+                          <li>¿Está el backend corriendo en puerto 4000?</li>
+                          <li>¿Tienes un token de autenticación válido?</li>
+                          <li>¿El proxy está configurado correctamente?</li>
+                      </ul>
+                  </div>
+              `;
+          }
+      }
+
+      // Buscar al presionar Enter
+      document.getElementById('searchInput').addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+              buscarPersonas();
+          }
+      });
+    </script>
+  </body>
+</html>

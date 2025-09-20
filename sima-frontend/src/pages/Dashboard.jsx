@@ -18,6 +18,7 @@ import {
   Assignment,
   Dashboard as DashboardIcon,
   LocationOn,
+  Psychology,
 } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -34,7 +35,7 @@ export default function Dashboard() {
   // Animación escalonada de las tarjetas
   useEffect(() => {
     const timer = setTimeout(() => {
-      [0, 1, 2, 3].forEach(index => {
+      [0, 1, 2, 3, 4].forEach(index => {
         setTimeout(() => {
           setVisibleCards(prev => [...prev, index]);
         }, index * 200);
@@ -110,6 +111,20 @@ export default function Dashboard() {
       color: 'var(--secondary)',
       hoverColor: 'var(--accent)',
     },
+    {
+      id: 4,
+      title: 'INTELIGENCIA',
+      subtitle: 'Análisis criminal',
+      description: 'Dashboard de vinculaciones criminales',
+      icon: (
+        <Psychology
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
+        />
+      ),
+      path: '/inteligencia',
+      color: '#8e24aa', // Color púrpura para destacar
+      hoverColor: '#7b1fa2',
+    },
   ];
 
   return (
@@ -182,6 +197,7 @@ export default function Dashboard() {
               xs={12}
               sm={6}
               md={4}
+              lg={2.4}
               key={item.id}
               sx={{
                 display: 'flex',

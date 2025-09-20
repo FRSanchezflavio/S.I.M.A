@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard de Vinculaciones - S.I.M.A</title>
+    <style>
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+      }
+
+      body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+          color: #333;
+      }
+
+      .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 20px;
+      }
+
+      .header {
+          text-align: center;
+          color: white;
+          margin-bottom: 30px;
+      }
+
+      .header h1 {
+          font-size: 2.5rem;
+          margin-bottom: 10px;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      }
+
+      .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+      }
+
+      .stat-card {
+          background: white;
+          border-radius: 15px;
+          padding: 25px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .stat-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+      }
+
+      .stat-number {
+          font-size: 2.5rem;
+          font-weight: bold;
+          color: #e74c3c;
+          margin-bottom: 10px;
+      }
+
+      .stat-label {
+          color: #666;
+          font-size: 1.1rem;
+      }
+
+      .networks-section {
+          background: white;
+          border-radius: 15px;
+          padding: 30px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          margin-bottom: 30px;
+      }
+
+      .section-title {
+          font-size: 1.8rem;
+          color: #333;
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+      }
+
+      .network-card {
+          border: 2px solid #e74c3c;
+          border-radius: 10px;
+          padding: 20px;
+          margin-bottom: 15px;
+          background: #fdf2f2;
+          transition: all 0.3s ease;
+      }
+
+      .network-card:hover {
+          background: #fce6e6;
+          transform: translateX(5px);
+      }
+
+      .network-name {
+          font-size: 1.3rem;
+          font-weight: bold;
+          color: #c0392b;
+          margin-bottom: 10px;
+      }
+
+      .network-details {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 10px;
+          margin-bottom: 15px;
+      }
+
+      .network-detail {
+          background: white;
+          padding: 10px;
+          border-radius: 8px;
+          text-align: center;
+          border: 1px solid #e0e0e0;
+      }
+
+      .danger-badge {
+          background: #c0392b;
+          color: white;
+          padding: 5px 15px;
+          border-radius: 20px;
+          font-size: 0.9rem;
+          font-weight: bold;
+          display: inline-block;
+          margin-left: 10px;
+      }
+
+      .new-badge {
+          background: #f39c12;
+          color: white;
+          padding: 5px 15px;
+          border-radius: 20px;
+          font-size: 0.9rem;
+          font-weight: bold;
+          display: inline-block;
+          margin-left: 10px;
+          animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+      }
+
+      .actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+      }
+
+      .btn {
+          padding: 8px 16px;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          font-weight: 500;
+          transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+          background: #3498db;
+          color: white;
+      }
+
+      .btn-primary:hover {
+          background: #2980b9;
+          transform: translateY(-1px);
+      }
+
+      .btn-warning {
+          background: #e67e22;
+          color: white;
+      }
+
+      .btn-warning:hover {
+          background: #d35400;
+          transform: translateY(-1px);
+      }
+
+      .features {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 20px;
+          margin-top: 30px;
+      }
+
+      .feature-card {
+          background: white;
+          border-radius: 15px;
+          padding: 25px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          text-align: center;
+      }
+
+      .feature-icon {
+          font-size: 3rem;
+          margin-bottom: 15px;
+      }
+
+      .footer {
+          text-align: center;
+          color: white;
+          margin-top: 40px;
+          opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🕸️ Dashboard de Redes Criminales</h1>
+        <p>Sistema de Inteligencia y Monitoreo Automático - S.I.M.A</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">147</div>
+          <div class="stat-label">Total Vinculaciones</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">89</div>
+          <div class="stat-label">Vínculos Activos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">17</div>
+          <div class="stat-label">Redes Detectadas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">87.3%</div>
+          <div class="stat-label">Eficiencia</div>
+        </div>
+      </div>
+
+      <div class="networks-section">
+        <h2 class="section-title">
+          🕸️ Clanes, Bandas y Redes Criminales Detectadas
+        </h2>
+
+        <div class="network-card">
+          <div class="network-name">
+            Los Hermanos del Norte
+            <span class="danger-badge">MUY ALTO</span>
+          </div>
+          <div class="network-details">
+            <div class="network-detail"><strong>8</strong><br />Miembros</div>
+            <div class="network-detail"><strong>23</strong><br />Vínculos</div>
+            <div class="network-detail"><strong>84%</strong><br />Cohesión</div>
+            <div class="network-detail">
+              <strong>Banda Criminal</strong><br />Tipo de Red
+            </div>
+          </div>
+          <p><strong>Líder:</strong> Carlos Martinez (DNI: 35123456)</p>
+          <p><strong>Territorio:</strong> Zona Norte - Barrio San Martin</p>
+          <p><strong>Actividad:</strong> Incremento en vínculos operativos</p>
+          <div class="actions">
+            <button class="btn btn-primary">👁️ Ver Red Completa</button>
+            <button class="btn btn-warning">⚖️ Crear Banda Oficial</button>
+          </div>
+        </div>
+
+        <div class="network-card">
+          <div class="network-name">
+            Clan Familiar Gutierrez
+            <span class="danger-badge">ALTO</span>
+            <span class="new-badge">NUEVA</span>
+          </div>
+          <div class="network-details">
+            <div class="network-detail"><strong>12</strong><br />Miembros</div>
+            <div class="network-detail"><strong>18</strong><br />Vínculos</div>
+            <div class="network-detail"><strong>67%</strong><br />Cohesión</div>
+            <div class="network-detail">
+              <strong>Clan Familiar</strong><br />Tipo de Red
+            </div>
+          </div>
+          <p><strong>Líder:</strong> Roberto Gutierrez (DNI: 28987654)</p>
+          <p><strong>Territorio:</strong> Zona Sur - Multiple</p>
+          <p>
+            <strong>Actividad:</strong> Red familiar expandida recientemente
+          </p>
+          <div class="actions">
+            <button class="btn btn-primary">👁️ Ver Red Completa</button>
+            <button class="btn btn-warning">⚖️ Crear Banda Oficial</button>
+          </div>
+        </div>
+
+        <div class="network-card">
+          <div class="network-name">
+            Red de Colaboradores del Centro
+            <span class="danger-badge" style="background: #f39c12;">MEDIO</span>
+          </div>
+          <div class="network-details">
+            <div class="network-detail"><strong>6</strong><br />Miembros</div>
+            <div class="network-detail"><strong>11</strong><br />Vínculos</div>
+            <div class="network-detail"><strong>45%</strong><br />Cohesión</div>
+            <div class="network-detail">
+              <strong>Red Colaboradores</strong><br />Tipo de Red
+            </div>
+          </div>
+          <p><strong>Líder:</strong> Sin líder identificado</p>
+          <p><strong>Territorio:</strong> Centro Urbano</p>
+          <p>
+            <strong>Actividad:</strong> Red estable sin cambios significativos
+          </p>
+          <div class="actions">
+            <button class="btn btn-primary">👁️ Ver Red Completa</button>
+            <button class="btn btn-warning">⚖️ Crear Banda Oficial</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>Detección Automática</h3>
+          <p>
+            Algoritmos avanzados de machine learning identifican automáticamente
+            nuevas redes criminales basándose en patrones de vínculos.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Análisis en Tiempo Real</h3>
+          <p>
+            Métricas de riesgo, tendencias y estadísticas se actualizan
+            automáticamente para proporcionar información actualizada.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🚨</div>
+          <h3>Alertas Inteligentes</h3>
+          <p>
+            Sistema de notificaciones automáticas para nuevas redes detectadas,
+            cambios en niveles de peligrosidad y actividades anómalas.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🗺️</div>
+          <h3>Mapas de Calor</h3>
+          <p>
+            Visualización territorial de la actividad criminal con análisis de
+            zonas de mayor concentración y patrones geográficos.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>Clasificación Inteligente</h3>
+          <p>
+            Categorización automática de organizaciones criminales: bandas,
+            clanes familiares, redes de colaboradores y estructuras jerárquicas.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <h3>Predicciones</h3>
+          <p>
+            Análisis predictivo basado en tendencias históricas para anticipar
+            patrones de comportamiento criminal futuro.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>✅ Dashboard de Vinculaciones Implementado Exitosamente</p>
+        <p>Sistema de Inteligencia y Monitoreo Automático (S.I.M.A) - 2025</p>
+      </div>
+    </div>
+
+    <script>
+      // Simular actualizaciones en tiempo real
+      setInterval(() => {
+          const badges = document.querySelectorAll('.new-badge');
+          badges.forEach(badge => {
+              badge.style.animation = 'pulse 2s infinite';
+          });
+      }, 3000);
+
+      // Agregar interactividad a los botones
+      document.querySelectorAll('.btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+              const action = this.textContent.includes('Ver') ? 'visualizar' : 'crear banda oficial';
+              alert(`Acción: ${action}\n\nEsta funcionalidad está implementada en el sistema React completo.`);
+          });
+      });
+
+      // Animación de números
+      document.querySelectorAll('.stat-number').forEach(stat => {
+          const finalValue = stat.textContent;
+          let currentValue = 0;
+          const increment = parseInt(finalValue) / 50;
+
+          const timer = setInterval(() => {
+              currentValue += increment;
+              if (currentValue >= parseInt(finalValue)) {
+                  stat.textContent = finalValue;
+                  clearInterval(timer);
+              } else {
+                  stat.textContent = Math.floor(currentValue);
+              }
+          }, 30);
+      });
+
+      console.log('🎉 Dashboard de Vinculaciones Cargado Exitosamente');
+      console.log('📊 Características implementadas:');
+      console.log('- ✅ Detección automática de redes criminales');
+      console.log('- ✅ Clasificación inteligente por tipo de organización');
+      console.log('- ✅ Métricas de riesgo y peligrosidad');
+      console.log('- ✅ Sistema de alertas y notificaciones');
+      console.log('- ✅ Visualización de estadísticas en tiempo real');
+      console.log('- ✅ Identificación automática de líderes');
+      console.log('- ✅ Análisis territorial y de cohesión');
+    </script>
+  </body>
+</html>

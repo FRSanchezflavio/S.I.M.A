@@ -18,8 +18,12 @@ import {
   Analytics,
   Security,
   Refresh,
+  Dashboard,
+  Assessment,
 } from '@mui/icons-material';
 import VisualizadorRedCriminalDemo from '../components/inteligencia/VisualizadorRedCriminalDemo';
+import DashboardVinculaciones from '../components/inteligencia/DashboardVinculaciones';
+import MetricasAvanzadas from '../components/inteligencia/MetricasAvanzadas';
 
 // Componente demo para mapas territoriales
 const MapaTerritorialDemo = () => (
@@ -307,34 +311,51 @@ const InteligenciaCriminal = () => {
             scrollButtons="auto"
           >
             <Tab
-              icon={<AccountTree />}
-              label="Redes Criminales"
+              icon={<Dashboard />}
+              label="Dashboard Redes"
               id="tab-0"
               aria-controls="tabpanel-0"
             />
             <Tab
-              icon={<Map />}
-              label="Mapeo Territorial"
+              icon={<AccountTree />}
+              label="Visualizador"
               id="tab-1"
               aria-controls="tabpanel-1"
             />
             <Tab
-              icon={<Analytics />}
-              label="Análisis Predictivo"
+              icon={<Assessment />}
+              label="Métricas Avanzadas"
               id="tab-2"
               aria-controls="tabpanel-2"
             />
             <Tab
-              icon={<Security />}
-              label="Gestión de Bandas"
+              icon={<Map />}
+              label="Mapeo Territorial"
               id="tab-3"
               aria-controls="tabpanel-3"
+            />
+            <Tab
+              icon={<Analytics />}
+              label="Análisis Predictivo"
+              id="tab-4"
+              aria-controls="tabpanel-4"
+            />
+            <Tab
+              icon={<Security />}
+              label="Gestión de Bandas"
+              id="tab-5"
+              aria-controls="tabpanel-5"
             />
           </Tabs>
         </Box>
 
-        {/* Panel de Redes Criminales */}
+        {/* Panel Dashboard de Redes */}
         <TabPanel value={tabActual} index={0}>
+          <DashboardVinculaciones />
+        </TabPanel>
+
+        {/* Panel de Visualizador de Redes */}
+        <TabPanel value={tabActual} index={1}>
           <VisualizadorRedCriminalDemo
             personaId={1}
             altura={600}
@@ -342,18 +363,23 @@ const InteligenciaCriminal = () => {
           />
         </TabPanel>
 
+        {/* Panel de Métricas Avanzadas */}
+        <TabPanel value={tabActual} index={2}>
+          <MetricasAvanzadas />
+        </TabPanel>
+
         {/* Panel de Mapeo Territorial */}
-        <TabPanel value={tabActual} index={1}>
+        <TabPanel value={tabActual} index={3}>
           <MapaTerritorialDemo />
         </TabPanel>
 
         {/* Panel de Análisis Predictivo */}
-        <TabPanel value={tabActual} index={2}>
+        <TabPanel value={tabActual} index={4}>
           <AnalisisPredictivo />
         </TabPanel>
 
         {/* Panel de Gestión de Bandas */}
-        <TabPanel value={tabActual} index={3}>
+        <TabPanel value={tabActual} index={5}>
           <GestionBandasDemo />
         </TabPanel>
       </Card>

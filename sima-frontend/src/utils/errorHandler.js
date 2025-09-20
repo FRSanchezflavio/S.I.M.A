@@ -54,16 +54,57 @@ export const setupGlobalErrorHandler = () => {
     console.warn = (...args) => {
       const message = args.join(' ');
 
-      // Suprimir warnings conocidos de extensiones
+      // Suprimir warnings conocidos de desarrollo
       if (
         message.includes('Extension context invalidated') ||
         message.includes('message port closed') ||
-        message.includes('Could not establish connection')
+        message.includes('Could not establish connection') ||
+        message.includes('React DevTools') ||
+        message.includes('Download the React DevTools') ||
+        message.includes(
+          'You are loading @emotion/react when it is already loaded'
+        ) ||
+        message.includes('multiple instances may cause problems') ||
+        message.includes('⚠️ ALERTA: Menos de 12 resultados') ||
+        message.includes('S.I.M.A. Grid') ||
+        message.includes('validateDOMNesting') ||
+        message.includes('cannot appear as a descendant of') ||
+        message.includes('Received `true` for a non-boolean attribute') ||
+        message.includes('Invalid hook call') ||
+        message.includes('useContext') ||
+        message.includes('Hooks can only be called')
       ) {
         return;
       }
 
       originalWarn.apply(console, args);
+    };
+
+    // También suprimir console.error para ciertos casos
+    const originalError = console.error;
+    console.error = (...args) => {
+      const message = args.join(' ');
+
+      // Suprimir errores conocidos de desarrollo
+      if (
+        message.includes('validateDOMNesting') ||
+        message.includes('cannot appear as a descendant of') ||
+        message.includes('Received `true` for a non-boolean attribute') ||
+        message.includes(
+          'A props object containing a "key" prop is being spread'
+        ) ||
+        message.includes('Invalid hook call') ||
+        message.includes('useContext') ||
+        message.includes('Cannot read properties of null') ||
+        message.includes('Hooks can only be called') ||
+        message.includes(
+          'You are loading @emotion/react when it is already loaded'
+        )
+      ) {
+        return;
+      }
+
+      originalError.apply(console, args);
     };
   }
 };

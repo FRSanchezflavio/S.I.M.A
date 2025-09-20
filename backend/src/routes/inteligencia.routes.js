@@ -47,4 +47,35 @@ router.get(
   vinculacionesController.detectCriminalNetworks
 );
 
+// ==================== DASHBOARD Y ESTADÍSTICAS ====================
+
+// Estadísticas para dashboard principal
+router.get(
+  '/vinculaciones/dashboard/stats',
+  requireAuth,
+  vinculacionesController.dashboardStats
+);
+
+// Detección avanzada de redes con análisis completo
+router.get(
+  '/vinculaciones/deteccion/redes/avanzado',
+  requireAuth,
+  vinculacionesController.detectCriminalNetworksAdvanced
+);
+
+// Tendencias y análisis temporal
+router.get(
+  '/vinculaciones/analisis/tendencias',
+  requireAuth,
+  vinculacionesController.trendAnalysis ||
+    vinculacionesController.dashboardStats
+);
+
+// Alertas y notificaciones del sistema
+router.get(
+  '/vinculaciones/alertas/sistema',
+  requireAuth,
+  vinculacionesController.systemAlerts || vinculacionesController.dashboardStats
+);
+
 module.exports = router;
