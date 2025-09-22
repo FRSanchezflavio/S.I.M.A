@@ -10,6 +10,8 @@ import {
   LayerGroup,
 } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet-draw';
+import 'leaflet-draw/dist/leaflet.draw.css';
 import {
   Box,
   Card,
@@ -49,11 +51,9 @@ import {
   Security,
   Group,
   TrendingUp,
-  Conflict as ConflictIcon,
+  Warning as ConflictIcon,
 } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import 'leaflet/dist/leaflet.css';
-import HeatmapLayer from './HeatmapLayer'; // Componente personalizado para mapa de calor
+import SafeDatePicker from '../SafeDatePicker'; // Componente de fecha seguro
 
 // Configuración de iconos para Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -63,13 +63,24 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-const MapaTerritorialBandas = ({ bandasSeleccionadas = [], altura = 600 }) => {
+const MapaTerritorialBandas = ({
+  bandasSeleccionadas = [],
+  altura = 600,
+  modoEdicion = 'visualizar',
+  bandaEditando = null,
+  onTerritorioModificado = null,
+  mostrarPanelControl = false,
+  esIntegracionDashboard = false,
+}) => {
   const mapRef = useRef();
+  const drawControlRef = useRef(null);
+  const drawnItemsRef = useRef(null);
   const [territorioBandas, setTerritorioBandas] = useState([]);
   const [actividadesRecientes, setActividadesRecientes] = useState([]);
   const [conflictosTeritoriales, setConflictosTeritoriales] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [territorioTemporal, setTerritorioTemporal] = useState(null);
 
   // Estados de configuración
   const [configuracion, setConfiguracion] = useState({
@@ -150,6 +161,182 @@ const MapaTerritorialBandas = ({ bandasSeleccionadas = [], altura = 600 }) => {
       setLoading(false);
     }
   };
+
+  // ===============================
+  // FUNCIONES DE EDICIÓN TERRITORIAL
+  // ===============================
+
+  // Configurar herramientas de edición según el modo
+  const configurarEdicionTerritorial = (map, modo) => {
+    // Limpiar controles anteriores
+    if (drawControlRef.current) {
+      map.removeControl(drawControlRef.current);
+      drawControlRef.current = null;
+    }
+
+    // Crear grupo de elementos dibujados si no existe
+    if (!drawnItemsRef.current) {
+      drawnItemsRef.current = new L.FeatureGroup();
+      map.addLayer(drawnItemsRef.current);
+    }
+
+    // Configuración según modo de edición
+    const opcionesEdicion = {
+      position: 'topleft',
+      draw: {
+        polygon: modo === 'redefinir',
+        rectangle: false,
+        circle: modo === 'expandir',
+        marker: false,
+        polyline: false,
+        circlemarker: false,
+      },
+      edit: {
+        featureGroup: drawnItemsRef.current,
+        remove: modo === 'contraer',
+        edit: modo === 'expandir' || modo === 'contraer',
+      },
+    };
+
+    // Solo agregar controles si no estamos en modo visualizar
+    if (modo !== 'visualizar') {
+      drawControlRef.current = new L.Control.Draw(opcionesEdicion);
+      map.addControl(drawControlRef.current);
+
+      // Event listeners para dibujo
+      map.on(L.Draw.Event.CREATED, handleTerritorioCreado);
+      map.on(L.Draw.Event.EDITED, handleTerritorioEditado);
+      map.on(L.Draw.Event.DELETED, handleTerritorioEliminado);
+    }
+
+    return {
+      drawnItems: drawnItemsRef.current,
+      drawControl: drawControlRef.current,
+    };
+  };
+
+  // Manejar creación de nuevo territorio
+  const handleTerritorioCreado = e => {
+    const layer = e.layer;
+    const geoJSON = layer.toGeoJSON();
+
+    if (bandaEditando && onTerritorioModificado) {
+      const nuevoPoligono = geoJSON.geometry.coordinates[0];
+      const centro = calcularCentroPoligono(nuevoPoligono);
+      const radio = calcularRadioPoligono(nuevoPoligono);
+
+      setTerritorioTemporal({
+        banda_id: bandaEditando.banda_id,
+        nuevoPoligono,
+        nuevoCentro: centro,
+        nuevoRadio: radio,
+        layer,
+      });
+
+      onTerritorioModificado({
+        banda_id: bandaEditando.banda_id,
+        nuevoPoligono,
+        nuevoCentro: centro,
+        nuevoRadio: radio,
+        tipo: 'creado',
+      });
+    }
+
+    drawnItemsRef.current.addLayer(layer);
+  };
+
+  // Manejar edición de territorio existente
+  const handleTerritorioEditado = e => {
+    const layers = e.layers;
+
+    layers.eachLayer(layer => {
+      const geoJSON = layer.toGeoJSON();
+
+      if (bandaEditando && onTerritorioModificado) {
+        const nuevoPoligono = geoJSON.geometry.coordinates[0];
+        const centro = calcularCentroPoligono(nuevoPoligono);
+        const radio = calcularRadioPoligono(nuevoPoligono);
+
+        onTerritorioModificado({
+          banda_id: bandaEditando.banda_id,
+          nuevoPoligono,
+          nuevoCentro: centro,
+          nuevoRadio: radio,
+          tipo: 'editado',
+        });
+      }
+    });
+  };
+
+  // Manejar eliminación de territorio
+  const handleTerritorioEliminado = e => {
+    if (bandaEditando && onTerritorioModificado) {
+      onTerritorioModificado({
+        banda_id: bandaEditando.banda_id,
+        nuevoPoligono: null,
+        tipo: 'eliminado',
+      });
+    }
+  };
+
+  // Calcular centro de un polígono
+  const calcularCentroPoligono = poligono => {
+    if (!poligono || poligono.length === 0) return [0, 0];
+
+    const lat =
+      poligono.reduce((sum, coord) => sum + coord[1], 0) / poligono.length;
+    const lng =
+      poligono.reduce((sum, coord) => sum + coord[0], 0) / poligono.length;
+
+    return [lat, lng];
+  };
+
+  // Calcular radio aproximado de un polígono
+  const calcularRadioPoligono = poligono => {
+    if (!poligono || poligono.length === 0) return 0;
+
+    const centro = calcularCentroPoligono(poligono);
+    let maxDistancia = 0;
+
+    poligono.forEach(coord => {
+      const distancia = Math.sqrt(
+        Math.pow(coord[1] - centro[0], 2) + Math.pow(coord[0] - centro[1], 2)
+      );
+      maxDistancia = Math.max(maxDistancia, distancia);
+    });
+
+    // Convertir grados a kilómetros aproximadamente
+    return Math.round(maxDistancia * 111 * 100) / 100;
+  };
+
+  // Cargar territorio de banda para edición
+  const cargarTerritorioParaEdicion = banda => {
+    if (!drawnItemsRef.current || !banda.poligonos_territorio) return;
+
+    // Limpiar elementos anteriores
+    drawnItemsRef.current.clearLayers();
+
+    // Agregar polígonos existentes al grupo editable
+    banda.poligonos_territorio.forEach(poligono => {
+      const layer = L.polygon(poligono.map(coord => [coord[1], coord[0]]));
+      drawnItemsRef.current.addLayer(layer);
+    });
+  };
+
+  // useEffect para manejar cambios en modo de edición
+  useEffect(() => {
+    if (mapRef.current && modoEdicion) {
+      const map = mapRef.current;
+      configurarEdicionTerritorial(map, modoEdicion);
+    }
+  }, [modoEdicion]);
+
+  // useEffect para cargar territorio cuando cambia la banda a editar
+  useEffect(() => {
+    if (bandaEditando && modoEdicion !== 'visualizar') {
+      cargarTerritorioParaEdicion(bandaEditando);
+    }
+  }, [bandaEditando, modoEdicion]);
 
   const crearIconoBanda = banda => {
     const colorPeligrosidad = obtenerColorPeligrosidad(banda.peligrosidad);
@@ -554,7 +741,7 @@ const MapaTerritorialBandas = ({ bandasSeleccionadas = [], altura = 600 }) => {
 
           {configuracion.filtrarPorFecha && (
             <Box display="flex" flexDirection="column" gap={1}>
-              <DatePicker
+              <SafeDatePicker
                 label="Fecha desde"
                 value={configuracion.fechaDesde}
                 onChange={fecha =>
@@ -563,10 +750,11 @@ const MapaTerritorialBandas = ({ bandasSeleccionadas = [], altura = 600 }) => {
                     fechaDesde: fecha,
                   }))
                 }
-                slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                size="small"
+                fullWidth
               />
 
-              <DatePicker
+              <SafeDatePicker
                 label="Fecha hasta"
                 value={configuracion.fechaHasta}
                 onChange={fecha =>
@@ -575,7 +763,8 @@ const MapaTerritorialBandas = ({ bandasSeleccionadas = [], altura = 600 }) => {
                     fechaHasta: fecha,
                   }))
                 }
-                slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                size="small"
+                fullWidth
               />
             </Box>
           )}
@@ -686,8 +875,8 @@ const MapaTerritorialBandas = ({ bandasSeleccionadas = [], altura = 600 }) => {
         </LayersControl>
       </MapContainer>
 
-      {/* Panel de control */}
-      <PanelControl />
+      {/* Panel de control - Solo mostrar si no es integración Dashboard */}
+      {mostrarPanelControl && !esIntegracionDashboard && <PanelControl />}
 
       {/* Diálogo de información del territorio */}
       <Dialog

@@ -25,12 +25,26 @@ import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
+// Importaciones para funcionalidad territorial
+// import MapaTerritorialBandas from '../components/inteligencia/MapaTerritorialBandas';
+// import PanelControlTerritorial from '../components/inteligencia/PanelControlTerritorial';
+
 export default function Dashboard() {
   const nav = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const [visibleCards, setVisibleCards] = useState([]);
+
+  // ===============================
+  // ESTADOS TERRITORIALES SIMPLIFICADOS
+  // ===============================
+  const [bandasConTerritorios, setBandasConTerritorios] = useState([]);
+  const [modoEdicion, setModoEdicion] = useState('visualizar');
+  const [bandaEditando, setBandaEditando] = useState(null);
+  const [mapaVisible, setMapaVisible] = useState(true);
+  const [loadingTerritorial, setLoadingTerritorial] = useState(false);
+  const [estadisticasTerritorial, setEstadisticasTerritorial] = useState({});
 
   // Animación escalonada de las tarjetas
   useEffect(() => {
@@ -44,6 +58,73 @@ export default function Dashboard() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Cargar datos territoriales al montar
+  useEffect(() => {
+    cargarBandasTerritoriales();
+  }, []);
+
+  // ===============================
+  // FUNCIONES TERRITORIALES SIMPLIFICADAS
+  // ===============================
+
+  const cargarBandasTerritoriales = async () => {
+    try {
+      setLoadingTerritorial(true);
+      const response = await fetch(
+        '/api/inteligencia/bandas/analisis/territorial'
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setBandasConTerritorios(data.coverage_map || []);
+      }
+    } catch (error) {
+      console.error('Error cargando territorios:', error);
+    } finally {
+      setLoadingTerritorial(false);
+    }
+  };
+
+  const handleTerritorioModificado = async cambio => {
+    try {
+      const response = await fetch(
+        `/api/inteligencia/bandas/${cambio.banda_id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            poligonos_territorio: cambio.nuevoPoligono,
+            latitud_centro: cambio.nuevoCentro[0],
+            longitud_centro: cambio.nuevoCentro[1],
+            radio_influencia_km: cambio.nuevoRadio,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        await cargarBandasTerritoriales();
+        // Aquí podrías agregar un toast de éxito
+        console.log('Territorio actualizado correctamente');
+      }
+    } catch (error) {
+      console.error('Error al actualizar territorio:', error);
+    }
+  };
+
+  const handleCambioModo = nuevoModo => {
+    setModoEdicion(nuevoModo);
+  };
+
+  const handleSeleccionBanda = banda => {
+    setBandaEditando(banda);
+    if (modoEdicion === 'visualizar') {
+      setModoEdicion('expandir');
+    }
+  };
+
+  const handleRefrescarDatos = () => {
+    cargarBandasTerritoriales();
+  };
 
   const fadeInUp = keyframes`
     from {
@@ -364,13 +445,135 @@ export default function Dashboard() {
         )}
       </Container>
 
+      {/* ===============================
+          NUEVA SECCIÓN - MAPA TERRITORIAL
+          =============================== */}
+      <Container maxWidth="xl" sx={{ py: 4, flexGrow: 1 }}>
+        <Fade in timeout={1000} style={{ transitionDelay: '1200ms' }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant={isMobile ? 'h5' : 'h4'}
+              sx={{
+                fontWeight: 'bold',
+                color: 'rgb(21, 77, 113)',
+                mb: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              🗺️ TERRITORIOS DE BANDAS CRIMINALES
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Gestión territorial de organizaciones criminales -{' '}
+              {bandasConTerritorios.length} bandas con territorios definidos
+              {estadisticasTerritorial.conflictos > 0 && (
+                <Typography
+                  component="span"
+                  sx={{
+                    color: 'warning.main',
+                    fontWeight: 'medium',
+                    ml: 1,
+                  }}
+                >
+                  • {estadisticasTerritorial.conflictos} conflictos activos
+                </Typography>
+              )}
+            </Typography>
+          </Box>
+        </Fade>
+
+        <Fade in timeout={1000} style={{ transitionDelay: '1400ms' }}>
+          <Card
+            sx={{
+              height: { xs: '50vh', md: '60vh' },
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 8px 32px rgba(21, 77, 113, 0.15)',
+              border: '1px solid rgba(21, 77, 113, 0.1)',
+            }}
+          >
+            <CardContent sx={{ p: 0, height: '100%', position: 'relative' }}>
+              {/* Componente de mapa territorial */}
+              {/* <MapaTerritorialBandas
+                bandasSeleccionadas={bandasConTerritorios.map(b => b.banda_id)}
+                altura="100%"
+                modoEdicion={modoEdicion}
+                bandaEditando={bandaEditando}
+                onTerritorioModificado={handleCambioTerritorial}
+                mostrarPanelControl={false}
+                esIntegracionDashboard={true}
+              /> */}
+
+              {/* Panel de control territorial flotante */}
+              {/* <PanelControlTerritorial
+                bandas={bandasConTerritorios}
+                modoEdicion={modoEdicion}
+                onModoChange={handleCambioModo}
+                onBandaSelect={handleSeleccionBanda}
+                bandaActiva={bandaEditando}
+                loading={loadingTerritorial || loadingEdicion}
+                cambiosPendientes={cambiosPendientes}
+                onGuardarCambios={handleGuardarCambios}
+                onCancelarCambios={handleCancelarCambios}
+                onRefrescar={handleRefrescarDatos}
+                estadisticas={estadisticasTerritorial}
+              /> */}
+
+              {/* Placeholder temporal para zona territorial */}
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: 1,
+                }}
+              >
+                <Typography variant="h6" color="text.secondary">
+                  Panel Territorial (En desarrollo)
+                </Typography>
+              </Box>
+
+              {/* Indicador de carga */}
+              {loadingTerritorial && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1500,
+                  }}
+                >
+                  <Box textAlign="center">
+                    <Typography
+                      variant="h6"
+                      color="rgb(21, 77, 113)"
+                      gutterBottom
+                    >
+                      Cargando datos territoriales...
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Analizando territorios de bandas criminales
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Fade>
+      </Container>
+
       <Box sx={{ mt: 'auto' }}>
         <Footer />
       </Box>
     </Box>
   );
 }
-
-<Box sx={{ mt: 'auto' }}>
-  <Footer />
-</Box>;
