@@ -138,10 +138,78 @@ const VisualizadorRedCriminal = ({
   onPersonaSelect,
   configuracion = {},
   altura = 600,
+  personas = [],
+  vinculaciones = [],
 }) => {
   const svgRef = useRef();
   const containerRef = useRef();
-  const [datosRed, setDatosRed] = useState(DATOS_PRUEBA);
+
+  // Procesar datos reales si están disponibles
+  const procesarDatosReales = () => {
+    if (personas.length === 0) {
+      return DATOS_PRUEBA;
+    }
+
+    // Convertir personas a nodos
+    const nodos = personas.slice(0, 15).map((persona, index) => ({
+      id: persona.dni || persona.id || index,
+      nombre: `${persona.nombre} ${persona.apellido}`.trim(),
+      nivel: index === 0 ? 0 : Math.floor(Math.random() * 3) + 1,
+      centralidad: Math.random(),
+      es_lider_banda: index === 0,
+      en_banda: Math.random() > 0.4,
+      dni: persona.dni,
+      telefono: persona.telefono,
+      direccion: persona.direccion,
+    }));
+
+    // Convertir vinculaciones a vínculos
+    let vinculos = [];
+
+    if (vinculaciones.length > 0) {
+      vinculos = vinculaciones
+        .map(vinculo => ({
+          id:
+            vinculo.id ||
+            `${vinculo.persona_origen_id}-${vinculo.persona_destino_id}`,
+          source: vinculo.persona_origen_id,
+          target: vinculo.persona_destino_id,
+          tipo: vinculo.tipo_vinculo,
+          nivel_confianza: vinculo.nivel_confianza || 0.5,
+          fuerza:
+            vinculo.nivel_confianza > 0.8
+              ? 'muy_fuerte'
+              : vinculo.nivel_confianza > 0.6
+              ? 'fuerte'
+              : 'moderada',
+          estado: vinculo.estado,
+          evidencias: vinculo.evidencias,
+        }))
+        .filter(
+          vinculo =>
+            nodos.find(n => n.id == vinculo.source) &&
+            nodos.find(n => n.id == vinculo.target)
+        );
+    } else {
+      // Generar vínculos de demo
+      for (let i = 1; i < Math.min(nodos.length, 8); i++) {
+        if (Math.random() > 0.4) {
+          vinculos.push({
+            id: `demo-${i}`,
+            source: nodos[0].id,
+            target: nodos[i].id,
+            tipo: 'complice_directo',
+            nivel_confianza: Math.random(),
+            fuerza: 'fuerte',
+          });
+        }
+      }
+    }
+
+    return { nodos, vinculos };
+  };
+
+  const [datosRed, setDatosRed] = useState(procesarDatosReales());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [simulacion, setSimulacion] = useState(null);
@@ -158,6 +226,12 @@ const VisualizadorRedCriminal = ({
   const [dialogoConfig, setDialogoConfig] = useState(false);
   const [nodoSeleccionado, setNodoSeleccionado] = useState(null);
   const [zoom, setZoom] = useState(null);
+
+  // Actualizar datos cuando cambien las props
+  useEffect(() => {
+    const nuevosdatos = procesarDatosReales();
+    setDatosRed(nuevosdatos);
+  }, [personas, vinculaciones]);
 
   // Inicializar visualización cuando cambien los datos
   useEffect(() => {

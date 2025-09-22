@@ -12,6 +12,7 @@ import MapaGeneral from './pages/MapaGeneral';
 import ProtectedRoute from './components/ProtectedRoute';
 import PDFTestComponent from './components/PDFTestComponent';
 import InteligenciaCriminal from './pages/InteligenciaCriminal';
+import RedesCriminales from './pages/RedesCriminales';
 
 export default function RoutesApp() {
   return (
@@ -24,6 +25,7 @@ export default function RoutesApp() {
         <Route path="/buscar" element={<Buscar />} />
         <Route path="/mapa" element={<MapaGeneral />} />
         <Route path="/inteligencia" element={<InteligenciaCriminal />} />
+        <Route path="/redes-criminales" element={<RedesCriminales />} />
         <Route path="/registros" element={<Registros />} />
         <Route path="/registros/nuevo" element={<RegistroNuevo />} />
         <Route path="/registros/:id" element={<RegistroDetalle />} />

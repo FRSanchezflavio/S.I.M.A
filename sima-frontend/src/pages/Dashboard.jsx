@@ -18,6 +18,7 @@ import {
   Assignment,
   Dashboard as DashboardIcon,
   LocationOn,
+  AccountTree,
 } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -34,7 +35,7 @@ export default function Dashboard() {
   // Animación escalonada de las tarjetas
   useEffect(() => {
     const timer = setTimeout(() => {
-      [0, 1, 2, 3].forEach(index => {
+      [0, 1, 2, 3, 4].forEach(index => {
         setTimeout(() => {
           setVisibleCards(prev => [...prev, index]);
         }, index * 200);
@@ -109,6 +110,20 @@ export default function Dashboard() {
       path: '/registros',
       color: 'var(--secondary)',
       hoverColor: 'var(--accent)',
+    },
+    {
+      id: 4,
+      title: 'REDES CRIMINALES',
+      subtitle: 'Análisis de vínculos',
+      description: 'Vincular personas y analizar organizaciones',
+      icon: (
+        <AccountTree
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
+        />
+      ),
+      path: '/redes-criminales',
+      color: 'var(--primary)',
+      hoverColor: 'var(--secondary)',
     },
   ];
 
