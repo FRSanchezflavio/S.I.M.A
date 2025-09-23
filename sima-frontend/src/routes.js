@@ -14,6 +14,16 @@ import PDFTestComponent from './components/PDFTestComponent';
 import InteligenciaCriminal from './pages/InteligenciaCriminal';
 import RedesCriminales from './pages/RedesCriminales';
 
+// Debug: verify that RedesCriminales is a valid React component import
+try {
+  // eslint-disable-next-line no-console
+  console.log(
+    'Debug import RedesCriminales ->',
+    typeof RedesCriminales,
+    RedesCriminales && RedesCriminales.name
+  );
+} catch (e) {}
+
 export default function RoutesApp() {
   return (
     <Routes>
