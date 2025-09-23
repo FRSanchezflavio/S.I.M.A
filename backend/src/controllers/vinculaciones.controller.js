@@ -89,6 +89,84 @@ const vinculacionSchema = Joi.object({
   observaciones_investigacion: Joi.string().allow('', null),
 });
 
+// Mapear tipos legacy a la nueva columna `categoria_vinculacion` usada por la tabla
+function mapTipoToCategoria(tipo) {
+  if (!tipo) return 'sospechosa_investigar';
+  const m = {
+    familiar_sangre: 'familiar_sanguinea',
+    familiar_politico: 'familiar_politica',
+    amistad_personal: 'amistad_personal',
+    relacion_sentimental: 'sentimental_conyugal',
+    socio_comercial: 'comercial_ilegal',
+    empleador_empleado: 'laboral_legal',
+    proveedor_cliente: 'comercial_legal',
+    intermediario_financiero: 'delictiva_financiera',
+    complice_directo: 'delictiva_operacional',
+    complice_indirecto: 'delictiva_operacional',
+    mentor_discipulo: 'amistad_personal',
+    rival_competencia: 'rival_enemigo',
+    victima_victimario: 'confirmada_evidencia',
+    testigo_colaborador: 'confirmada_evidencia',
+    informante_contacto: 'informante_de',
+    corruption_soborno: 'corrupcion_funcionarios',
+    coordinacion_operativa: 'delictiva_operacional',
+    jerarquia_comando: 'delictiva_operacional',
+    alianza_temporal: 'sospechosa_investigar',
+    conflicto_territorial: 'territorial_barrial',
+    comunicacion_frecuente: 'amistad_personal',
+    reunion_clandestina: 'sospechosa_investigar',
+    transaccion_sospechosa: 'delictiva_financiera',
+    otro_criminal: 'sospechosa_investigar',
+  };
+  return m[tipo] || 'sospechosa_investigar';
+}
+
+function mapNivelConfianza(nivel) {
+  // Si ya es string válido, devolverlo
+  if (typeof nivel === 'string') return nivel;
+  const v = parseFloat(nivel);
+  if (isNaN(v)) return 'sospechoso_indicios';
+
+  if (v >= 0.85) return 'confirmado_evidencia';
+  if (v >= 0.65) return 'confirmado_testigo';
+  if (v >= 0.45) return 'probable_investigacion';
+  if (v >= 0.25) return 'sospechoso_indicios';
+  return 'rumor_investigar';
+}
+
+// Orden y puntajes representativos para las categorías de confianza.
+const NIVEL_CONF_ORDER_DESC = [
+  'confirmado_evidencia',
+  'confirmado_testigo',
+  'probable_investigacion',
+  'sospechoso_indicios',
+  'rumor_investigar',
+  'descartado_falso',
+];
+
+const NIVEL_CONF_SCORE = {
+  confirmado_evidencia: 1.0,
+  confirmado_testigo: 0.75,
+  probable_investigacion: 0.55,
+  sospechoso_indicios: 0.35,
+  rumor_investigar: 0.15,
+  descartado_falso: 0.0,
+};
+
+function getCategoriesForMinNivel(min) {
+  // Acepta número o string. Devuelve arreglo de categorías (strings) cuyo score >= min
+  const n = typeof min === 'number' ? min : parseFloat(min);
+  if (isNaN(n)) {
+    // Si no es numérico, si es string válido devolver sólo esa categoría
+    if (typeof min === 'string' && NIVEL_CONF_ORDER_DESC.includes(min))
+      return [min];
+    // Valor por defecto: incluir desde 'sospechoso_indicios' hacia arriba
+    return NIVEL_CONF_ORDER_DESC.filter(c => NIVEL_CONF_SCORE[c] >= 0.25);
+  }
+
+  return NIVEL_CONF_ORDER_DESC.filter(c => NIVEL_CONF_SCORE[c] >= n);
+}
+
 // ==================== CONTROLADORES DE VINCULACIONES ====================
 
 // Listar vinculaciones con filtros avanzados
@@ -164,8 +242,10 @@ exports.list = async (req, res, next) => {
 
     if (estado_vinculacion)
       query.where('vc.estado_vinculacion', estado_vinculacion);
-    if (nivel_confianza_min)
-      query.where('vc.nivel_confianza', '>=', parseFloat(nivel_confianza_min));
+    if (nivel_confianza_min) {
+      const cats = getCategoriesForMinNivel(nivel_confianza_min);
+      query.whereIn('vc.nivel_confianza', cats);
+    }
 
     // Obtener total para paginación
     const total = await query.clone().count('* as count').first();
@@ -227,14 +307,19 @@ exports.create = async (req, res, next) => {
   try {
     // Normalizar alias: permitir que el frontend envíe `evidencias` (string o array)
     const payload = { ...req.body };
-    if (Object.prototype.hasOwnProperty.call(req.body, 'evidencias') && !Object.prototype.hasOwnProperty.call(req.body, 'evidencias_materiales')) {
+    if (
+      Object.prototype.hasOwnProperty.call(req.body, 'evidencias') &&
+      !Object.prototype.hasOwnProperty.call(req.body, 'evidencias_materiales')
+    ) {
       const ev = req.body.evidencias;
       if (Array.isArray(ev)) payload.evidencias_materiales = ev;
-      else if (typeof ev === 'string' && ev.trim() !== '') payload.evidencias_materiales = [ev.trim()];
+      else if (typeof ev === 'string' && ev.trim() !== '')
+        payload.evidencias_materiales = [ev.trim()];
       else payload.evidencias_materiales = null;
     }
     // Eliminar campo alias para evitar que Joi lo rechace
-    if (Object.prototype.hasOwnProperty.call(payload, 'evidencias')) delete payload.evidencias;
+    if (Object.prototype.hasOwnProperty.call(payload, 'evidencias'))
+      delete payload.evidencias;
 
     const { value, error } = vinculacionSchema.validate(payload);
     if (error) return res.status(400).json({ error: error.details[0].message });
@@ -288,20 +373,33 @@ exports.create = async (req, res, next) => {
 
     const trx = await db.transaction();
     try {
+      // Preparar payload para la tabla: mapear campos legacy a columnas actuales
+      const insertPayload = {
+        ...value,
+        categoria_vinculacion: mapTipoToCategoria(value.tipo_vinculacion),
+        nivel_confianza: mapNivelConfianza(value.nivel_confianza),
+        score_importancia: metricas.scoreImportancia,
+        created_by: req.user?.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      // Eliminar campos legados que no existen en la tabla para evitar errores de insert
+      if (
+        Object.prototype.hasOwnProperty.call(insertPayload, 'tipo_vinculacion')
+      )
+        delete insertPayload.tipo_vinculacion;
+
       const [vinculacion] = await trx('vinculaciones_criminales')
-        .insert({
-          ...value,
-          score_importancia: metricas.scoreImportancia,
-          created_by: req.user?.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
+        .insert(insertPayload)
         .returning('*');
 
       // Si es bidireccional, crear la vinculación inversa
       if (value.es_bidireccional) {
-        await trx('vinculaciones_criminales').insert({
+        const inversePayload = {
           ...value,
+          categoria_vinculacion: mapTipoToCategoria(value.tipo_vinculacion),
+          nivel_confianza: mapNivelConfianza(value.nivel_confianza),
           persona_origen_id: value.persona_destino_id,
           persona_destino_id: value.persona_origen_id,
           score_importancia: metricas.scoreImportancia,
@@ -310,7 +408,17 @@ exports.create = async (req, res, next) => {
           created_by: req.user?.id,
           created_at: new Date(),
           updated_at: new Date(),
-        });
+        };
+
+        if (
+          Object.prototype.hasOwnProperty.call(
+            inversePayload,
+            'tipo_vinculacion'
+          )
+        )
+          delete inversePayload.tipo_vinculacion;
+
+        await trx('vinculaciones_criminales').insert(inversePayload);
       }
 
       // Actualizar métricas de centralidad de las personas involucradas
@@ -391,14 +499,19 @@ exports.update = async (req, res, next) => {
     const { id } = req.params;
     // Normalizar alias de evidencias también al actualizar
     const payload = { ...req.body };
-    if (Object.prototype.hasOwnProperty.call(req.body, 'evidencias') && !Object.prototype.hasOwnProperty.call(req.body, 'evidencias_materiales')) {
+    if (
+      Object.prototype.hasOwnProperty.call(req.body, 'evidencias') &&
+      !Object.prototype.hasOwnProperty.call(req.body, 'evidencias_materiales')
+    ) {
       const ev = req.body.evidencias;
       if (Array.isArray(ev)) payload.evidencias_materiales = ev;
-      else if (typeof ev === 'string' && ev.trim() !== '') payload.evidencias_materiales = [ev.trim()];
+      else if (typeof ev === 'string' && ev.trim() !== '')
+        payload.evidencias_materiales = [ev.trim()];
       else payload.evidencias_materiales = null;
     }
     // Eliminar campo alias para evitar que Joi lo rechace
-    if (Object.prototype.hasOwnProperty.call(payload, 'evidencias')) delete payload.evidencias;
+    if (Object.prototype.hasOwnProperty.call(payload, 'evidencias'))
+      delete payload.evidencias;
 
     const { value, error } = vinculacionSchema.validate(payload);
     if (error) return res.status(400).json({ error: error.details[0].message });
@@ -591,8 +704,9 @@ exports.detectCriminalNetworks = async (req, res, next) => {
     } = req.query;
 
     // Obtener todas las vinculaciones de alta confianza
+    const cats = getCategoriesForMinNivel(parseFloat(nivel_confianza_min));
     const vinculaciones = await db('vinculaciones_criminales')
-      .where('nivel_confianza', '>=', parseFloat(nivel_confianza_min))
+      .whereIn('nivel_confianza', cats)
       .whereIn('estado_vinculacion', [
         'activa_confirmada',
         'activa_sospechosa',
@@ -772,6 +886,7 @@ async function construirRedRecursiva(
   }
 
   // Obtener vinculaciones de esta persona
+  const catsPersona = getCategoriesForMinNivel(nivelConfianzaMin);
   const vinculacionesPersona = await db('vinculaciones_criminales')
     .where(function () {
       this.where('persona_origen_id', personaId).orWhere(
@@ -779,7 +894,7 @@ async function construirRedRecursiva(
         personaId
       );
     })
-    .where('nivel_confianza', '>=', nivelConfianzaMin)
+    .whereIn('nivel_confianza', catsPersona)
     .whereIn('estado_vinculacion', ['activa_confirmada', 'activa_sospechosa']);
 
   for (const vinc of vinculacionesPersona) {
@@ -813,5 +928,61 @@ async function construirRedRecursiva(
 
 // Otras funciones auxiliares para análisis de redes...
 // [Implementar según necesidades específicas]
+
+// Stub seguro para actualizar métricas de centralidad.
+// En entornos de desarrollo o cuando la implementación completa no está disponible,
+// simplemente devolvemos sin hacer nada. Mantener firma async para compatibilidad
+// con llamadas que pasan una transacción (trx) o un objeto cualquiera.
+async function actualizarMetricasCentralidad(trxOrNull, personaIds) {
+  // Implementación concreta: centralidad por grado (número de vinculaciones activas)
+  // personaIds puede ser un array de IDs, o null para recalcular todo (evitar en producción)
+  const personaList = Array.isArray(personaIds)
+    ? Array.from(new Set(personaIds.filter(Boolean)))
+    : [];
+  if (personaList.length === 0) return;
+
+  const useTrx =
+    trxOrNull &&
+    typeof trxOrNull === 'object' &&
+    typeof trxOrNull.commit === 'function';
+  const exec = useTrx ? trxOrNull : db;
+
+  try {
+    // Para cada persona calculamos el grado contando vinculaciones activas (origen o destino)
+    for (const pid of personaList) {
+      const cats = [
+        'confirmado_evidencia',
+        'confirmado_testigo',
+        'probable_investigacion',
+        'sospechoso_indicios',
+      ];
+
+      const res = await exec('vinculaciones_criminales')
+        .where(function () {
+          this.where('persona_origen_id', pid).orWhere(
+            'persona_destino_id',
+            pid
+          );
+        })
+        .whereIn('nivel_confianza', cats)
+        .whereIn('estado_vinculacion', [
+          'activa_confirmada',
+          'activa_sospechosa',
+        ])
+        .count('* as count')
+        .first();
+
+      const grado = parseInt(res && res.count ? res.count : 0, 10);
+
+      await exec('personas_registradas').where('id', pid).update({
+        centralidad_grado: grado,
+        centralidad_actualizada_at: new Date(),
+      });
+    }
+  } catch (e) {
+    // No bloquear la operación principal si falla la actualización de métricas
+    console.warn('Error actualizando métricas de centralidad:', e && e.message);
+  }
+}
 
 module.exports = exports;

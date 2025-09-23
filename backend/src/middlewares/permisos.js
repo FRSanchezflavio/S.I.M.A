@@ -13,14 +13,20 @@ const permisos = {
 
 function validarPermisos(permisosRequeridos) {
   return (req, res, next) => {
-    // Si estamos en modo demo, permitir todas las operaciones
-    if (process.env.DEMO_MODE === 'true') {
+    // Si estamos en modo demo o en desarrollo, permitir todas las operaciones
+    // (en desarrollo el middleware `auth` puede hacer `next()` sin poblar `req.user`)
+    if (
+      process.env.DEMO_MODE === 'true' ||
+      process.env.NODE_ENV === 'development'
+    ) {
       return next();
     }
 
     // Verificar si el usuario tiene los permisos requeridos
     if (!req.user || !req.user.rol) {
-      return res.status(403).json({ error: 'Usuario no autenticado o sin rol asignado' });
+      return res
+        .status(403)
+        .json({ error: 'Usuario no autenticado o sin rol asignado' });
     }
 
     const rolUsuario = req.user.rol;
@@ -32,7 +38,7 @@ function validarPermisos(permisosRequeridos) {
       return res.status(403).json({
         error: 'No tienes permisos para realizar esta acción',
         permisos_requeridos: permisosRequeridos,
-        rol_actual: rolUsuario
+        rol_actual: rolUsuario,
       });
     }
 
