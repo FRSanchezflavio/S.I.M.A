@@ -137,7 +137,11 @@ export default function RedesCriminales() {
 
           if (!res.ok) {
             // eslint-disable-next-line no-console
-            console.warn('Respuesta no OK al cargar personas:', res.status, url);
+            console.warn(
+              'Respuesta no OK al cargar personas:',
+              res.status,
+              url
+            );
             continue;
           }
 
@@ -164,18 +168,22 @@ export default function RedesCriminales() {
       if (!data) {
         setPersonasDisponibles([]);
         // eslint-disable-next-line no-console
-        console.error('No se pudieron cargar personas desde ninguno de los endpoints probados.');
+        console.error(
+          'No se pudieron cargar personas desde ninguno de los endpoints probados.'
+        );
         return;
       }
 
       // Normalizar estructura mínima para Autocomplete
-      const normalized = data.map(p => ({
-        id: p.id || p.persona_id || p.dni || null,
-        nombre: p.nombre || p.nombres || p.nombre_completo || '',
-        apellido: p.apellido || p.apellidos || '',
-        dni: p.dni || p.numero_documento || '',
-        ...p,
-      })).filter(p => p.id !== null);
+      const normalized = data
+        .map(p => ({
+          id: p.id || p.persona_id || p.dni || null,
+          nombre: p.nombre || p.nombres || p.nombre_completo || '',
+          apellido: p.apellido || p.apellidos || '',
+          dni: p.dni || p.numero_documento || '',
+          ...p,
+        }))
+        .filter(p => p.id !== null);
 
       // eslint-disable-next-line no-console
       console.log('Personas normalizadas:', normalized.length);
@@ -249,7 +257,7 @@ export default function RedesCriminales() {
     try {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
-      
+
       // Mapear campos del frontend al backend
       const payload = {
         persona_origen_id: parseInt(nuevaVinculacion.persona_origen_id),
@@ -285,7 +293,11 @@ export default function RedesCriminales() {
       } else {
         responseData = await response.text();
       }
-      console.log('Crear vinculacion response status:', response.status, responseData);
+      console.log(
+        'Crear vinculacion response status:',
+        response.status,
+        responseData
+      );
 
       if (response.ok) {
         await fetchVinculacionesExistentes();
@@ -302,8 +314,14 @@ export default function RedesCriminales() {
       } else {
         const msg = responseData?.error || responseData || 'Error desconocido';
         // Mostrar stack en desarrollo si viene desde backend
-        if (responseData && responseData.stack && process.env.NODE_ENV !== 'production') {
-          alert(`Error creando vinculacion: ${msg}\n\nStack:\n${responseData.stack}`);
+        if (
+          responseData &&
+          responseData.stack &&
+          process.env.NODE_ENV !== 'production'
+        ) {
+          alert(
+            `Error creando vinculacion: ${msg}\n\nStack:\n${responseData.stack}`
+          );
         } else {
           alert(`Error: ${msg}`);
         }

@@ -20,7 +20,9 @@ function validarPermisos(permisosRequeridos) {
 
     // Verificar si el usuario tiene los permisos requeridos
     if (!req.user || !req.user.rol) {
-      return res.status(403).json({ error: 'Usuario no autenticado o sin rol asignado' });
+      return res
+        .status(403)
+        .json({ error: 'Usuario no autenticado o sin rol asignado' });
     }
 
     const rolUsuario = req.user.rol;
@@ -32,7 +34,7 @@ function validarPermisos(permisosRequeridos) {
       return res.status(403).json({
         error: 'No tienes permisos para realizar esta acción',
         permisos_requeridos: permisosRequeridos,
-        rol_actual: rolUsuario
+        rol_actual: rolUsuario,
       });
     }
 

@@ -32,7 +32,7 @@ app.use(pinoHttp({ logger }));
 // CORS restringido a LAN/orígenes permitidos
 app.use(cors(corsOptions));
 
-// Body parsing
+// Body parsingnetstat -ano | findstr :4000netstat -ano | findstr :4000
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 

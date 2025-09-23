@@ -2,7 +2,10 @@ const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
   // Si estamos en modo demo o desarrollo, permitir todas las solicitudes
-  if (process.env.DEMO_MODE === 'true' || process.env.NODE_ENV === 'development') {
+  if (
+    process.env.DEMO_MODE === 'true' ||
+    process.env.NODE_ENV === 'development'
+  ) {
     return next();
   }
 
