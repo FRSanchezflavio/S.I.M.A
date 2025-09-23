@@ -225,7 +225,18 @@ exports.list = async (req, res, next) => {
 // Crear vinculación
 exports.create = async (req, res, next) => {
   try {
-    const { value, error } = vinculacionSchema.validate(req.body);
+    // Normalizar alias: permitir que el frontend envíe `evidencias` (string o array)
+    const payload = { ...req.body };
+    if (Object.prototype.hasOwnProperty.call(req.body, 'evidencias') && !Object.prototype.hasOwnProperty.call(req.body, 'evidencias_materiales')) {
+      const ev = req.body.evidencias;
+      if (Array.isArray(ev)) payload.evidencias_materiales = ev;
+      else if (typeof ev === 'string' && ev.trim() !== '') payload.evidencias_materiales = [ev.trim()];
+      else payload.evidencias_materiales = null;
+    }
+    // Eliminar campo alias para evitar que Joi lo rechace
+    if (Object.prototype.hasOwnProperty.call(payload, 'evidencias')) delete payload.evidencias;
+
+    const { value, error } = vinculacionSchema.validate(payload);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     // Validaciones de negocio
@@ -315,9 +326,23 @@ exports.create = async (req, res, next) => {
       res.status(201).json(vinculacionCompleta);
     } catch (error) {
       await trx.rollback();
+      // Log detallado para depuración: payload y error
+      console.error('Error durante transacción al crear vinculacion:', {
+        message: error.message,
+        stack: error.stack,
+        payload: value,
+        userId: req.user?.id || null,
+      });
       throw error;
     }
   } catch (error) {
+    // Log adicional antes de next
+    console.error('Error en vinculaciones.create (outer):', {
+      message: error.message,
+      stack: error.stack,
+      payload: req.body,
+      userId: req.user?.id || null,
+    });
     next(error);
   }
 };
@@ -364,7 +389,18 @@ exports.get = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { value, error } = vinculacionSchema.validate(req.body);
+    // Normalizar alias de evidencias también al actualizar
+    const payload = { ...req.body };
+    if (Object.prototype.hasOwnProperty.call(req.body, 'evidencias') && !Object.prototype.hasOwnProperty.call(req.body, 'evidencias_materiales')) {
+      const ev = req.body.evidencias;
+      if (Array.isArray(ev)) payload.evidencias_materiales = ev;
+      else if (typeof ev === 'string' && ev.trim() !== '') payload.evidencias_materiales = [ev.trim()];
+      else payload.evidencias_materiales = null;
+    }
+    // Eliminar campo alias para evitar que Joi lo rechace
+    if (Object.prototype.hasOwnProperty.call(payload, 'evidencias')) delete payload.evidencias;
+
+    const { value, error } = vinculacionSchema.validate(payload);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const vinculacionExiste = await db('vinculaciones_criminales')
