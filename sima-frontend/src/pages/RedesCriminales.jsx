@@ -75,7 +75,8 @@ export default function RedesCriminales() {
 
   // Cargar datos al montar el componente
   useEffect(() => {
-    fetchPersonasRegistradas();
+    // Usar la nueva función robusta para cargar personas
+    fetchPersonasDisponibles();
     fetchVinculacionesExistentes();
     fetchBandasExistentes();
   }, []);
@@ -104,6 +105,84 @@ export default function RedesCriminales() {
       }
     } catch (error) {
       console.error('Error fetching personas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Nueva función: fetch robusto y normalización de respuesta
+  const fetchPersonasDisponibles = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('accessToken');
+      // Intentar varias formas de endpoint por compatibilidad
+      const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+      const urlsToTry = [
+        `${baseUrl}/api/personas?page=1&pageSize=200`,
+        `${baseUrl}/api/personas?pageSize=200`,
+        `${baseUrl}/api/personas-registradas?page=1&pageSize=200`,
+      ];
+
+      let data = null;
+      for (const url of urlsToTry) {
+        try {
+          // eslint-disable-next-line no-console
+          console.log('Intentando cargar personas desde:', url);
+          const res = await fetch(url, {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : '',
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!res.ok) {
+            // eslint-disable-next-line no-console
+            console.warn('Respuesta no OK al cargar personas:', res.status, url);
+            continue;
+          }
+
+          const json = await res.json();
+          // Normalizar posibles shapes
+          if (Array.isArray(json)) data = json;
+          else if (Array.isArray(json.items)) data = json.items;
+          else if (Array.isArray(json.personas)) data = json.personas;
+          else if (Array.isArray(json.data)) data = json.data;
+          else if (Array.isArray(json.results)) data = json.results;
+          else data = null;
+
+          if (data) {
+            // eslint-disable-next-line no-console
+            console.log('Personas cargadas (raw):', data.length);
+            break;
+          }
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn('Error cargando desde', url, e.message || e);
+        }
+      }
+
+      if (!data) {
+        setPersonasDisponibles([]);
+        // eslint-disable-next-line no-console
+        console.error('No se pudieron cargar personas desde ninguno de los endpoints probados.');
+        return;
+      }
+
+      // Normalizar estructura mínima para Autocomplete
+      const normalized = data.map(p => ({
+        id: p.id || p.persona_id || p.dni || null,
+        nombre: p.nombre || p.nombres || p.nombre_completo || '',
+        apellido: p.apellido || p.apellidos || '',
+        dni: p.dni || p.numero_documento || '',
+        ...p,
+      })).filter(p => p.id !== null);
+
+      // eslint-disable-next-line no-console
+      console.log('Personas normalizadas:', normalized.length);
+      setPersonasDisponibles(normalized);
+    } catch (err) {
+      console.error('Excepción cargando personas:', err);
+      setPersonasDisponibles([]);
     } finally {
       setLoading(false);
     }
@@ -170,6 +249,20 @@ export default function RedesCriminales() {
     try {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
+      
+      // Mapear campos del frontend al backend
+      const payload = {
+        persona_origen_id: parseInt(nuevaVinculacion.persona_origen_id),
+        persona_destino_id: parseInt(nuevaVinculacion.persona_destino_id),
+        tipo_vinculacion: nuevaVinculacion.tipo_vinculo, // Mapear tipo_vinculo -> tipo_vinculacion
+        estado_vinculacion: nuevaVinculacion.estado, // Mapear estado -> estado_vinculacion
+        nivel_confianza: nuevaVinculacion.nivel_confianza,
+        evidencias: nuevaVinculacion.evidencias,
+        descripcion: nuevaVinculacion.descripcion,
+      };
+
+      console.log('Payload a enviar:', payload);
+
       const response = await fetch(
         `${
           process.env.REACT_APP_API_URL || 'http://localhost:4000'
@@ -180,9 +273,19 @@ export default function RedesCriminales() {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(nuevaVinculacion),
+          body: JSON.stringify(payload),
         }
       );
+
+      // Leer respuesta de forma robusta
+      const contentType = response.headers.get('content-type') || '';
+      let responseData;
+      if (contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        responseData = await response.text();
+      }
+      console.log('Crear vinculacion response status:', response.status, responseData);
 
       if (response.ok) {
         await fetchVinculacionesExistentes();
@@ -197,11 +300,17 @@ export default function RedesCriminales() {
         });
         alert('Vinculación creada exitosamente');
       } else {
-        alert('Error al crear vinculación');
+        const msg = responseData?.error || responseData || 'Error desconocido';
+        // Mostrar stack en desarrollo si viene desde backend
+        if (responseData && responseData.stack && process.env.NODE_ENV !== 'production') {
+          alert(`Error creando vinculacion: ${msg}\n\nStack:\n${responseData.stack}`);
+        } else {
+          alert(`Error: ${msg}`);
+        }
       }
     } catch (error) {
-      console.error('Error creating vinculacion:', error);
-      alert('Error al crear vinculación');
+      console.error('Error completo:', error);
+      alert('Error de conexión');
     } finally {
       setLoading(false);
     }
@@ -326,13 +435,13 @@ export default function RedesCriminales() {
                         }
                         value={
                           personasDisponibles.find(
-                            p => p.dni === nuevaVinculacion.persona_origen_id
+                            p => p.id === nuevaVinculacion.persona_origen_id
                           ) || null
                         }
                         onChange={(e, newValue) => {
                           setNuevaVinculacion(prev => ({
                             ...prev,
-                            persona_origen_id: newValue?.dni || '',
+                            persona_origen_id: newValue?.id || '',
                           }));
                         }}
                         renderInput={params => (
@@ -349,13 +458,13 @@ export default function RedesCriminales() {
                         }
                         value={
                           personasDisponibles.find(
-                            p => p.dni === nuevaVinculacion.persona_destino_id
+                            p => p.id === nuevaVinculacion.persona_destino_id
                           ) || null
                         }
                         onChange={(e, newValue) => {
                           setNuevaVinculacion(prev => ({
                             ...prev,
-                            persona_destino_id: newValue?.dni || '',
+                            persona_destino_id: newValue?.id || '',
                           }));
                         }}
                         renderInput={params => (

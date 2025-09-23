@@ -334,30 +334,39 @@ router.get(
 
 router.use((error, req, res, next) => {
   console.error('Error en rutas de inteligencia criminal:', error);
+  // Always log stack for debugging
+  if (error && error.stack) console.error(error.stack);
 
   if (error.name === 'ValidationError') {
     return res.status(400).json({
       error: 'Error de validación',
       detalles: error.message,
+      stack: process.env.NODE_ENV === 'production' ? undefined : error.stack,
     });
   }
 
   if (error.code === '23505') {
     return res.status(409).json({
       error: 'Conflicto: El registro ya existe',
+      stack: process.env.NODE_ENV === 'production' ? undefined : error.stack,
     });
   }
 
   if (error.code === '23503') {
     return res.status(400).json({
       error: 'Error de referencia: Registro relacionado no encontrado',
+      stack: process.env.NODE_ENV === 'production' ? undefined : error.stack,
     });
   }
 
-  res.status(500).json({
+  // In development mode include stack in response to aid debugging
+  const payload = {
     error: 'Error interno del servidor en sistema de inteligencia criminal',
     timestamp: new Date().toISOString(),
-  });
+  };
+  if (process.env.NODE_ENV !== 'production') payload.stack = error.stack;
+
+  res.status(error.status || 500).json(payload);
 });
 
 // ==================== FUNCIONES AUXILIARES ====================
