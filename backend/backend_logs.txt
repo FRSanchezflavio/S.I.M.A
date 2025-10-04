@@ -1,0 +1,7 @@
+Starting SIMA API server...
+Environment: development
+Port: 4003
+Demo mode: undefined
+SIMA API corriendo en http://localhost:4003
+Server listening: true
+Server address: { address: '127.0.0.1', family: 'IPv4', port: 4003 }

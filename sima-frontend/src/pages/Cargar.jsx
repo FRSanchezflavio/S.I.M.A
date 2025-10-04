@@ -199,20 +199,31 @@ export default function Cargar() {
     // Campos para georeferenciación
     latitud: '',
     longitud: '',
+    // Campos para georeferenciación del hecho
+    direccion_hecho: '',
+    latitud_hecho: '',
+    longitud_hecho: '',
   });
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  const [loading, setLoading] = useState(false);
   const [comisariasDisponibles, setComisariasDisponibles] = useState([]);
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedLocationHecho, setSelectedLocationHecho] = useState(null);
   // Estados para modal de visualización de imágenes
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [mapModalOpenHecho, setMapModalOpenHecho] = useState(false);
   const nav = useNavigate();
   const { showToast } = useToast();
 
-  const canSave = form.nombre && form.apellido && form.dni && files.length > 0;
+  const canSave =
+    form.nombre?.trim() &&
+    form.apellido?.trim() &&
+    form.dni?.trim() &&
+    files.length > 0;
 
   // Función para manejar la selección de ubicación en el mapa
   const handleLocationSelect = location => {
@@ -238,6 +249,32 @@ export default function Cargar() {
   // Función para abrir el modal del mapa
   const handleOpenMap = () => {
     setMapModalOpen(true);
+  };
+
+  // Función para manejar la selección de ubicación del hecho en el mapa
+  const handleLocationSelectHecho = location => {
+    if (location) {
+      setSelectedLocationHecho(location);
+      setForm(prev => ({
+        ...prev,
+        latitud_hecho: location.lat.toString(),
+        longitud_hecho: location.lng.toString(),
+      }));
+      showToast('Ubicación del hecho seleccionada correctamente', 'success');
+    } else {
+      setSelectedLocationHecho(null);
+      setForm(prev => ({
+        ...prev,
+        latitud_hecho: '',
+        longitud_hecho: '',
+      }));
+      showToast('Ubicación del hecho eliminada', 'info');
+    }
+  };
+
+  // Función para abrir el modal del mapa del hecho
+  const handleOpenMapHecho = () => {
+    setMapModalOpenHecho(true);
   };
 
   // Funciones para el modal de visualización de imágenes
@@ -328,19 +365,66 @@ export default function Cargar() {
   const onSubmit = async () => {
     setError('');
     setOk('');
+    setLoading(true);
+
+    // Declarar formData aquí para que esté disponible en try y catch
+    let formData = null;
 
     // Verificar token antes de enviar
     const token = localStorage.getItem('accessToken');
     if (!token) {
       setError('Sesión expirada. Por favor, inicie sesión nuevamente.');
       showToast('Sesión expirada', 'error');
-      nav('/login');
+      setLoading(false);
+      // Dar tiempo para que el usuario vea el mensaje antes de redirigir
+      setTimeout(() => nav('/login'), 2000);
       return;
     }
 
     try {
+      // Validaciones adicionales antes de enviar
+      if (!form.nombre?.trim()) {
+        setError('El nombre es obligatorio');
+        showToast('Complete el nombre', 'warning');
+        setLoading(false);
+        return;
+      }
+
+      if (!form.apellido?.trim()) {
+        setError('El apellido es obligatorio');
+        showToast('Complete el apellido', 'warning');
+        setLoading(false);
+        return;
+      }
+
+      if (!form.dni?.trim()) {
+        setError('El DNI es obligatorio');
+        showToast('Complete el DNI', 'warning');
+        setLoading(false);
+        return;
+      }
+
+      if (files.length === 0) {
+        setError('Debe seleccionar al menos una fotografía');
+        showToast('Seleccione al menos una foto', 'warning');
+        setLoading(false);
+        return;
+      }
+
       const data = new FormData();
-      const formData = { ...form };
+      formData = { ...form };
+
+      // Limpiar campos vacíos antes de enviar
+      Object.keys(formData).forEach(key => {
+        if (
+          formData[key] === '' ||
+          formData[key] === null ||
+          formData[key] === undefined
+        ) {
+          delete formData[key];
+        }
+      });
+
       // Mapear UnidadesRegionales a unidades_regionales para el backend
       if (formData.UnidadesRegionales) {
         formData.unidades_regionales = formData.UnidadesRegionales;
@@ -349,10 +433,38 @@ export default function Cargar() {
 
       // Convertir coordenadas a números si están presentes
       if (formData.latitud && formData.latitud !== '') {
-        formData.latitud = parseFloat(formData.latitud);
+        const lat = parseFloat(formData.latitud);
+        if (!isNaN(lat)) {
+          formData.latitud = lat;
+        } else {
+          delete formData.latitud;
+        }
       }
       if (formData.longitud && formData.longitud !== '') {
-        formData.longitud = parseFloat(formData.longitud);
+        const lng = parseFloat(formData.longitud);
+        if (!isNaN(lng)) {
+          formData.longitud = lng;
+        } else {
+          delete formData.longitud;
+        }
+      }
+
+      // Convertir coordenadas del hecho a números si están presentes
+      if (formData.latitud_hecho && formData.latitud_hecho !== '') {
+        const lat = parseFloat(formData.latitud_hecho);
+        if (!isNaN(lat)) {
+          formData.latitud_hecho = lat;
+        } else {
+          delete formData.latitud_hecho;
+        }
+      }
+      if (formData.longitud_hecho && formData.longitud_hecho !== '') {
+        const lng = parseFloat(formData.longitud_hecho);
+        if (!isNaN(lng)) {
+          formData.longitud_hecho = lng;
+        } else {
+          delete formData.longitud_hecho;
+        }
       }
 
       Object.entries(formData).forEach(([k, v]) => {
@@ -362,10 +474,15 @@ export default function Cargar() {
       });
       files.forEach(f => data.append('fotos', f));
 
+      console.log('📤 Enviando datos al servidor...');
+
       // Enviar datos a la base de datos
       const response = await api.post('/personas', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 30000, // 30 segundos de timeout
       });
+
+      console.log('✅ Respuesta exitosa del servidor:', response.data);
 
       // Si se guardó correctamente y hay datos de delito, crear antecedente personal
       if (
@@ -448,9 +565,13 @@ export default function Cargar() {
         // Limpiar campos de georeferenciación
         latitud: '',
         longitud: '',
+        direccion_hecho: '',
+        latitud_hecho: '',
+        longitud_hecho: '',
       });
       setFiles([]);
       setSelectedLocation(null);
+      setSelectedLocationHecho(null);
       // Cerrar modal de imágenes si está abierto
       if (imageModalOpen) {
         handleCloseImageModal();
@@ -459,12 +580,92 @@ export default function Cargar() {
       // Navegar al detalle de la persona recién creada para ver los antecedentes
       if (response.data && response.data.id) {
         setTimeout(() => {
+          setLoading(false);
           nav(`/personas/${response.data.id}`);
         }, 1500); // Dar tiempo para que se vean los toasts
+      } else {
+        setLoading(false);
       }
     } catch (err) {
-      setError(err?.response?.data?.message || 'Error al guardar');
-      showToast('Error al guardar', 'error');
+      console.error('❌ Error completo:', err);
+      console.error('📋 Datos que se intentaron enviar:', formData);
+
+      let errorMessage = 'Error al registrar la persona';
+
+      if (err.response) {
+        // El servidor respondió con un código de error
+        console.error('📊 Response data:', err.response.data);
+        console.error('🔢 Response status:', err.response.status);
+        console.error('📄 Response headers:', err.response.headers);
+
+        const status = err.response.status;
+        const errorData = err.response.data;
+
+        switch (status) {
+          case 400:
+            // Error de validación
+            if (errorData?.details && Array.isArray(errorData.details)) {
+              const validationErrors = errorData.details
+                .map(detail => detail.message || detail)
+                .join('; ');
+              errorMessage = `Error de validación: ${validationErrors}`;
+            } else if (errorData?.message) {
+              errorMessage = errorData.message;
+            } else {
+              errorMessage = 'Datos inválidos. Verifique los campos.';
+            }
+            console.error('⚠️ Detalles del error 400:', errorData);
+            break;
+
+          case 401:
+            // Error de autenticación
+            errorMessage =
+              'Su sesión ha expirado. Por favor, inicie sesión nuevamente.';
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            setTimeout(() => nav('/login'), 3000);
+            break;
+
+          case 409:
+            // Conflicto - DNI duplicado
+            errorMessage =
+              errorData?.message || 'Ya existe una persona con ese DNI';
+            break;
+
+          case 413:
+            // Payload demasiado grande
+            errorMessage =
+              'Las imágenes son demasiado grandes. Máximo 5MB por archivo.';
+            break;
+
+          case 500:
+          case 503:
+            // Error del servidor
+            errorMessage =
+              errorData?.message || 'Error del servidor. Intente nuevamente.';
+            console.error('🔴 Error del servidor:', errorData);
+            break;
+
+          default:
+            errorMessage =
+              errorData?.message ||
+              err.message ||
+              'Error desconocido al guardar';
+        }
+      } else if (err.request) {
+        // La petición se hizo pero no hubo respuesta
+        console.error('📡 No se recibió respuesta del servidor');
+        errorMessage =
+          'No se pudo conectar con el servidor. Verifique su conexión.';
+      } else {
+        // Error al configurar la petición
+        console.error('⚙️ Error de configuración:', err.message);
+        errorMessage = err.message || 'Error al configurar la petición';
+      }
+
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+      setLoading(false);
     }
   };
 
@@ -514,6 +715,12 @@ export default function Cargar() {
               Complete todos los campos y seleccione al menos una fotografía
               para guardar los datos.
             </Alert>
+
+            {loading && (
+              <Alert severity="info" sx={{ mb: 2, color: '#000' }}>
+                ⏳ Guardando información... Por favor espere.
+              </Alert>
+            )}
             {error && (
               <Alert severity="error" sx={{ mb: 2, color: '#000' }}>
                 {error}
@@ -584,6 +791,61 @@ export default function Cargar() {
                   <MenuItem value="Artículo_189_bis">Artículo 189 bis</MenuItem>
                   <MenuItem value="otro">Otro</MenuItem>
                 </FormInput>
+
+                {/* Campo de Dirección del Hecho con icono de georeferenciación */}
+                <Box sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Dirección del Hecho"
+                    value={form.direccion_hecho}
+                    onChange={e =>
+                      setForm({ ...form, direccion_hecho: e.target.value })
+                    }
+                    InputLabelProps={{ style: { color: '#000' } }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={handleOpenMapHecho}
+                            edge="end"
+                            title="Seleccionar ubicación del hecho en el mapa"
+                            sx={{
+                              color: selectedLocationHecho
+                                ? '#666666'
+                                : '#757575',
+                              '&:hover': {
+                                color: '#2196f3',
+                                backgroundColor: 'rgba(33, 150, 243, 0.04)',
+                              },
+                            }}
+                          >
+                            <LocationOn />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    helperText={
+                      selectedLocationHecho
+                        ? `Ubicación del hecho: ${selectedLocationHecho.lat.toFixed(
+                            6
+                          )}, ${selectedLocationHecho.lng.toFixed(6)}`
+                        : 'Ingrese la dirección donde ocurrió el hecho y use el ícono para georeferenciación precisa'
+                    }
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#e0e0e0',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#000',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#000',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
                 <FormInput
                   label="Unidades Regionales"
                   value={form.UnidadesRegionales}
@@ -699,11 +961,11 @@ export default function Cargar() {
                   InputLabelProps={{ style: { color: '#000' } }}
                 />
 
-                {/* Campo de Dirección con icono de georeferenciación */}
+                {/* Campo de Dirección de Residencia con icono de georeferenciación */}
                 <Box sx={{ mb: 2 }}>
                   <TextField
                     fullWidth
-                    label="Dirección"
+                    label="Dirección de Residencia"
                     value={form.direccion}
                     onChange={e =>
                       setForm({ ...form, direccion: e.target.value })
@@ -715,7 +977,7 @@ export default function Cargar() {
                           <IconButton
                             onClick={handleOpenMap}
                             edge="end"
-                            title="Seleccionar ubicación en el mapa"
+                            title="Seleccionar ubicación de residencia en el mapa"
                             sx={{
                               color: selectedLocation ? '#666666' : '#757575',
                               '&:hover': {
@@ -731,10 +993,10 @@ export default function Cargar() {
                     }}
                     helperText={
                       selectedLocation
-                        ? `Ubicación: ${selectedLocation.lat.toFixed(
+                        ? `Ubicación de residencia: ${selectedLocation.lat.toFixed(
                             6
                           )}, ${selectedLocation.lng.toFixed(6)}`
-                        : 'Ingrese la dirección y use el ícono para georeferenciación precisa'
+                        : 'Ingrese la dirección de residencia y use el ícono para georeferenciación precisa'
                     }
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -1046,6 +1308,7 @@ export default function Cargar() {
                             onClick={() => {
                               setFiles([]);
                               setSelectedLocation(null);
+                              setSelectedLocationHecho(null);
                               if (imageModalOpen) {
                                 handleCloseImageModal();
                               }
@@ -1321,16 +1584,18 @@ export default function Cargar() {
               <Button
                 variant="contained"
                 onClick={onSubmit}
-                disabled={!canSave}
+                disabled={!canSave || loading}
                 sx={{
-                  bgcolor: canSave ? 'var(--secondary)' : '#ccc',
+                  bgcolor: canSave && !loading ? 'var(--secondary)' : '#ccc',
                   color: '#fff',
                   '&:hover': {
-                    bgcolor: canSave ? 'var(--accent)' : '#ccc',
-                    transform: canSave ? 'translateY(-2px)' : 'none',
-                    boxShadow: canSave
-                      ? '0 6px 20px rgba(21,97,111,0.3)'
-                      : 'none',
+                    bgcolor: canSave && !loading ? 'var(--accent)' : '#ccc',
+                    transform:
+                      canSave && !loading ? 'translateY(-2px)' : 'none',
+                    boxShadow:
+                      canSave && !loading
+                        ? '0 6px 20px rgba(21,97,111,0.3)'
+                        : 'none',
                   },
                   '&:disabled': {
                     bgcolor: '#ccc',
@@ -1342,21 +1607,51 @@ export default function Cargar() {
                   fontWeight: 600,
                   textTransform: 'none',
                   transition: 'all 0.3s ease',
+                  minWidth: '280px',
                 }}
               >
-                💾 Guardar mencionado/aprehendido
+                {loading ? (
+                  <>
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        border: '2px solid #f3f3f3',
+                        borderTop: '2px solid #fff',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        marginRight: 1,
+                        '@keyframes spin': {
+                          '0%': { transform: 'rotate(0deg)' },
+                          '100%': { transform: 'rotate(360deg)' },
+                        },
+                      }}
+                    />
+                    Guardando...
+                  </>
+                ) : (
+                  '💾 Guardar mencionado/aprehendido'
+                )}
               </Button>
             </Box>
           </CardContent>
         </Card>
       </Container>
 
-      {/* Modal del mapa para georeferenciación */}
+      {/* Modal del mapa para georeferenciación de residencia */}
       <MapModal
         open={mapModalOpen}
         onClose={() => setMapModalOpen(false)}
         onLocationSelect={handleLocationSelect}
         initialPosition={selectedLocation}
+      />
+
+      {/* Modal del mapa para georeferenciación del hecho */}
+      <MapModal
+        open={mapModalOpenHecho}
+        onClose={() => setMapModalOpenHecho(false)}
+        onLocationSelect={handleLocationSelectHecho}
+        initialPosition={selectedLocationHecho}
       />
 
       {/* Modal de visualización de imágenes */}

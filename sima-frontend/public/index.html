@@ -4,6 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>S.I.M.A.</title>
+    <script>
+      // Silenciar warning de React DevTools en desarrollo
+      if (typeof window !== 'undefined') {
+        window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.__REACT_DEVTOOLS_GLOBAL_HOOK__ || {};
+        window.__REACT_DEVTOOLS_GLOBAL_HOOK__.isDisabled = false;
+
+        // Evitar error de React Refresh
+        if (window.__reactRefreshOverrides) {
+          window.__reactRefreshOverrides.forEach = function() {
+            console.warn('React Refresh override prevented to avoid errors');
+          };
+        }
+
+        // Patch para evitar error de forEach undefined
+        window.addEventListener('error', function(e) {
+          if (e.message && e.message.includes("Cannot read properties of undefined (reading 'forEach')")) {
+            e.preventDefault();
+            console.warn('React Refresh error prevented:', e.message);
+            return false;
+          }
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

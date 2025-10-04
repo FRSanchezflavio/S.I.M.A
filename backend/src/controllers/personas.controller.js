@@ -1,6 +1,17 @@
 const db = require('../db/knex');
 const Joi = require('joi');
 
+// Función auxiliar para verificar conexión a la base de datos
+async function verificarConexionDB() {
+  try {
+    await db.raw('SELECT 1');
+    return true;
+  } catch (error) {
+    console.error('Error de conexión a la base de datos:', error.message);
+    return false;
+  }
+}
+
 const personSchema = Joi.object({
   nombre: Joi.string().min(2).max(100).required(),
   apellido: Joi.string().min(2).max(100).required(),
@@ -91,9 +102,14 @@ const personSchema = Joi.object({
   categoria: Joi.string().optional().allow('', null),
   fecha_carga: Joi.date().optional().allow('', null),
   unidades_regionales: Joi.string().optional().allow('', null),
+  UnidadesRegionales: Joi.string().optional().allow('', null), // Alias para compatibilidad con frontend
   // Campos de georeferenciación
   latitud: Joi.number().min(-90).max(90).optional().allow('', null),
   longitud: Joi.number().min(-180).max(180).optional().allow('', null),
+  // Campos de georeferenciación del hecho
+  direccion_hecho: Joi.string().optional().allow('', null),
+  latitud_hecho: Joi.number().min(-90).max(90).optional().allow('', null),
+  longitud_hecho: Joi.number().min(-180).max(180).optional().allow('', null),
 });
 
 exports.search = async (req, res, next) => {
@@ -283,40 +299,155 @@ exports.search = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    console.log('Datos recibidos en el backend:', req.body);
+    console.log('📥 Datos recibidos en el backend:', {
+      body: req.body,
+      files: req.files ? req.files.length : 0,
+    });
+
+    // Verificar conexión a la base de datos
+    const dbConectada = await verificarConexionDB();
+    if (!dbConectada) {
+      console.error('❌ Base de datos no disponible');
+      return res.status(503).json({
+        message: 'Servicio temporalmente no disponible',
+        details: ['Error de conexión a la base de datos'],
+        error: 'database_connection_failed',
+      });
+    }
+
+    // Validar que se hayan subido archivos
+    if (!req.files || req.files.length === 0) {
+      console.error('❌ No se recibieron archivos');
+      return res.status(400).json({
+        message: 'Debe incluir al menos una fotografía',
+        details: ['No se recibieron archivos'],
+        error: 'no_files_uploaded',
+      });
+    }
+
     const { value, error } = personSchema.validate(req.body);
     if (error) {
-      console.log('Error de validación:', error.message);
-      console.log('Detalles:', error.details);
+      console.error('❌ Error de validación:', error.message);
+      console.error('Detalles:', error.details);
       return res
         .status(400)
         .json({ message: error.message, details: error.details });
     }
+
     const fotos = (req.files || []).map(f => `/uploads/${f.filename}`);
-    console.log('Datos validados:', value);
+    console.log('✅ Datos validados correctamente');
+    console.log('📸 Fotos procesadas:', fotos.length);
+
+    // Verificar si la tabla existe
+    let tablaExiste = false;
+    try {
+      tablaExiste = await db.schema.hasTable('personas_registradas');
+    } catch (schemaError) {
+      console.error('Error verificando esquema:', schemaError);
+      return res.status(503).json({
+        message: 'Error de configuración de base de datos',
+        details: ['Esquema de base de datos no disponible'],
+        error: 'database_schema_error',
+      });
+    }
+
+    if (!tablaExiste) {
+      return res.status(503).json({
+        message: 'Servicio no configurado',
+        details: ['Tabla de personas no existe en la base de datos'],
+        error: 'table_not_exists',
+      });
+    }
+
+    // Preparar datos para inserción, convirtiendo UnidadesRegionales a unidades_regionales
+    const dataToInsert = { ...value };
+    if (dataToInsert.UnidadesRegionales) {
+      dataToInsert.unidades_regionales = dataToInsert.UnidadesRegionales;
+      delete dataToInsert.UnidadesRegionales;
+    }
+
     const [id] = await db('personas_registradas')
       .insert({
-        ...value,
+        ...dataToInsert,
         foto_principal: fotos[0] || null,
         fotos_adicionales: JSON.stringify(fotos),
         created_by: req.user?.id || null,
         updated_by: req.user?.id || null,
       })
       .returning('id');
+
     const newId = id?.id || id;
+    console.log('✅ Persona creada exitosamente con ID:', newId);
+
+    // Intentar crear log de auditoría (no crítico)
     try {
-      await db('audit_logs').insert({
-        user_id: req.user?.id || null,
-        action: 'create',
-        entity: 'persona',
-        entity_id: newId,
-        payload: value,
-      });
-    } catch (_) {}
-    res.status(201).json({ id: newId });
+      const auditTablaExiste = await db.schema.hasTable('audit_logs');
+      if (auditTablaExiste) {
+        await db('audit_logs').insert({
+          user_id: req.user?.id || null,
+          action: 'create',
+          entity: 'persona',
+          entity_id: newId,
+          payload: value,
+        });
+      }
+    } catch (auditError) {
+      console.warn('⚠️ No se pudo crear log de auditoría:', auditError.message);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Persona creada exitosamente',
+      id: newId,
+      data: {
+        id: newId,
+        nombre: value.nombre,
+        apellido: value.apellido,
+        dni: value.dni,
+      },
+    });
   } catch (e) {
-    console.error('Error en create persona:', e);
-    next(e);
+    console.error('❌ Error en create persona:', {
+      message: e.message,
+      code: e.code,
+      stack: e.stack,
+    });
+
+    // Manejo específico de errores de base de datos
+    if (e.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Error de conexión a la base de datos',
+        details: ['No se puede conectar al servidor de base de datos'],
+        error: 'database_connection_refused',
+      });
+    }
+
+    if (e.code === '23505') {
+      return res.status(409).json({
+        success: false,
+        message: 'Ya existe una persona con ese DNI',
+        details: ['Registro duplicado'],
+        error: 'duplicate_entry',
+      });
+    }
+
+    if (e.code === '22P02') {
+      return res.status(400).json({
+        success: false,
+        message: 'Formato de datos inválido',
+        details: [e.message],
+        error: 'invalid_input_syntax',
+      });
+    }
+
+    // Error genérico del servidor
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor al crear persona',
+      details: [e.message],
+      error: 'internal_server_error',
+    });
   }
 };
 

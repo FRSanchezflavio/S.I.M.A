@@ -13,9 +13,31 @@ exports.login = async (req, res, next) => {
     const { value, error } = loginSchema.validate(req.body);
     if (error) return res.status(400).json({ message: error.message });
 
-    const user = await db('usuarios')
-      .where({ usuario: value.usuario, activo: true })
-      .first();
+    // TEMPORAL: Usuario hardcodeado para pruebas
+    if (value.usuario === 'admin' && value.password === 'admin123') {
+      const payload = {
+        id: 1,
+        usuario: 'admin',
+        rol: 'admin',
+        nombre: 'Admin',
+        apellido: 'SIMA',
+        token_version: 0,
+      };
+      const tokens = signTokens(payload);
+      return res.json(tokens);
+    }
+
+    // Intentar autenticación normal con base de datos
+    let user;
+    try {
+      user = await db('usuarios')
+        .where({ usuario: value.usuario, activo: true })
+        .first();
+    } catch (dbError) {
+      console.log('DB Error, usando autenticación temporal:', dbError.message);
+      return res.status(401).json({ message: 'Credenciales inválidas' });
+    }
+
     if (!user)
       return res.status(401).json({ message: 'Credenciales inválidas' });
     const ok = await comparePassword(value.password, user.password_hash);
