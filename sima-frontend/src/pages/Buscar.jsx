@@ -228,7 +228,7 @@ export default function Buscar() {
       <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
         <Card className="card">
           <CardContent>
-            <Typography variant="h4" sx={{ fontWeight: 900, mb: 3, mt: 1 }}>
+            <Typography variant="h3" sx={{ fontWeight: 900, mb: 3, mt: 1 }}>
               Buscar Mencionado/Aprehendido
             </Typography>
 
@@ -276,6 +276,9 @@ export default function Buscar() {
                       height: '56px',
                       width: '160px',
                       fontSize: '1.125rem',
+                      fontFamily: 'serif',
+                      fontWeight: 700,
+                      letterSpacing: '0.5px',
                       bgcolor: '#000',
                       borderRadius: '8px',
                       boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
@@ -294,6 +297,9 @@ export default function Buscar() {
                       height: '56px',
                       width: '160px',
                       fontSize: '1rem',
+                      fontFamily: 'serif',
+                      fontWeight: 700,
+                      letterSpacing: '0.5px',
                       fontWeight: 'bold',
                       borderRadius: '8px',
                       boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
@@ -313,6 +319,9 @@ export default function Buscar() {
                       height: '56px',
                       width: '180px',
                       fontSize: '14px',
+                      fontFamily: 'serif',
+                      fontWeight: 800,
+                      letterSpacing: '1px',
                       fontWeight: 800,
                       borderRadius: '6px',
                       textTransform: 'uppercase',
