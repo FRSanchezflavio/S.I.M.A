@@ -188,11 +188,11 @@ export default function AgregarDelitoEspecifico({
         }}
       >
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
             Agregar Delito Específico
           </Typography>
           {sujetoInfo && (
-            <Typography variant="subtitle2" color="text.secondary">
+            <Typography variant="body1" color="text.primary">
               Sujeto: {sujetoInfo.apellido}, {sujetoInfo.nombre} - DNI:{' '}
               {sujetoInfo.dni}
             </Typography>

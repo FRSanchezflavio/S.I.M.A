@@ -1025,9 +1025,39 @@ export default function PersonaDetalle() {
   return (
     <>
       <Header showSettings />
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-          <Button variant="outlined" onClick={() => nav(-1)}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            mb: 3,
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
+          <Button
+            variant="outlined"
+            onClick={() => nav(-1)}
+            sx={{
+              borderColor: 'rgb(21, 77, 113)',
+              color: 'rgb(21, 77, 113)',
+              fontSize: 20,
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              borderWidth: 2,
+              boxShadow: '0 2px 8px rgba(21, 77, 113, 0.1)',
+              '&:hover': {
+                borderColor: 'rgb(16, 58, 85)',
+                bgcolor: 'rgba(21, 77, 113, 0.04)',
+                borderWidth: 2,
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 12px rgba(21, 77, 113, 0.2)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
             ← Volver
           </Button>
           {canEdit && !editMode && (
@@ -1036,7 +1066,22 @@ export default function PersonaDetalle() {
                 variant="contained"
                 startIcon={<EditIcon />}
                 onClick={() => setEditMode(true)}
-                sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#111' } }}
+                sx={{
+                  bgcolor: '#000',
+                  color: '#fff',
+                  fontSize: 20,
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  '&:hover': {
+                    bgcolor: '#1a1a1a',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 16px rgba(0, 0, 0, 0.4)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
               >
                 Editar
               </Button>
@@ -1047,8 +1092,23 @@ export default function PersonaDetalle() {
                 disabled={isGeneratingPDF}
                 sx={{
                   bgcolor: 'rgb(21, 77, 113)',
-                  '&:hover': { bgcolor: 'rgb(16, 58, 85)' },
-                  borderRadius: '4px',
+                  color: '#fff',
+                  fontSize: 20,
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 12px rgba(21, 77, 113, 0.3)',
+                  '&:hover': {
+                    bgcolor: 'rgb(16, 58, 85)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 16px rgba(21, 77, 113, 0.4)',
+                  },
+                  '&:disabled': {
+                    bgcolor: '#ccc',
+                    color: '#666',
+                  },
+                  transition: 'all 0.3s ease',
                 }}
               >
                 Descargar Excel
@@ -1060,11 +1120,28 @@ export default function PersonaDetalle() {
                 disabled={isGeneratingPDF || saving}
                 sx={{
                   bgcolor: isGeneratingPDF ? '#999' : 'rgb(21, 77, 113)',
+                  color: '#fff',
+                  fontSize: 20,
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  minWidth: '180px',
+                  boxShadow: isGeneratingPDF
+                    ? 'none'
+                    : '0 4px 12px rgba(21, 77, 113, 0.3)',
                   '&:hover': {
                     bgcolor: isGeneratingPDF ? '#999' : 'rgb(16, 58, 85)',
+                    transform: isGeneratingPDF ? 'none' : 'translateY(-2px)',
+                    boxShadow: isGeneratingPDF
+                      ? 'none'
+                      : '0 6px 16px rgba(21, 77, 113, 0.4)',
                   },
-                  borderRadius: '4px',
-                  minWidth: '160px',
+                  '&:disabled': {
+                    bgcolor: '#ccc',
+                    color: '#666',
+                  },
+                  transition: 'all 0.3s ease',
                 }}
               >
                 {isGeneratingPDF ? 'Generando PDF...' : 'Descargar PDF'}
@@ -1074,6 +1151,22 @@ export default function PersonaDetalle() {
                 color="error"
                 startIcon={<DeleteIcon />}
                 onClick={onDelete}
+                sx={{
+                  borderWidth: 2,
+                  fontSize: 19,
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  boxShadow: '0 2px 8px rgba(211, 47, 47, 0.2)',
+                  '&:hover': {
+                    borderWidth: 2,
+                    bgcolor: 'rgba(211, 47, 47, 0.08)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(211, 47, 47, 0.3)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
               >
                 Eliminar
               </Button>
@@ -1106,6 +1199,20 @@ export default function PersonaDetalle() {
                     });
                   }
                 }}
+                sx={{
+                  borderWidth: 2,
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                  '&:hover': {
+                    borderWidth: 2,
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
               >
                 Cancelar
               </Button>
@@ -1114,9 +1221,27 @@ export default function PersonaDetalle() {
                 startIcon={<SaveIcon />}
                 disabled={saving}
                 onClick={onSave}
-                sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#111' } }}
+                sx={{
+                  bgcolor: '#000',
+                  color: '#fff',
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  '&:hover': {
+                    bgcolor: '#1a1a1a',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 16px rgba(0, 0, 0, 0.4)',
+                  },
+                  '&:disabled': {
+                    bgcolor: '#ccc',
+                    color: '#666',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
               >
-                Guardar
+                {saving ? 'Guardando...' : 'Guardar'}
               </Button>
             </>
           )}
@@ -1136,7 +1261,7 @@ export default function PersonaDetalle() {
                     sx={{
                       position: 'relative',
                       height: '600px',
-                      width: '280px',
+                      width: '380px',
                       mt: '25px',
                       aspectRatio: '1/1',
                       borderRadius: '12px',
@@ -1154,7 +1279,7 @@ export default function PersonaDetalle() {
                     <CardMedia
                       component="img"
                       sx={{
-                        width: '100%',
+                        width: 'auto',
                         height: '100%',
                         objectFit: 'cover',
                         transition: 'transform 0.3s ease',
@@ -1214,7 +1339,7 @@ export default function PersonaDetalle() {
                       <Typography
                         variant="h4"
                         sx={{
-                          fontWeight: 700,
+                          fontWeight: 800,
                           color: 'rgb(21, 77, 113)',
                           mb: 3,
                           borderBottom: '2px solid rgb(21, 77, 113)',
@@ -1358,7 +1483,7 @@ export default function PersonaDetalle() {
                               <Typography
                                 variant="subtitle2"
                                 sx={{
-                                  color: '#e65100',
+                                  color: 'rgb(21, 77, 113)',
                                   fontWeight: 600,
                                   mb: 0.5,
                                 }}
@@ -1367,7 +1492,10 @@ export default function PersonaDetalle() {
                               </Typography>
                               <Typography
                                 variant="body1"
-                                sx={{ fontWeight: 500, color: '#e65100' }}
+                                sx={{
+                                  fontWeight: 500,
+                                  color: 'rgb(21, 77, 113)',
+                                }}
                               >
                                 {item.alias}
                               </Typography>
@@ -1789,33 +1917,49 @@ export default function PersonaDetalle() {
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            mb: 2,
+                            mb: 3, // Aumentado el margen inferior para más separación
+                            p: 2, // Padding agregado para mejor espaciado
+                            bgcolor: 'rgba(21, 77, 113, 0.05)', // Fondo sutil para destacar la sección
+                            borderRadius: 2, // Bordes redondeados
+                            border: '1px solid rgba(21, 77, 113, 0.2)', // Borde sutil
                           }}
                         >
                           <Typography
-                            variant="h6"
+                            variant="h5" // Cambiado a h5 para hacerlo más grande
                             sx={{
-                              fontWeight: 600,
+                              fontWeight: 700, // Más negrita
                               display: 'flex',
                               alignItems: 'center',
+                              color: 'rgb(21, 77, 113)', // Color consistente
                             }}
                           >
                             <LocationOnIcon
-                              sx={{ mr: 1, color: 'rgb(21, 77, 113)' }}
+                              sx={{
+                                mr: 1.5,
+                                color: 'rgb(21, 77, 113)',
+                                fontSize: '1.8rem',
+                              }} // Ícono más grande
                             />
                             Ubicación Geográfica
                           </Typography>
                           <Button
-                            variant="outlined"
+                            variant="contained" // Cambiado a contained para más prominencia
                             onClick={() => setShowMap(!showMap)}
                             startIcon={<MapIcon />}
                             sx={{
-                              borderColor: 'rgb(21, 77, 113)',
-                              color: 'rgb(21, 77, 113)',
+                              bgcolor: 'rgb(21, 77, 113)',
+                              color: '#fff',
+                              fontWeight: 600,
+                              px: 3, // Padding horizontal aumentado
+                              py: 1, // Padding vertical aumentado
+                              borderRadius: 2,
+                              boxShadow: '0 4px 12px rgba(21, 77, 113, 0.3)', // Sombra para profundidad
                               '&:hover': {
-                                backgroundColor: 'rgba(21, 77, 113, 0.04)',
-                                borderColor: 'rgb(21, 77, 113)',
+                                bgcolor: 'rgb(16, 58, 85)',
+                                boxShadow: '0 6px 16px rgba(21, 77, 113, 0.4)', // Sombra más intensa en hover
+                                transform: 'translateY(-2px)', // Efecto de elevación
                               },
+                              transition: 'all 0.3s ease', // Transición suave
                             }}
                           >
                             {showMap ? 'Ocultar Mapa' : 'Ver en Mapa'}
@@ -1825,15 +1969,17 @@ export default function PersonaDetalle() {
                         {showMap && (
                           <Box
                             sx={{
-                              height: '400px',
-                              borderRadius: 1,
+                              height: '600px', // Altura aumentada de 400px a 600px
+                              borderRadius: 3, // Bordes más redondeados
                               overflow: 'hidden',
-                              border: '1px solid #e0e0e0',
+                              border: '2px solid rgb(21, 77, 113)', // Borde más grueso y colorido
+                              boxShadow: '0 8px 24px rgba(21, 77, 113, 0.2)', // Sombra para profundidad
+                              transition: 'all 0.3s ease', // Transición suave al aparecer
                             }}
                           >
                             <MapaInteractivo
                               personas={personasParaMapa}
-                              height="400px"
+                              height="600px" // Altura actualizada para coincidir
                               initialCenter={[
                                 parseFloat(item.latitud),
                                 parseFloat(item.longitud),
@@ -1893,6 +2039,7 @@ export default function PersonaDetalle() {
                           color: '#fff',
                           fontSize: '25px',
                           fontWeight: 'bold',
+                          mt: -5,
                           px: 2,
                           py: 0.5,
                           borderRadius: 2,
@@ -1915,7 +2062,7 @@ export default function PersonaDetalle() {
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
 
-                  <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}>
+                  {/* <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}>
                     <Tabs
                       value={tabValue}
                       onChange={(e, newValue) => setTabValue(newValue)}
@@ -1927,7 +2074,7 @@ export default function PersonaDetalle() {
                         aria-controls="tabpanel-0"
                       />
                     </Tabs>
-                  </Box>
+                  </Box> */}
 
                   {/* Panel de Antecedentes Personales */}
                   <Box
@@ -1947,13 +2094,14 @@ export default function PersonaDetalle() {
                           }}
                         >
                           <Box>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                              Antecedentes Personales del Sujeto
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Estos antecedentes no aparecen en las búsquedas
-                              generales del sistema
-                            </Typography>
+                            <Typography
+                              variant="h6"
+                              sx={{ fontWeight: 600 }}
+                            ></Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                            ></Typography>
                           </Box>
                           {canEdit && (
                             <Button
