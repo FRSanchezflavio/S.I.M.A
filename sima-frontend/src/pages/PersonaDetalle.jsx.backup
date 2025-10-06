@@ -543,11 +543,10 @@ export default function PersonaDetalle() {
     }
   };
 
+  // Función para descargar datos de la persona en formato PDF
   const handleDownloadPDF = async () => {
     try {
-      // ============================================
-      // 1. VALIDACIONES INICIALES
-      // ============================================
+      // Validaciones existentes...
       if (!item) {
         showToast('No hay datos de la persona para exportar', 'error');
         return;
@@ -558,70 +557,386 @@ export default function PersonaDetalle() {
         return;
       }
 
-      // Verificar que jsPDF esté disponible
-      if (typeof jsPDF === 'undefined') {
-        console.error('jsPDF no está disponible');
-        showToast(
-          'Error: Librería PDF no disponible. Recargue la página.',
-          'error'
-        );
-        setIsGeneratingPDF(false);
-        return;
-      }
-
       setIsGeneratingPDF(true);
-      showToast('Generando PDF profesional...', 'info');
+      showToast('Generando PDF, esto puede tomar unos momentos...', 'info');
 
-      // ============================================
-      // 2. HELPER: CONVERTIR IMAGEN A BASE64
-      // ============================================
-      const loadImageAsBase64 = url => {
-        return new Promise(resolve => {
-          if (!url || url.includes('placeholder')) {
-            resolve(null);
-            return;
+      // CSS específico para PDF - Estilos simples y serios
+      const pdfCSS = `
+        <style>
+          .pdf-container {
+            font-family: 'Times New Roman', 'Arial', sans-serif !important;
+            font-size: 9px !important;
+            line-height: 1.2 !important;
+            color: #000000 !important;
+            background-color: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
-
-          const img = new Image();
-          img.crossOrigin = 'Anonymous';
-
-          img.onload = () => {
-            try {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-
-              // Fondo blanco para evitar transparencias
-              ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              ctx.drawImage(img, 0, 0);
-
-              const dataURL = canvas.toDataURL('image/jpeg', 0.8);
-              resolve(dataURL);
-            } catch (error) {
-              console.warn('Error convirtiendo imagen:', error);
-              resolve(null);
+          
+          .pdf-header {
+            text-align: center;
+            margin-bottom: 1px;
+            padding: 8px;
+            border-bottom: 2px solid #000000;
+            background-color: #ffffff !important;
+          }
+          
+          .pdf-title {
+            color: #000000 !important;
+            margin: 0;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .pdf-subtitle {
+            margin: 3px 0 0 0 !important;
+            font-size: 8px !important;
+            color: #333333 !important;
+            font-style: italic;
+          }
+          
+          .pdf-section {
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+          }
+          
+          .pdf-personal-data {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+            border: 1px solid #000000;
+            padding: 8px;
+            background-color: #ffffff;
+          }
+          
+          .pdf-photo-container {
+            flex-shrink: 0;
+            text-align: center;
+          }
+          
+          .pdf-photo {
+            width: 150px !important;
+            height: 180px !important;
+            object-fit: cover !important;
+            border: 2px solid #000000 !important;
+            background-color: #f5f5f5;
+          }
+          
+          .pdf-photo-label {
+            margin-top: 4px;
+            font-size: 7px;
+            color: #000000;
+            font-weight: bold;
+            text-transform: uppercase;
+          }
+          
+          .pdf-info-container {
+            flex-grow: 1;
+          }
+          
+          .pdf-person-name {
+            color: #000000 !important;
+            margin: 0 0 8px 0 !important;
+            font-size: 12px !important;
+            font-weight: bold !important;
+            border-bottom: 1px solid #000000;
+            padding-bottom: 2px;
+            text-transform: uppercase;
+          }
+          
+          .pdf-info-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6px !important;
+            font-size: 8px !important;
+          }
+          
+          .pdf-info-item {
+            padding: 4px;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+          }
+          
+          .pdf-info-label {
+            font-weight: bold !important;
+            color: #000000 !important;
+            display: block;
+            margin-bottom: 1px;
+            text-transform: uppercase;
+            font-size: 7px !important;
+          }
+          
+          .pdf-info-value {
+            color: #000000 !important;
+            font-size: 8px !important;
+          }
+          
+          .pdf-full-width {
+            grid-column: 1 / -1 !important;
+          }
+          
+          .pdf-antecedentes {
+            margin-top: 15px;
+            page-break-before: auto;
+          }
+          
+          .pdf-footer {
+            margin-top: 15px;
+            padding: 8px;
+            border-top: 1px solid #000000;
+            background-color: #ffffff;
+            text-align: center;
+            font-size: 7px;
+            color: #000000;
+            page-break-inside: avoid;
+          }
+          
+          .pdf-confidential {
+            font-weight: bold;
+            color: #000000 !important;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          
+          .pdf-generation-info {
+            font-size: 6px;
+            color: #333333;
+          }
+          
+          /* Optimización para antecedentes */
+          .antecedentes-pdf-content {
+            font-family: 'Times New Roman', 'Arial', sans-serif !important;
+            font-size: 9px !important;
+            line-height: 1.2 !important;
+          }
+          
+          .antecedentes-pdf-content * {
+            box-sizing: border-box !important;
+            page-break-inside: avoid !important;
+          }
+          
+          .antecedentes-pdf-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            border: 1px solid #cccccc !important;
+          }
+          
+          /* Asegurar diseño limpio */
+          .antecedentes-pdf-content [style*="grid"] {
+            display: grid !important;
+            gap: 4px !important;
+          }
+          
+          /* Media print optimizations */
+          @media print {
+            .pdf-container {
+              font-size: 9px !important;
             }
-          };
+            .pdf-photo {
+              width: 120px !important;
+              height: 150px !important;
+            }
+          }
+        </style>
+      `;
 
-          img.onerror = () => {
-            console.warn('Error cargando imagen:', url);
-            resolve(null);
-          };
+      // Crear contenedor temporal optimizado para PDF
+      const tempDiv = document.createElement('div');
+      tempDiv.className = 'pdf-container';
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '210mm'; // A4 width
+      tempDiv.style.minHeight = '297mm'; // A4 height
+      tempDiv.style.backgroundColor = '#ffffff';
+      tempDiv.style.padding = '15mm';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '12px';
+      tempDiv.style.lineHeight = '1.4';
+      tempDiv.style.color = '#000000';
+      tempDiv.style.boxSizing = 'border-box';
 
-          // Construir URL completa si es relativa
-          const fullUrl = url.startsWith('http')
-            ? url
-            : `${window.location.origin}${url}`;
+      // Inyectar CSS específico para PDF
+      const styleElement = document.createElement('div');
+      styleElement.innerHTML = pdfCSS;
+      tempDiv.appendChild(styleElement);
 
-          img.src = fullUrl;
-        });
-      };
+      // Header del documento con clases CSS
+      const header = document.createElement('div');
+      header.className = 'pdf-header';
+      header.innerHTML = `
+        <h1 class="pdf-title">S.I.M.A - Sistema de Identificación de Mencionados y/o Aprehendidos</h1>
+        <p class="pdf-subtitle">Ficha Personal Completa - Generado el ${new Date().toLocaleString(
+          'es-AR'
+        )}</p>
+      `;
 
-      // ============================================
-      // 3. CREAR DOCUMENTO PDF
-      // ============================================
+      // Sección de datos personales optimizada con CSS
+      const datosPersonales = document.createElement('div');
+      datosPersonales.className = 'pdf-section pdf-personal-data';
+      datosPersonales.innerHTML = `
+        <div class="pdf-photo-container">
+          <img 
+            src="${
+              item.foto_principal ||
+              'https://via.placeholder.com/150x200/f5f5f5/999999?text=Sin+Foto'
+            }" 
+            alt="Fotografía Personal" 
+            class="pdf-photo"
+            onerror="this.src='https://via.placeholder.com/150x200/f5f5f5/999999?text=Sin+Foto'"
+          />
+          <div class="pdf-photo-label">FOTOGRAFÍA DEL SUJETO</div>
+        </div>
+        <div class="pdf-info-container">
+          <h2 class="pdf-person-name">${item.apellido || 'N/A'}, ${
+        item.nombre || 'N/A'
+      }</h2>
+          <div class="pdf-info-grid">
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">DNI:</span>
+              <span class="pdf-info-value">${item.dni || 'N/A'}</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Fecha de Nacimiento:</span>
+              <span class="pdf-info-value">${
+                item.fecha_nacimiento
+                  ? new Date(item.fecha_nacimiento).toLocaleDateString('es-AR')
+                  : 'N/A'
+              }</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Edad:</span>
+              <span class="pdf-info-value">${item.edad || 'N/A'} años</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Género:</span>
+              <span class="pdf-info-value">${
+                item.genero
+                  ? item.genero.charAt(0).toUpperCase() + item.genero.slice(1)
+                  : 'N/A'
+              }</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Nacionalidad:</span>
+              <span class="pdf-info-value">${item.nacionalidad || 'N/A'}</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Teléfono:</span>
+              <span class="pdf-info-value">${item.telefono || 'N/A'}</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-info-label">Comisaría Juridiscional del Sujeto:</span>
+              <span class="pdf-info-value">${item.comisaria || 'N/A'}</span>
+            </div>
+            <div class="pdf-info-item pdf-full-width">
+              <span class="pdf-info-label">Domicilio:</span>
+              <span class="pdf-info-value">${item.direccion || 'N/A'}</span>
+            </div>
+            ${
+              item.alias
+                ? `
+              <div class="pdf-info-item pdf-full-width">
+                <span class="pdf-info-label">Alias/Apodos:</span>
+                <span class="pdf-info-value">${item.alias}</span>
+              </div>
+            `
+                : ''
+            }
+            ${
+              item.observaciones
+                ? `
+              <div class="pdf-info-item pdf-full-width">
+                <span class="pdf-info-label">Observaciones:</span>
+                <span class="pdf-info-value">${item.observaciones}</span>
+              </div>
+            `
+                : ''
+            }
+            ${
+              item.descripcion_fisica
+                ? `
+              <div class="pdf-info-item pdf-full-width">
+                <span class="pdf-info-label">Descripción Física:</span>
+                <span class="pdf-info-value">${item.descripcion_fisica}</span>
+              </div>
+            `
+                : ''
+            }
+            
+        </div>
+      `;
+
+      // Crear contenedor para antecedentes con React
+      const antecedentesContainer = document.createElement('div');
+      antecedentesContainer.id = 'antecedentes-pdf-container';
+      antecedentesContainer.className = 'pdf-antecedentes';
+
+      // Footer profesional
+      const footer = document.createElement('div');
+      footer.className = 'pdf-footer';
+      footer.innerHTML = `
+        <div class="pdf-confidential">CONFIDENCIAL - S.I.M.A - SISTEMA DE INFORMACIÓN POLICIAL</div>
+        <div class="pdf-generation-info">
+          Documento generado el ${new Date().toLocaleString('es-AR')} | 
+          Usuario: ${me?.nombre || 'Sistema'} | 
+          ID Persona: ${item.id} | 
+          Total Antecedentes: ${antecedentesPersonales.length}
+        </div>
+      `;
+
+      // Ensamblar documento con estructura mejorada
+      tempDiv.appendChild(header);
+      tempDiv.appendChild(datosPersonales);
+      tempDiv.appendChild(antecedentesContainer);
+      tempDiv.appendChild(footer);
+
+      document.body.appendChild(tempDiv);
+
+      // Renderizar antecedentes en modo PDF usando React
+      const { createRoot } = await import('react-dom/client');
+      const root = createRoot(antecedentesContainer);
+
+      await new Promise(resolve => {
+        root.render(
+          React.createElement(ListaAntecedentesPersonalesMejorada, {
+            delitos: antecedentesPersonales,
+            loading: false,
+            isPDFMode: true, // MODO PDF ACTIVADO
+            onActualizar: () => {},
+            onEliminar: () => {},
+          })
+        );
+
+        // Esperar a que se renderice
+        setTimeout(resolve, 1000);
+      });
+
+      // Generar PDF con html2canvas
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        width: tempDiv.scrollWidth,
+        height: tempDiv.scrollHeight,
+        logging: false,
+        onclone: clonedDoc => {
+          // Asegurar estilos en el documento clonado
+          const clonedElement = clonedDoc.querySelector(
+            '#antecedentes-pdf-container'
+          );
+          if (clonedElement) {
+            clonedElement.style.fontFamily = 'Arial, sans-serif';
+            clonedElement.style.fontSize = '12px';
+          }
+        },
+      });
+
+      // Crear PDF con jsPDF
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -629,366 +944,45 @@ export default function PersonaDetalle() {
         compress: true,
       });
 
-      // Configuración de página A4: 210mm x 297mm
-      const pageWidth = 210;
-      const pageHeight = 297;
-      const margin = 15;
-      const contentWidth = pageWidth - margin * 2;
-      let yPos = margin;
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      // Colores institucionales
-      const colorAzulOscuro = [26, 54, 93]; // #1a365d
-      const colorAzulClaro = [44, 82, 130]; // #2c5282
-      const colorRojo = [211, 47, 47]; // #d32f2f
-      const colorGris = [100, 100, 100];
-      const colorNegro = [0, 0, 0];
+      let heightLeft = imgHeight;
+      let position = 10;
 
-      // ============================================
-      // 4. FUNCIONES AUXILIARES PARA PDF
-      // ============================================
-      const addHeader = () => {
-        // Fondo azul del header
-        pdf.setFillColor(...colorAzulOscuro);
-        pdf.rect(0, 0, pageWidth, 35, 'F');
+      // Primera página
+      pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight - 20;
 
-        // Título principal
-        pdf.setTextColor(255, 255, 255);
-        pdf.setFontSize(20);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('S.I.M.A', pageWidth / 2, 12, { align: 'center' });
-
-        // Subtítulo
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(
-          'Sistema de Identificación de Mencionados y/o Aprehendidos',
-          pageWidth / 2,
-          19,
-          { align: 'center' }
-        );
-        pdf.text('FICHA PERSONAL COMPLETA', pageWidth / 2, 25, {
-          align: 'center',
-        });
-
-        // Fecha de generación
-        pdf.setFontSize(8);
-        pdf.text(
-          `Generado: ${new Date().toLocaleString('es-AR')}`,
-          pageWidth / 2,
-          31,
-          { align: 'center' }
-        );
-      };
-
-      const addFooter = pageNum => {
-        const footerY = pageHeight - 10;
-
-        // Línea superior del footer
-        pdf.setDrawColor(...colorAzulOscuro);
-        pdf.setLineWidth(0.5);
-        pdf.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
-
-        // Texto confidencial
-        pdf.setTextColor(...colorRojo);
-        pdf.setFontSize(8);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(
-          'DOCUMENTO CONFIDENCIAL - USO POLICIAL',
-          pageWidth / 2,
-          footerY,
-          { align: 'center' }
-        );
-
-        // Número de página
-        pdf.setTextColor(...colorGris);
-        pdf.setFontSize(8);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(`Página ${pageNum}`, pageWidth - margin, footerY, {
-          align: 'right',
-        });
-      };
-
-      const addWatermark = () => {
-        pdf.setTextColor(26, 54, 93);
-        pdf.setFontSize(60);
-        pdf.setFont('helvetica', 'bold');
-        pdf.saveGraphicsState();
-        pdf.setGState(new pdf.GState({ opacity: 0.03 }));
-        pdf.text('POLICIA', pageWidth / 2, pageHeight / 2, {
-          align: 'center',
-          angle: 45,
-        });
-        pdf.restoreGraphicsState();
-      };
-
-      // ============================================
-      // 5. AGREGAR HEADER, FOOTER Y WATERMARK
-      // ============================================
-      addHeader();
-      addFooter(1);
-      addWatermark();
-      yPos = 40;
-
-      // ============================================
-      // 6. SECCIÓN DATOS PERSONALES CON FOTO
-      // ============================================
-      showToast('Procesando datos personales...', 'info');
-
-      // Marco de sección
-      pdf.setDrawColor(...colorAzulOscuro);
-      pdf.setLineWidth(0.8);
-      pdf.rect(margin, yPos, contentWidth, 70, 'S');
-
-      // Cargar foto si existe
-      let fotoBase64 = null;
-      if (item.foto_principal) {
-        try {
-          showToast('Cargando fotografía...', 'info');
-          fotoBase64 = await loadImageAsBase64(item.foto_principal);
-        } catch (error) {
-          console.warn('No se pudo cargar la foto:', error);
-        }
+      // Páginas adicionales si es necesario
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight - 20;
       }
 
-      // Dibujar foto o placeholder
-      const fotoX = margin + 5;
-      const fotoY = yPos + 5;
-      const fotoWidth = 35;
-      const fotoHeight = 45;
+      // Guardar PDF
+      const filename = `SIMA_Persona_${item.apellido || 'SinApellido'}_${
+        item.nombre || 'SinNombre'
+      }_${item.dni || 'SinDNI'}_${new Date()
+        .toLocaleString('es-AR')
+        .replace(/[/:]/g, '-')
+        .replace(/,/g, '')}.pdf`;
 
-      if (fotoBase64) {
-        pdf.addImage(fotoBase64, 'JPEG', fotoX, fotoY, fotoWidth, fotoHeight);
-      } else {
-        pdf.setFillColor(245, 245, 245);
-        pdf.rect(fotoX, fotoY, fotoWidth, fotoHeight, 'F');
-        pdf.setTextColor(...colorGris);
-        pdf.setFontSize(8);
-        pdf.text('SIN', fotoX + fotoWidth / 2, fotoY + fotoHeight / 2 - 2, {
-          align: 'center',
-        });
-        pdf.text('FOTO', fotoX + fotoWidth / 2, fotoY + fotoHeight / 2 + 2, {
-          align: 'center',
-        });
-      }
+      pdf.save(filename);
 
-      // Borde de la foto
-      pdf.setDrawColor(...colorAzulOscuro);
-      pdf.setLineWidth(0.5);
-      pdf.rect(fotoX, fotoY, fotoWidth, fotoHeight, 'S');
+      // Limpiar
+      root.unmount();
+      document.body.removeChild(tempDiv);
 
-      // Etiqueta de foto
-      pdf.setFontSize(7);
-      pdf.setTextColor(...colorNegro);
-      pdf.text('📸 FOTOGRAFÍA', fotoX + fotoWidth / 2, fotoY + fotoHeight + 4, {
-        align: 'center',
-      });
-
-      // Datos personales a la derecha de la foto
-      const datosX = fotoX + fotoWidth + 8;
-      let datosY = yPos + 8;
-
-      // Nombre completo (destacado)
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...colorAzulOscuro);
-      const nombreCompleto = `${(
-        item.apellido || 'SIN APELLIDO'
-      ).toUpperCase()}, ${(item.nombre || 'SIN NOMBRE').toUpperCase()}`;
-      pdf.text(nombreCompleto, datosX, datosY);
-      datosY += 8;
-
-      // Datos personales en grid
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-
-      const datosPersonales = [
-        { label: 'DNI:', value: item.dni || 'NO REGISTRADO' },
-        {
-          label: 'Fecha Nac.:',
-          value: item.fecha_nacimiento
-            ? new Date(item.fecha_nacimiento).toLocaleDateString('es-AR')
-            : 'NO REGISTRADO',
-        },
-        {
-          label: 'Edad:',
-          value: item.fecha_nacimiento
-            ? `${Math.floor(
-                (new Date() - new Date(item.fecha_nacimiento)) / 31557600000
-              )} años`
-            : 'N/A',
-        },
-        { label: 'Género:', value: item.genero || 'NO ESPECIFICADO' },
-        { label: 'Nacionalidad:', value: item.nacionalidad || 'NO REGISTRADO' },
-        { label: 'Provincia:', value: item.provincia || 'NO REGISTRADO' },
-        { label: 'Domicilio:', value: item.domicilio || 'NO REGISTRADO' },
-      ];
-
-      datosPersonales.forEach(dato => {
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(...colorNegro);
-        pdf.text(dato.label, datosX, datosY);
-
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(...colorGris);
-        const textoValor = pdf.splitTextToSize(
-          dato.value,
-          contentWidth - (datosX - margin) - 5
-        );
-        pdf.text(textoValor, datosX + 25, datosY);
-
-        datosY += 6;
-      });
-
-      yPos += 75;
-
-      // ============================================
-      // 7. SECCIÓN ANTECEDENTES PERSONALES
-      // ============================================
-      if (antecedentesPersonales && antecedentesPersonales.length > 0) {
-        showToast(
-          `Procesando ${antecedentesPersonales.length} antecedentes...`,
-          'info'
-        );
-
-        // Verificar si necesitamos nueva página
-        if (yPos > pageHeight - 80) {
-          pdf.addPage();
-          addHeader();
-          addFooter(2);
-          addWatermark();
-          yPos = 40;
-        }
-
-        // Título de sección
-        pdf.setFillColor(...colorAzulOscuro);
-        pdf.rect(margin, yPos, contentWidth, 10, 'F');
-        pdf.setTextColor(255, 255, 255);
-        pdf.setFontSize(11);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('ANTECEDENTES PERSONALES', margin + 3, yPos + 7);
-        yPos += 12;
-
-        // Estadísticas
-        pdf.setFontSize(9);
-        pdf.setTextColor(...colorNegro);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(
-          `Total de registros: ${antecedentesPersonales.length}`,
-          margin,
-          yPos
-        );
-        yPos += 7;
-
-        // Procesar cada antecedente
-        let pageNum = 2;
-        antecedentesPersonales.forEach((antecedente, index) => {
-          // Verificar espacio (cada antecedente necesita ~40mm)
-          if (yPos > pageHeight - 50) {
-            pdf.addPage();
-            pageNum++;
-            addHeader();
-            addFooter(pageNum);
-            addWatermark();
-            yPos = 40;
-          }
-
-          // Marco del antecedente
-          const antecedenteHeight = 35;
-          pdf.setDrawColor(...colorAzulClaro);
-          pdf.setLineWidth(0.5);
-          pdf.rect(margin, yPos, contentWidth, antecedenteHeight, 'S');
-
-          // Número y fecha
-          pdf.setFontSize(8);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...colorAzulOscuro);
-          pdf.text(`#${index + 1}`, margin + 2, yPos + 5);
-
-          if (antecedente.fecha) {
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(...colorGris);
-            pdf.text(
-              new Date(antecedente.fecha).toLocaleDateString('es-AR'),
-              pageWidth - margin - 2,
-              yPos + 5,
-              { align: 'right' }
-            );
-          }
-
-          // Delito
-          pdf.setFontSize(10);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...colorNegro);
-          pdf.text('Delito:', margin + 2, yPos + 12);
-          pdf.setFont('helvetica', 'normal');
-          const delitoTexto = pdf.splitTextToSize(
-            antecedente.delito || 'NO ESPECIFICADO',
-            contentWidth - 25
-          );
-          pdf.text(delitoTexto, margin + 18, yPos + 12);
-
-          // Rol
-          let currentY = yPos + 18;
-          if (antecedente.rol) {
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('Rol:', margin + 2, currentY);
-            pdf.setFont('helvetica', 'normal');
-            pdf.text(antecedente.rol, margin + 18, currentY);
-            currentY += 6;
-          }
-
-          // Comisaría
-          if (antecedente.comisaria_hecho) {
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('Comisaría:', margin + 2, currentY);
-            pdf.setFont('helvetica', 'normal');
-            const comisariaTexto = pdf.splitTextToSize(
-              antecedente.comisaria_hecho,
-              contentWidth - 25
-            );
-            pdf.text(comisariaTexto, margin + 30, currentY);
-          }
-
-          yPos += antecedenteHeight + 3;
-        });
-      } else {
-        // Sin antecedentes
-        pdf.setFillColor(250, 250, 250);
-        pdf.rect(margin, yPos, contentWidth, 20, 'F');
-        pdf.setDrawColor(...colorGris);
-        pdf.setLineWidth(0.3);
-        pdf.rect(margin, yPos, contentWidth, 20, 'S');
-
-        pdf.setTextColor(...colorGris);
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'italic');
-        pdf.text(
-          'Sin antecedentes personales registrados',
-          pageWidth / 2,
-          yPos + 12,
-          { align: 'center' }
-        );
-        yPos += 25;
-      }
-
-      // ============================================
-      // 8. GUARDAR PDF
-      // ============================================
-      showToast('Guardando PDF...', 'info');
-
-      const fechaHora = new Date()
-        .toISOString()
-        .slice(0, 16)
-        .replace(/[-:T]/g, '_');
-      const nombreArchivo = `SIMA_Persona_${item.apellido}_${item.nombre}_${
-        item.dni || 'NO'
-      }_${fechaHora}.pdf`;
-      pdf.save(nombreArchivo);
-
-      showToast('PDF generado exitosamente', 'success');
+      showToast('PDF descargado exitosamente', 'success');
     } catch (error) {
-      console.error('Error generando PDF:', error);
-      showToast(`Error al generar PDF: ${error.message}`, 'error');
+      console.error('Error al generar PDF:', error);
+      showToast('Error al generar el archivo PDF: ' + error.message, 'error');
     } finally {
       setIsGeneratingPDF(false);
     }

@@ -1,0 +1,424 @@
+/**
+ * ============================================================================
+ * ESTILOS OPTIMIZADOS PARA GENERACIÓN DE PDFs - S.I.M.A
+ * Sistema de Información Policial
+ * ============================================================================
+ * 
+ * Estos estilos están diseñados específicamente para la generación de PDFs
+ * usando html2canvas y jsPDF, evitando problemas comunes de layout,
+ * superposición y elementos cortados.
+ * 
+ * COLORES INSTITUCIONALES:
+ * - Azul Policial Oscuro: #1a365d
+ * - Azul Policial Claro: #2c5282
+ * - Rojo Confidencial: #d32f2f
+ * - Fondo Claro: #f8f9fa
+ * ============================================================================
+ */
+
+/* ============= RESET Y CONFIGURACIÓN BASE ============= */
+.pdf-export-container * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.pdf-export-container {
+  font-family: 'Times New Roman', Arial, sans-serif !important;
+  font-size: 10px !important;
+  line-height: 1.3 !important;
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  color-adjust: exact !important;
+}
+
+/* ============= HEADER PROFESIONAL ============= */
+.pdf-header-professional {
+  text-align: center;
+  margin-bottom: 15px;
+  padding: 12px;
+  border-bottom: 3px solid #1a365d;
+  background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  page-break-after: avoid;
+}
+
+.pdf-title-main {
+  color: #ffffff !important;
+  margin: 0 0 5px 0;
+  font-size: 16px !important;
+  font-weight: bold !important;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.pdf-subtitle-main {
+  margin: 0 !important;
+  font-size: 9px !important;
+  color: #e8e8e8 !important;
+  font-style: italic;
+}
+
+/* ============= WATERMARK POLICIAL ============= */
+.pdf-watermark-police {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 100px;
+  font-weight: bold;
+  color: rgba(26, 54, 93, 0.03);
+  z-index: -1;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: 5px;
+}
+
+/* ============= SECCIÓN DATOS PERSONALES ============= */
+.pdf-personal-section {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  page-break-inside: avoid;
+  border: 2px solid #1a365d;
+  padding: 12px;
+  background-color: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-photo-section {
+  flex-shrink: 0;
+  text-align: center;
+  border-right: 1px solid #e0e0e0;
+  padding-right: 15px;
+}
+
+.pdf-photo-main {
+  width: 140px !important;
+  height: 170px !important;
+  object-fit: cover !important;
+  border: 3px solid #1a365d !important;
+  background-color: #f5f5f5;
+  display: block;
+}
+
+.pdf-photo-caption {
+  margin-top: 6px;
+  font-size: 8px;
+  color: #1a365d;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ============= INFORMACIÓN PERSONAL ============= */
+.pdf-person-title {
+  color: #1a365d !important;
+  margin: 0 0 12px 0 !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  border-bottom: 2px solid #1a365d;
+  padding-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pdf-data-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  font-size: 9px !important;
+}
+
+.pdf-data-field {
+  padding: 6px 8px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-left: 3px solid #1a365d;
+  border-radius: 2px;
+}
+
+.pdf-data-field.highlighted {
+  background-color: #fff3cd;
+  border-left-color: #ffc107;
+}
+
+.pdf-field-label {
+  font-weight: bold !important;
+  color: #1a365d !important;
+  display: block;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  font-size: 8px !important;
+  letter-spacing: 0.3px;
+}
+
+.pdf-field-value {
+  color: #000000 !important;
+  font-size: 9px !important;
+  line-height: 1.3;
+}
+
+.pdf-full-width-field {
+  grid-column: 1 / -1 !important;
+}
+
+/* ============= SECCIÓN ANTECEDENTES ============= */
+.pdf-antecedentes-section {
+  margin-top: 20px;
+  page-break-before: auto;
+}
+
+.pdf-antecedentes-header {
+  background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+  color: #ffffff;
+  padding: 10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+.pdf-antecedente-card {
+  page-break-inside: avoid;
+  margin-bottom: 12px;
+  border: 2px solid #1a365d;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pdf-antecedente-header {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.pdf-antecedente-type {
+  font-size: 11px;
+  font-weight: bold;
+  color: #1a365d;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.pdf-antecedente-badges {
+  margin-top: 5px;
+}
+
+.pdf-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background-color: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 10px;
+  font-size: 8px;
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+.pdf-badge-date {
+  background-color: #e3f2fd;
+  border-color: #2196f3;
+}
+
+.pdf-badge-location {
+  background-color: #c8e6c9;
+  border-color: #4caf50;
+}
+
+.pdf-badge-evidence {
+  background-color: #ffe0b2;
+  border-color: #ff9800;
+}
+
+/* ============= DESCRIPCIÓN Y DETALLES ============= */
+.pdf-description-box {
+  background-color: #f8f9fa;
+  padding: 8px;
+  border-radius: 3px;
+  border: 1px solid #dee2e6;
+  margin-bottom: 10px;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.pdf-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 8px;
+  margin-top: 10px;
+}
+
+.pdf-detail-item {
+  padding: 5px;
+  background-color: #f8f9fa;
+  border-left: 2px solid #1a365d;
+}
+
+.pdf-detail-label {
+  font-weight: bold;
+  color: #1a365d;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* ============= EVIDENCIAS FOTOGRÁFICAS ============= */
+.pdf-evidence-section {
+  margin-top: 10px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 3px;
+}
+
+.pdf-evidence-title {
+  font-size: 9px;
+  font-weight: bold;
+  color: #1a365d;
+  margin-bottom: 6px;
+}
+
+.pdf-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.pdf-evidence-photo {
+  width: 100%;
+  height: 60px;
+  object-fit: cover;
+  border: 2px solid #1a365d;
+  border-radius: 2px;
+}
+
+/* ============= FOOTER PROFESIONAL ============= */
+.pdf-footer-professional {
+  margin-top: 20px;
+  padding: 12px;
+  border-top: 2px solid #1a365d;
+  background-color: #f8f9fa;
+  text-align: center;
+  font-size: 8px;
+  color: #000000;
+  page-break-inside: avoid;
+}
+
+.pdf-confidential-notice {
+  font-weight: bold;
+  color: #d32f2f !important;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 9px !important;
+}
+
+.pdf-generation-metadata {
+  font-size: 7px;
+  color: #666666;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.pdf-metadata-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  text-align: center;
+  margin: 8px 0;
+}
+
+/* ============= OPTIMIZACIONES PARA IMPRESIÓN ============= */
+@media print {
+  .pdf-export-container {
+    font-size: 10px !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+  }
+
+  .pdf-photo-main {
+    width: 120px !important;
+    height: 150px !important;
+  }
+
+  .pdf-watermark-police {
+    opacity: 0.02 !important;
+  }
+
+  .pdf-antecedente-card,
+  .pdf-personal-section {
+    page-break-inside: avoid;
+  }
+
+  .pdf-header-professional,
+  .pdf-footer-professional {
+    page-break-after: avoid;
+  }
+}
+
+/* ============= OPTIMIZACIONES PARA html2canvas ============= */
+@media screen {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .pdf-header-professional {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%) !important;
+  }
+
+  .pdf-antecedentes-header {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%) !important;
+  }
+}
+
+/* ============= UTILIDADES ============= */
+.pdf-page-break {
+  page-break-after: always;
+}
+
+.pdf-no-break {
+  page-break-inside: avoid;
+}
+
+.pdf-text-center {
+  text-align: center;
+}
+
+.pdf-text-bold {
+  font-weight: bold !important;
+}
+
+.pdf-text-uppercase {
+  text-transform: uppercase !important;
+}
+
+.pdf-margin-top {
+  margin-top: 15px;
+}
+
+.pdf-margin-bottom {
+  margin-bottom: 15px;
+}
+
+/* ============= SEPARADORES ============= */
+.pdf-separator {
+  width: 100%;
+  height: 1px;
+  background-color: #dee2e6;
+  margin: 12px 0;
+}
+
+.pdf-separator-thick {
+  height: 2px;
+  background-color: #1a365d;
+}
