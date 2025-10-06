@@ -55,11 +55,34 @@ export default function PersonaDetalle() {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState({
+    nombre: '',
+    apellido: '',
+    dni: '',
+    fecha_nacimiento: '',
+    genero: '',
+    nacionalidad: '',
+    direccion: '',
+    telefono: '',
+    observaciones: '',
+    comisaria: '',
+    comisaria_hecho: '',
+    alias: '',
+    descripcion_fisica: '',
+  });
   const [files, setFiles] = useState([]);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const { showToast } = useToast();
+
+  // Función helper para manejar cambios en inputs de forma segura
+  const handleInputChange = field => event => {
+    const value = event.target.value || '';
+    setForm(prevForm => ({
+      ...prevForm,
+      [field]: String(value),
+    }));
+  };
 
   // Estado para paginación de registros
   const [registros, setRegistros] = useState([]);
@@ -151,22 +174,24 @@ export default function PersonaDetalle() {
             )
           );
         }
-        setForm({
-          nombre: personaRes.data.nombre || '',
-          apellido: personaRes.data.apellido || '',
-          dni: personaRes.data.dni || '',
+        // Inicializar formulario con valores seguros
+        const formData = {
+          nombre: String(personaRes.data.nombre || ''),
+          apellido: String(personaRes.data.apellido || ''),
+          dni: String(personaRes.data.dni || ''),
           fecha_nacimiento:
             personaRes.data.fecha_nacimiento?.slice(0, 10) || '',
-          genero: personaRes.data.genero || '',
-          nacionalidad: personaRes.data.nacionalidad || '',
-          direccion: personaRes.data.direccion || '',
-          telefono: personaRes.data.telefono || '',
-          observaciones: personaRes.data.observaciones || '',
-          comisaria: personaRes.data.comisaria || '',
-          comisaria_hecho: personaRes.data.comisaria_hecho || '',
-          alias: personaRes.data.alias || '',
-          descripcion_fisica: personaRes.data.descripcion_fisica || '',
-        });
+          genero: String(personaRes.data.genero || ''),
+          nacionalidad: String(personaRes.data.nacionalidad || ''),
+          direccion: String(personaRes.data.direccion || ''),
+          telefono: String(personaRes.data.telefono || ''),
+          observaciones: String(personaRes.data.observaciones || ''),
+          comisaria: String(personaRes.data.comisaria || ''),
+          comisaria_hecho: String(personaRes.data.comisaria_hecho || ''),
+          alias: String(personaRes.data.alias || ''),
+          descripcion_fisica: String(personaRes.data.descripcion_fisica || ''),
+        };
+        setForm(formData);
       } catch (e) {
         if (!mounted) return;
         if (e.response?.status === 401) {
@@ -249,23 +274,47 @@ export default function PersonaDetalle() {
   }, [item]);
 
   const onSave = async () => {
+    // Validaciones básicas
+    if (!form.apellido?.trim()) {
+      setError('El apellido es requerido');
+      showToast('El apellido es requerido', 'error');
+      return;
+    }
+
+    if (!form.dni?.trim()) {
+      setError('El DNI es requerido');
+      showToast('El DNI es requerido', 'error');
+      return;
+    }
+
     setSaving(true);
     setError('');
+
     try {
       const data = new FormData();
-      Object.entries(form).forEach(([k, v]) => data.append(k, v || ''));
+
+      // Asegurar que todos los valores sean strings
+      Object.entries(form).forEach(([k, v]) => {
+        data.append(k, String(v || ''));
+      });
+
       files.forEach(f => data.append('fotos', f));
+
       await api.put(`/personas/${id}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
       const { data: refreshed } = await api.get(`/personas/${id}`);
       setItem(refreshed);
       setEditMode(false);
       setFiles([]);
-      showToast('Cambios guardados', 'success');
+      showToast('Cambios guardados exitosamente', 'success');
     } catch (e) {
-      setError(e?.response?.data?.message || 'No se pudo guardar');
-      showToast('No se pudo guardar', 'error');
+      const errorMsg =
+        e?.response?.data?.message || 'No se pudo guardar los cambios';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
+      console.error('Error guardando:', e);
     } finally {
       setSaving(false);
     }
@@ -844,6 +893,8 @@ export default function PersonaDetalle() {
       // ============================================
       // 7. SECCIÓN ANTECEDENTES PERSONALES
       // ============================================
+      let pageNum = 2; // Declarar pageNum aquí para usarlo en múltiples secciones
+
       if (antecedentesPersonales && antecedentesPersonales.length > 0) {
         showToast(
           `Procesando ${antecedentesPersonales.length} antecedentes...`,
@@ -854,7 +905,7 @@ export default function PersonaDetalle() {
         if (yPos > pageHeight - 80) {
           pdf.addPage();
           addHeader();
-          addFooter(2);
+          addFooter(pageNum);
           addWatermark();
           yPos = 40;
         }
@@ -880,7 +931,6 @@ export default function PersonaDetalle() {
         yPos += 7;
 
         // Procesar cada antecedente
-        let pageNum = 2;
         antecedentesPersonales.forEach((antecedente, index) => {
           // Verificar espacio (cada antecedente necesita ~40mm)
           if (yPos > pageHeight - 50) {
@@ -972,7 +1022,154 @@ export default function PersonaDetalle() {
       }
 
       // ============================================
-      // 8. GUARDAR PDF
+      // 8. SECCIÓN REGISTROS DELICTUALES
+      // ============================================
+      if (registros && registros.length > 0) {
+        showToast(
+          `Procesando ${registros.length} registros delictuales...`,
+          'info'
+        );
+
+        // Verificar si necesitamos nueva página
+        if (yPos > pageHeight - 80) {
+          pdf.addPage();
+          pageNum++;
+          addHeader();
+          addFooter(pageNum);
+          addWatermark();
+          yPos = 40;
+        }
+
+        // Título de sección
+        pdf.setFillColor(...colorRojo);
+        pdf.rect(margin, yPos, contentWidth, 10, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('REGISTROS DELICTUALES', margin + 3, yPos + 7);
+        yPos += 12;
+
+        // Estadísticas
+        pdf.setFontSize(9);
+        pdf.setTextColor(...colorNegro);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Total de registros: ${registros.length}`, margin, yPos);
+        yPos += 7;
+
+        // Procesar cada registro
+        registros.forEach((registro, index) => {
+          // Verificar espacio (cada registro necesita ~45mm)
+          if (yPos > pageHeight - 55) {
+            pdf.addPage();
+            pageNum++;
+            addHeader();
+            addFooter(pageNum);
+            addWatermark();
+            yPos = 40;
+          }
+
+          // Marco del registro
+          const registroHeight = 42;
+          pdf.setDrawColor(...colorRojo);
+          pdf.setLineWidth(0.5);
+          pdf.rect(margin, yPos, contentWidth, registroHeight, 'S');
+
+          // Número y fecha
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(...colorRojo);
+          pdf.text(`#${index + 1}`, margin + 2, yPos + 5);
+
+          if (registro.created_at) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(...colorGris);
+            pdf.text(
+              new Date(registro.created_at).toLocaleDateString('es-AR'),
+              pageWidth - margin - 2,
+              yPos + 5,
+              { align: 'right' }
+            );
+          }
+
+          // Delito (campo principal)
+          let currentY = yPos + 12;
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(...colorNegro);
+          pdf.text('Delito:', margin + 2, currentY);
+          pdf.setFont('helvetica', 'normal');
+          const delitoTexto = pdf.splitTextToSize(
+            registro.tipo_delito || registro.delito || 'NO ESPECIFICADO',
+            contentWidth - 25
+          );
+          pdf.text(delitoTexto, margin + 18, currentY);
+          currentY += 6 * delitoTexto.length;
+
+          // Comisaría
+          if (registro.lugar || item.comisaria) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Comisaría:', margin + 2, currentY);
+            pdf.setFont('helvetica', 'normal');
+            const comisariaTexto = pdf.splitTextToSize(
+              registro.lugar || item.comisaria || 'No especificada',
+              contentWidth - 30
+            );
+            pdf.text(comisariaTexto, margin + 30, currentY);
+            currentY += 6;
+          }
+
+          // Estado
+          if (registro.estado) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Estado:', margin + 2, currentY);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(registro.estado, margin + 20, currentY);
+            currentY += 6;
+          }
+
+          // Juzgado
+          if (registro.juzgado) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Juzgado:', margin + 2, currentY);
+            pdf.setFont('helvetica', 'normal');
+            const juzgadoTexto = pdf.splitTextToSize(
+              registro.juzgado,
+              contentWidth - 25
+            );
+            pdf.text(juzgadoTexto, margin + 22, currentY);
+            currentY += 6;
+          }
+
+          yPos += registroHeight + 3;
+        });
+      } else {
+        // Sin registros delictuales
+        if (yPos > pageHeight - 30) {
+          pdf.addPage();
+          pageNum++;
+          addHeader();
+          addFooter(pageNum);
+          addWatermark();
+          yPos = 40;
+        }
+
+        pdf.setFillColor(250, 250, 250);
+        pdf.rect(margin, yPos, contentWidth, 20, 'F');
+        pdf.setDrawColor(...colorGris);
+        pdf.setLineWidth(0.3);
+        pdf.rect(margin, yPos, contentWidth, 20, 'S');
+
+        pdf.setTextColor(...colorGris);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'italic');
+        pdf.text('Sin registros delictuales', pageWidth / 2, yPos + 12, {
+          align: 'center',
+        });
+        yPos += 25;
+      }
+
+      // ============================================
+      // 9. GUARDAR PDF
       // ============================================
       showToast('Guardando PDF...', 'info');
 
@@ -1184,25 +1381,48 @@ export default function PersonaDetalle() {
                 variant="outlined"
                 startIcon={<CloseIcon />}
                 onClick={() => {
+                  // Verificar si hay cambios no guardados
+                  const hasChanges =
+                    (item &&
+                      Object.keys(form).some(key => {
+                        const currentValue = String(form[key] || '');
+                        const originalValue =
+                          key === 'fecha_nacimiento'
+                            ? item[key]?.slice(0, 10) || ''
+                            : String(item[key] || '');
+                        return currentValue !== originalValue;
+                      })) ||
+                    files.length > 0;
+
+                  if (hasChanges) {
+                    const confirma = window.confirm(
+                      '¿Estás seguro de que quieres cancelar? Se perderán los cambios no guardados.'
+                    );
+                    if (!confirma) return;
+                  }
+
+                  // Restaurar datos originales
                   setEditMode(false);
+                  setError('');
                   setFiles([]);
                   if (item) {
-                    setForm({
-                      nombre: item.nombre || '',
-                      apellido: item.apellido || '',
-                      dni: item.dni || '',
+                    const formData = {
+                      nombre: String(item.nombre || ''),
+                      apellido: String(item.apellido || ''),
+                      dni: String(item.dni || ''),
                       fecha_nacimiento:
                         item.fecha_nacimiento?.slice(0, 10) || '',
-                      genero: item.genero || '',
-                      nacionalidad: item.nacionalidad || '',
-                      direccion: item.direccion || '',
-                      telefono: item.telefono || '',
-                      email: item.email || '',
-                      observaciones: item.observaciones || '',
-                      comisaria: item.comisaria || '',
-                      comisaria_hecho: item.comisaria_hecho || '',
-                      alias: item.alias || '',
-                    });
+                      genero: String(item.genero || ''),
+                      nacionalidad: String(item.nacionalidad || ''),
+                      direccion: String(item.direccion || ''),
+                      telefono: String(item.telefono || ''),
+                      observaciones: String(item.observaciones || ''),
+                      comisaria: String(item.comisaria || ''),
+                      comisaria_hecho: String(item.comisaria_hecho || ''),
+                      alias: String(item.alias || ''),
+                      descripcion_fisica: String(item.descripcion_fisica || ''),
+                    };
+                    setForm(formData);
                   }
                 }}
                 sx={{
@@ -1692,32 +1912,38 @@ export default function PersonaDetalle() {
                         <TextField
                           label="Nombre"
                           fullWidth
-                          value={form.nombre}
-                          onChange={e =>
-                            setForm({ ...form, nombre: e.target.value })
-                          }
+                          value={form.nombre || ''}
+                          onChange={handleInputChange('nombre')}
+                          disabled={saving}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField
-                          label="Apellido"
+                          label="Apellido *"
                           fullWidth
-                          value={form.apellido}
-                          onChange={e =>
-                            setForm({ ...form, apellido: e.target.value })
+                          value={form.apellido || ''}
+                          onChange={handleInputChange('apellido')}
+                          disabled={saving}
+                          required
+                          error={!form.apellido?.trim()}
+                          helperText={
+                            !form.apellido?.trim()
+                              ? 'El apellido es requerido'
+                              : ''
                           }
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField
-                          label="DNI"
+                          label="DNI *"
                           fullWidth
                           placeholder="Ej: 12345678 o NO"
                           helperText="Ingrese un DNI válido o 'NO', 'NULO', 'EXTRANJERO', etc."
-                          value={form.dni}
-                          onChange={e =>
-                            setForm({ ...form, dni: e.target.value })
-                          }
+                          value={form.dni || ''}
+                          onChange={handleInputChange('dni')}
+                          disabled={saving}
+                          required
+                          error={!form.dni?.trim()}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -1726,13 +1952,9 @@ export default function PersonaDetalle() {
                           label="Fecha de nacimiento"
                           fullWidth
                           InputLabelProps={{ shrink: true }}
-                          value={form.fecha_nacimiento}
-                          onChange={e =>
-                            setForm({
-                              ...form,
-                              fecha_nacimiento: e.target.value,
-                            })
-                          }
+                          value={form.fecha_nacimiento || ''}
+                          onChange={handleInputChange('fecha_nacimiento')}
+                          disabled={saving}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -1740,10 +1962,9 @@ export default function PersonaDetalle() {
                           select
                           label="Género"
                           fullWidth
-                          value={form.genero}
-                          onChange={e =>
-                            setForm({ ...form, genero: e.target.value })
-                          }
+                          value={form.genero || ''}
+                          onChange={handleInputChange('genero')}
+                          disabled={saving}
                         >
                           <MenuItem value="">Seleccionar género</MenuItem>
                           <MenuItem value="masculino">Masculino</MenuItem>
@@ -1755,33 +1976,27 @@ export default function PersonaDetalle() {
                         <TextField
                           label="Comisaría"
                           fullWidth
-                          value={form.comisaria}
-                          onChange={e =>
-                            setForm({ ...form, comisaria: e.target.value })
-                          }
+                          value={form.comisaria || ''}
+                          onChange={handleInputChange('comisaria')}
+                          disabled={saving}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField
                           label="Comisaría del Hecho"
                           fullWidth
-                          value={form.comisaria_hecho}
-                          onChange={e =>
-                            setForm({
-                              ...form,
-                              comisaria_hecho: e.target.value,
-                            })
-                          }
+                          value={form.comisaria_hecho || ''}
+                          onChange={handleInputChange('comisaria_hecho')}
+                          disabled={saving}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField
                           label="Nacionalidad"
                           fullWidth
-                          value={form.nacionalidad}
-                          onChange={e =>
-                            setForm({ ...form, nacionalidad: e.target.value })
-                          }
+                          value={form.nacionalidad || ''}
+                          onChange={handleInputChange('nacionalidad')}
+                          disabled={saving}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -1790,20 +2005,20 @@ export default function PersonaDetalle() {
                           fullWidth
                           placeholder="Ej: El Flaco, Checo, etc."
                           helperText="Ingrese cualquier alias o apodo conocido"
-                          value={form.alias}
-                          onChange={e =>
-                            setForm({ ...form, alias: e.target.value })
-                          }
+                          value={form.alias || ''}
+                          onChange={handleInputChange('alias')}
+                          disabled={saving}
                         />
                       </Grid>
                       <Grid item xs={12}>
                         <TextField
                           label="Dirección"
                           fullWidth
-                          value={form.direccion}
-                          onChange={e =>
-                            setForm({ ...form, direccion: e.target.value })
-                          }
+                          value={form.direccion || ''}
+                          onChange={handleInputChange('direccion')}
+                          disabled={saving}
+                          multiline
+                          rows={2}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -1812,10 +2027,9 @@ export default function PersonaDetalle() {
                           fullWidth
                           placeholder="Ej: +54 381 1234567 o NO"
                           helperText="Puede ingresar un número válido o 'NO', 'NULO', 'N/A', etc."
-                          value={form.telefono}
-                          onChange={e =>
-                            setForm({ ...form, telefono: e.target.value })
-                          }
+                          value={form.telefono || ''}
+                          onChange={handleInputChange('telefono')}
+                          disabled={saving}
                         />
                       </Grid>
                       <Grid item xs={12}>
@@ -1824,10 +2038,9 @@ export default function PersonaDetalle() {
                           fullWidth
                           multiline
                           rows={3}
-                          value={form.observaciones}
-                          onChange={e =>
-                            setForm({ ...form, observaciones: e.target.value })
-                          }
+                          value={form.observaciones || ''}
+                          onChange={handleInputChange('observaciones')}
+                          disabled={saving}
                         />
                       </Grid>
                       <Grid item xs={12}>
@@ -2152,6 +2365,170 @@ export default function PersonaDetalle() {
                     )}
                   </Box>
                 </Grid>
+
+                {/* Sección de Registros Delictuales */}
+                {registros && registros.length > 0 && (
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 3 }} />
+                    <Box sx={{ mt: 3 }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 600,
+                          mb: 2,
+                          color: '#d32f2f',
+                        }}
+                      >
+                        📋 Registros Delictuales ({registros.length})
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 2 }}
+                      >
+                        Historial de delitos registrados oficialmente en el
+                        sistema
+                      </Typography>
+
+                      {registros.map((registro, idx) => (
+                        <Accordion
+                          key={registro.id || idx}
+                          sx={{
+                            mb: 1,
+                            border: '1px solid #e0e0e0',
+                            '&:before': { display: 'none' },
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                          }}
+                        >
+                          <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            sx={{
+                              bgcolor: '#fff3f3',
+                              '&:hover': { bgcolor: '#ffe8e8' },
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 2,
+                              }}
+                            >
+                              <Chip
+                                label={`#${idx + 1}`}
+                                size="small"
+                                color="error"
+                                sx={{ fontWeight: 600 }}
+                              />
+                              <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: 600, flex: 1 }}
+                              >
+                                {registro.tipo_delito ||
+                                  registro.delito ||
+                                  'DELITO NO ESPECIFICADO'}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {registro.created_at
+                                  ? new Date(
+                                      registro.created_at
+                                    ).toLocaleDateString('es-AR')
+                                  : 'Fecha no registrada'}
+                              </Typography>
+                            </Box>
+                          </AccordionSummary>
+                          <AccordionDetails>
+                            <Grid container spacing={2}>
+                              {registro.lugar && (
+                                <Grid item xs={12} sm={6}>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Comisaría:</strong>
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {registro.lugar}
+                                  </Typography>
+                                </Grid>
+                              )}
+                              {registro.estado && (
+                                <Grid item xs={12} sm={6}>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Estado:</strong>
+                                  </Typography>
+                                  <Chip
+                                    label={registro.estado}
+                                    size="small"
+                                    color={
+                                      registro.estado
+                                        ?.toLowerCase()
+                                        .includes('activo')
+                                        ? 'error'
+                                        : registro.estado
+                                            ?.toLowerCase()
+                                            .includes('cerrado')
+                                        ? 'success'
+                                        : 'default'
+                                    }
+                                  />
+                                </Grid>
+                              )}
+                              {registro.juzgado && (
+                                <Grid item xs={12}>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Juzgado:</strong>
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {registro.juzgado}
+                                  </Typography>
+                                </Grid>
+                              )}
+                              {registro.detalle && (
+                                <Grid item xs={12}>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Detalle:</strong>
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {registro.detalle}
+                                  </Typography>
+                                </Grid>
+                              )}
+                              <Grid item xs={12}>
+                                <Divider sx={{ my: 1 }} />
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  Fecha de registro:{' '}
+                                  {registro.created_at
+                                    ? new Date(
+                                        registro.created_at
+                                      ).toLocaleString('es-AR')
+                                    : 'No disponible'}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                          </AccordionDetails>
+                        </Accordion>
+                      ))}
+                    </Box>
+                  </Grid>
+                )}
+
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="body2" color="text.secondary">
