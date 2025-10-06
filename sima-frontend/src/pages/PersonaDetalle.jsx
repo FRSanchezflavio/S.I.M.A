@@ -36,12 +36,14 @@ import DownloadIcon from '@mui/icons-material/Download';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import ReactDOM from 'react-dom/client';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AgregarDelitoEspecifico from '../components/AgregarDelitoEspecifico';
 import ListaAntecedentesPersonalesMejorada from '../components/ListaAntecedentesPersonalesMejorada';
 import EstadisticasDelitos from '../components/EstadisticasDelitos';
 import MapaInteractivo from '../components/MapaInteractivo';
+import PlanillaProntuariaPDF from '../components/PlanillaProntuariaPDF';
 import useDelitosEspecificos from '../hooks/useDelitosEspecificos';
 import api from '../services/api';
 import { useToast } from '../components/ToastProvider';
@@ -1191,6 +1193,146 @@ export default function PersonaDetalle() {
     }
   };
 
+  // Función para generar Planilla Oficial con formato institucional
+  const handleDescargarPlanillaOficial = async () => {
+    try {
+      if (!item) {
+        showToast(
+          'No hay datos de la persona para generar la planilla',
+          'error'
+        );
+        return;
+      }
+
+      setIsGeneratingPDF(true);
+      showToast('Generando Planilla Oficial de Análisis Delictual...', 'info');
+
+      // Crear contenedor temporal para renderizar la planilla
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '210mm'; // Ancho A4
+      tempDiv.style.background = 'white';
+      document.body.appendChild(tempDiv);
+
+      // Renderizar componente de planilla usando React 18 API
+      const root = ReactDOM.createRoot(tempDiv);
+
+      await new Promise(resolve => {
+        root.render(
+          React.createElement(PlanillaProntuariaPDF, {
+            persona: item,
+            antecedentes: antecedentesPersonales || [],
+            registros: registros || [],
+          })
+        );
+        // Esperar a que se renderice completamente
+        setTimeout(resolve, 2000);
+      });
+
+      showToast('Capturando planilla...', 'info');
+
+      // Generar imagen con html2canvas
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        width: tempDiv.scrollWidth,
+        height: tempDiv.scrollHeight,
+        logging: false,
+        imageTimeout: 0,
+        onclone: clonedDoc => {
+          const clonedDiv = clonedDoc.querySelector('div');
+          if (clonedDiv) {
+            clonedDiv.style.display = 'block';
+            clonedDiv.style.position = 'relative';
+          }
+        },
+      });
+
+      showToast('Generando PDF...', 'info');
+
+      // Crear PDF con jsPDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true,
+        hotfixes: ['px_scaling'],
+      });
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = pdfWidth / (imgWidth / 2); // Escala por el factor scale=2
+      const scaledHeight = (imgHeight / 2) * (pdfWidth / (imgWidth / 2));
+
+      // Agregar imagen al PDF con múltiples páginas si es necesario
+      let heightLeft = scaledHeight;
+      let position = 0;
+      let pageCount = 1;
+
+      // Primera página
+      pdf.addImage(
+        imgData,
+        'PNG',
+        0,
+        position,
+        pdfWidth,
+        scaledHeight,
+        undefined,
+        'FAST'
+      );
+      heightLeft -= pdfHeight;
+
+      // Páginas adicionales si es necesario
+      while (heightLeft > 0) {
+        position = heightLeft - scaledHeight;
+        pdf.addPage();
+        pageCount++;
+        pdf.addImage(
+          imgData,
+          'PNG',
+          0,
+          position,
+          pdfWidth,
+          scaledHeight,
+          undefined,
+          'FAST'
+        );
+        heightLeft -= pdfHeight;
+      }
+
+      // Limpiar DOM
+      root.unmount();
+      document.body.removeChild(tempDiv);
+
+      // Descargar PDF
+      const fechaHora = new Date()
+        .toISOString()
+        .slice(0, 16)
+        .replace(/[-:T]/g, '_');
+      const fileName = `Planilla_Analisis_Delictual_${item.apellido}_${item.nombre}_${fechaHora}.pdf`;
+      pdf.save(fileName);
+
+      showToast(
+        `✅ Planilla generada exitosamente (${pageCount} página${
+          pageCount > 1 ? 's' : ''
+        })`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Error generando planilla oficial:', error);
+      showToast(`Error al generar planilla: ${error.message}`, 'error');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   // Función alternativa simple para imprimir (backup)
   const handlePrintAsPDF = () => {
     try {
@@ -1347,7 +1489,43 @@ export default function PersonaDetalle() {
                   transition: 'all 0.3s ease',
                 }}
               >
-                {isGeneratingPDF ? 'Generando PDF...' : 'Descargar PDF'}
+                {isGeneratingPDF ? 'Generando...' : 'PDF Completo'}
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<PictureAsPdfIcon />}
+                onClick={handleDescargarPlanillaOficial}
+                disabled={isGeneratingPDF || saving}
+                sx={{
+                  bgcolor: isGeneratingPDF ? '#999' : '#d32f2f',
+                  color: '#fff',
+                  fontSize: 20,
+                  fontWeight: 700,
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  minWidth: '200px',
+                  boxShadow: isGeneratingPDF
+                    ? 'none'
+                    : '0 4px 16px rgba(211, 47, 47, 0.4)',
+                  border: '2px solid',
+                  borderColor: isGeneratingPDF ? '#999' : '#b71c1c',
+                  '&:hover': {
+                    bgcolor: isGeneratingPDF ? '#999' : '#b71c1c',
+                    transform: isGeneratingPDF ? 'none' : 'translateY(-2px)',
+                    boxShadow: isGeneratingPDF
+                      ? 'none'
+                      : '0 6px 20px rgba(211, 47, 47, 0.5)',
+                  },
+                  '&:disabled': {
+                    bgcolor: '#ccc',
+                    color: '#666',
+                    borderColor: '#999',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                {isGeneratingPDF ? 'Generando...' : '📋 Planilla Oficial'}
               </Button>
               <Button
                 variant="outlined"

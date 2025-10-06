@@ -1,0 +1,171 @@
+.planilla-prontuaria {
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  width: 100%;
+  max-width: 210mm; /* Ancho A4 */
+  margin: 0 auto;
+  background: white;
+  position: relative;
+}
+
+/* Campos de datos personales */
+.campo-dato-planilla {
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 6px;
+  border-left: 4px solid #1a365d;
+  border-bottom: 2px solid #e2e8f0;
+  min-height: 48px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.campo-dato-planilla:hover {
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f4f8 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.campo-label-planilla {
+  font-size: 0.65rem !important;
+  font-weight: 800 !important;
+  color: #1a365d !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  margin-bottom: 4px !important;
+  display: block !important;
+  opacity: 0.9;
+}
+
+.campo-valor-planilla {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: #2d3748 !important;
+  line-height: 1.4 !important;
+  word-wrap: break-word;
+}
+
+/* Campos de delitos */
+.campo-delito {
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.campo-delito:last-child {
+  border-bottom: none;
+}
+
+.campo-delito-label {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #4a5568 !important;
+  margin-bottom: 4px !important;
+  display: block !important;
+}
+
+.campo-delito-valor {
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  color: #1a202c !important;
+  line-height: 1.5 !important;
+}
+
+/* Encabezado institucional */
+.encabezado-institucional {
+  page-break-after: avoid;
+  page-break-inside: avoid;
+}
+
+/* Evitar cortes de página en elementos importantes */
+.campo-dato-planilla,
+.campo-delito {
+  page-break-inside: avoid;
+}
+
+/* Estilos para impresión */
+@media print {
+  .planilla-prontuaria {
+    padding: 10mm;
+    max-width: 100%;
+  }
+
+  .campo-dato-planilla {
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .campo-delito {
+    page-break-inside: avoid;
+  }
+
+  button,
+  .no-print,
+  .MuiIconButton-root {
+    display: none !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Asegurar que los colores de fondo se impriman */
+  .campo-dato-planilla,
+  [class*='MuiPaper'],
+  [class*='MuiBox'],
+  [class*='MuiChip'] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Optimizar márgenes para impresión */
+  @page {
+    margin: 15mm;
+    size: A4 portrait;
+  }
+
+  /* Evitar cortes de página en secciones importantes */
+  .MuiPaper-root {
+    page-break-inside: avoid;
+  }
+
+  .encabezado-institucional {
+    page-break-after: avoid;
+  }
+}
+
+/* Estilos responsivos */
+@media screen and (max-width: 768px) {
+  .planilla-prontuaria {
+    padding: 16px;
+  }
+
+  .campo-dato-planilla {
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  .campo-label-planilla {
+    font-size: 0.6rem !important;
+  }
+
+  .campo-valor-planilla {
+    font-size: 0.85rem !important;
+  }
+}
+
+/* Animaciones sutiles */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.planilla-prontuaria > * {
+  animation: fadeIn 0.3s ease-out;
+}
