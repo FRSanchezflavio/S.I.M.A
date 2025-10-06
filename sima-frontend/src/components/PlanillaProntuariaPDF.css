@@ -106,7 +106,6 @@
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
 
   /* Asegurar que los colores de fondo se impriman */
@@ -168,4 +167,27 @@
 
 .planilla-prontuaria > * {
   animation: fadeIn 0.3s ease-out;
+}
+
+/* Forzar que la sección de antecedentes ocupe la primera página en impresión/PDF */
+.full-page {
+  break-inside: avoid;
+  page-break-after: always;
+}
+
+@media print {
+  /* Asegurar que la sección full-page ocupe toda la hoja A4 */
+  .full-page {
+    min-height: 240mm; /* A4 height minus margins */
+    height: 240mm;
+    page-break-after: always;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ajustes para que el contenido no se corte en páginas */
+  .planilla-prontuaria {
+    max-width: 100%;
+    padding: 8mm;
+  }
 }

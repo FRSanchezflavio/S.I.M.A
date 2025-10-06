@@ -80,8 +80,8 @@ export default function PlanillaProntuariaPDF({
             src="/img/oficina2.jpeg"
             alt="Escudo Policial"
             sx={{
-              width: 90,
-              height: 90,
+              width: 220,
+              height: 220,
               borderRadius: '50%',
               border: '3px solid #1a365d',
               boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
@@ -129,14 +129,19 @@ export default function PlanillaProntuariaPDF({
         </Typography>
       </Box>
 
-      {/* SECCIÓN: ANTECEDENTES PERSONALES */}
+      {/* SECCIÓN: ANTECEDENTES PERSONALES (OCUPA PÁGINA COMPLETA) */}
       <Paper
+        className="full-page"
         elevation={0}
         sx={{
           mb: 3,
           border: '3px solid #1a365d',
           borderRadius: 2,
           overflow: 'hidden',
+          minHeight: '250mm', // Reservar la mayor parte de la hoja A4
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
         }}
       >
         <Box
@@ -156,7 +161,7 @@ export default function PlanillaProntuariaPDF({
           </Typography>
         </Box>
 
-        <Box sx={{ p: 3, bgcolor: '#fafbfc' }}>
+        <Box sx={{ p: 3, bgcolor: '#fafbfc', flex: 1 }}>
           <Grid container spacing={3}>
             {/* Foto del sujeto */}
             <Grid item xs={12} md={3}>
