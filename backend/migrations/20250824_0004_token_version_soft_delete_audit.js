@@ -17,7 +17,11 @@ exports.up = async function up(knex) {
     t.string('action').notNullable();
     t.string('entity').notNullable();
     t.integer('entity_id').unsigned().nullable();
-    t.jsonb('payload').defaultTo(knex.raw("'{}'::jsonb"));
+    if (knex.client.config.client === 'sqlite3') {
+      t.text('payload').defaultTo('{}');
+    } else {
+      t.jsonb('payload').defaultTo(knex.raw("'{}'::jsonb"));
+    }
     t.timestamp('created_at').defaultTo(knex.fn.now());
     t.index(['entity', 'entity_id']);
   });

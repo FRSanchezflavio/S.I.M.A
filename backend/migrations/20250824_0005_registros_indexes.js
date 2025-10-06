@@ -4,13 +4,23 @@
 
 /** @param {import('knex').Knex} knex */
 exports.up = async function up(knex) {
-  await knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm');
-  await knex.raw(
-    'CREATE INDEX IF NOT EXISTS idx_registros_tipo_trgm ON registros_delictuales USING GIN (tipo_delito gin_trgm_ops)'
-  );
-  await knex.raw(
-    'CREATE INDEX IF NOT EXISTS idx_registros_lugar_trgm ON registros_delictuales USING GIN (lugar gin_trgm_ops)'
-  );
+  if (knex.client.config.client === 'pg') {
+    await knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+    await knex.raw(
+      'CREATE INDEX IF NOT EXISTS idx_registros_tipo_trgm ON registros_delictuales USING GIN (tipo_delito gin_trgm_ops)'
+    );
+    await knex.raw(
+      'CREATE INDEX IF NOT EXISTS idx_registros_lugar_trgm ON registros_delictuales USING GIN (lugar gin_trgm_ops)'
+    );
+  } else {
+    await knex.raw(
+      'CREATE INDEX IF NOT EXISTS idx_registros_tipo ON registros_delictuales (tipo_delito)'
+    );
+    await knex.raw(
+      'CREATE INDEX IF NOT EXISTS idx_registros_lugar ON registros_delictuales (lugar)'
+    );
+  }
+
   await knex.raw(
     'CREATE INDEX IF NOT EXISTS idx_registros_estado ON registros_delictuales (estado)'
   );

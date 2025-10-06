@@ -4,7 +4,8 @@ if (process.env.NODE_ENV === 'test') {
   require('dotenv').config({ path: '.env.test', override: true });
 }
 
-const base = {
+// Configuración para PostgreSQL
+const pgConfig = {
   client: 'pg',
   connection: {
     host: process.env.DB_HOST || '127.0.0.1',
@@ -17,8 +18,23 @@ const base = {
   migrations: { tableName: 'knex_migrations', directory: './migrations' },
 };
 
+// Configuración para SQLite (desarrollo)
+const sqliteConfig = {
+  client: 'sqlite3',
+  connection: {
+    filename: './dev.sqlite3',
+  },
+  useNullAsDefault: true,
+  migrations: { tableName: 'knex_migrations', directory: './migrations' },
+};
+
+// Usar SQLite en desarrollo si DATABASE_URL no está definido o DB_PASSWORD está vacío
+const useSqlite =
+  process.env.NODE_ENV === 'development' &&
+  (!process.env.DB_PASSWORD || process.env.DB_PASSWORD === '');
+
 module.exports = {
-  development: { ...base },
-  test: { ...base },
-  production: { ...base },
+  development: useSqlite ? sqliteConfig : pgConfig,
+  test: { ...pgConfig },
+  production: { ...pgConfig },
 };

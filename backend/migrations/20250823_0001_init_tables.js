@@ -27,7 +27,12 @@ exports.up = async function up(knex) {
     t.string('email');
     t.text('observaciones');
     t.string('foto_principal');
-    t.jsonb('fotos_adicionales').defaultTo(knex.raw("'[]'::jsonb"));
+    // Compatible con SQLite y PostgreSQL
+    if (knex.client.config.client === 'sqlite3') {
+      t.text('fotos_adicionales').defaultTo('[]');
+    } else {
+      t.jsonb('fotos_adicionales').defaultTo(knex.raw("'[]'::jsonb"));
+    }
     t.string('comisaria').index();
     t.timestamps(true, true);
   });

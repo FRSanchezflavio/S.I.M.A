@@ -41,14 +41,62 @@ export default function Login() {
     }
 
     try {
-      const { data } = await api.post('/auth/login', { usuario, password });
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      showToast('Inicio de sesión exitoso', 'success');
-      nav('/dashboard');
+      // Verificar que la API esté configurada correctamente
+      console.log('Intentando login con:', { usuario, password: '***' });
+
+      const { data } = await api.post('/auth/login', {
+        usuario: usuario.trim(),
+        password: password.trim(),
+      });
+
+      console.log('Respuesta del servidor:', data);
+
+      if (data.accessToken && data.refreshToken) {
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        showToast('Inicio de sesión exitoso', 'success');
+        nav('/dashboard');
+      } else {
+        throw new Error('Respuesta del servidor incompleta');
+      }
     } catch (err) {
-      setError(err?.response?.data?.message || 'Error de autenticación');
-      showToast('Error de autenticación', 'error');
+      console.error('Error completo:', err);
+
+      let errorMessage = 'Error de conexión con el servidor';
+
+      if (err.response) {
+        // El servidor respondió con un código de error
+        const status = err.response.status;
+        const serverMessage =
+          err.response.data?.message || err.response.data?.error;
+
+        switch (status) {
+          case 401:
+            errorMessage = 'Usuario o contraseña incorrectos';
+            break;
+          case 404:
+            errorMessage =
+              'Servicio no encontrado. Verifique la configuración del servidor';
+            break;
+          case 500:
+            errorMessage =
+              serverMessage ||
+              'Error interno del servidor. Contacte al administrador';
+            break;
+          default:
+            errorMessage = serverMessage || `Error del servidor (${status})`;
+        }
+      } else if (err.request) {
+        // La petición se hizo pero no hubo respuesta
+        errorMessage =
+          'No se puede conectar con el servidor. Verifique su conexión';
+      } else {
+        // Error en la configuración de la petición
+        errorMessage = err.message || 'Error inesperado';
+      }
+
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
