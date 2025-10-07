@@ -18,6 +18,8 @@ import {
   FormControl,
   InputLabel,
   Chip,
+  Checkbox,
+  CircularProgress,
 } from '@mui/material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -28,7 +30,9 @@ import { useSIMAGridMetrics } from '../utils/gridMetrics';
 import DownloadIcon from '@mui/icons-material/Download';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import InfoIcon from '@mui/icons-material/Info';
+import TableViewIcon from '@mui/icons-material/TableView';
 import { useToast } from '../components/ToastProvider';
+import * as XLSX from 'xlsx';
 
 export default function Buscar() {
   const [modo, setModo] = useState('nombre');
@@ -38,6 +42,11 @@ export default function Buscar() {
   const [error, setError] = useState('');
   const nav = useNavigate();
   const { showToast } = useToast();
+
+  // Estados para selección y exportación Excel
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
+  const [selectAllChecked, setSelectAllChecked] = useState(false);
 
   // Integrar métricas específicas de S.I.M.A.
   const gridMetrics = useSIMAGridMetrics();
@@ -208,6 +217,253 @@ export default function Buscar() {
     } catch (e) {
       setError('No se pudo exportar');
       showToast('No se pudo exportar', 'error');
+    }
+  };
+
+  /**
+   * Formatea una fecha ISO a formato DD/MM/YYYY o DD/MM/YYYY HH:mm
+   * @param {string|Date} fecha - Fecha en formato ISO o objeto Date
+   * @param {boolean} incluirHora - Si incluir hora (HH:mm)
+   * @returns {string} Fecha formateada o "-" si es null
+   */
+  const formatearFecha = (fecha, incluirHora = false) => {
+    if (!fecha) return '-';
+
+    try {
+      const date = new Date(fecha);
+      if (isNaN(date.getTime())) return '-';
+
+      const dia = String(date.getDate()).padStart(2, '0');
+      const mes = String(date.getMonth() + 1).padStart(2, '0');
+      const anio = date.getFullYear();
+
+      if (incluirHora) {
+        const hora = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        return `${dia}/${mes}/${anio} ${hora}:${min}`;
+      }
+
+      return `${dia}/${mes}/${anio}`;
+    } catch (error) {
+      console.error('Error al formatear fecha:', error);
+      return '-';
+    }
+  };
+
+  /**
+   * Maneja la selección/deselección de todos los items
+   */
+  const handleSelectAll = event => {
+    if (event.target.checked) {
+      // Seleccionar todos los IDs de los items actuales
+      const allIds = items.map(item => item.id);
+      setSelectedItems(allIds);
+      setSelectAllChecked(true);
+    } else {
+      // Deseleccionar todos
+      setSelectedItems([]);
+      setSelectAllChecked(false);
+    }
+  };
+
+  /**
+   * Maneja la selección/deselección de un item individual
+   */
+  const handleSelectItem = (id, event) => {
+    // Prevenir navegación al detalle cuando se hace click en checkbox
+    if (event) {
+      event.stopPropagation();
+    }
+
+    setSelectedItems(prev => {
+      const isSelected = prev.includes(id);
+      const newSelection = isSelected
+        ? prev.filter(itemId => itemId !== id) // Deseleccionar
+        : [...prev, id]; // Seleccionar
+
+      // Actualizar estado del checkbox "Seleccionar todo"
+      setSelectAllChecked(newSelection.length === items.length);
+
+      return newSelection;
+    });
+  };
+
+  /**
+   * Verifica si un item está seleccionado
+   */
+  const isItemSelected = id => {
+    return selectedItems.includes(id);
+  };
+
+  /**
+   * Exporta las personas seleccionadas a un archivo Excel
+   * Genera dos hojas: Datos Personales y Ubicaciones (si hay coordenadas)
+   */
+  const handleExportSelected = async () => {
+    try {
+      // Validación 1: Verificar que hay items seleccionados
+      if (selectedItems.length === 0) {
+        showToast(
+          '⚠️ Seleccione al menos una persona para exportar',
+          'warning'
+        );
+        return;
+      }
+
+      // Validación 2: Verificar que items existe
+      if (!items || items.length === 0) {
+        showToast('❌ No hay resultados de búsqueda para exportar', 'error');
+        return;
+      }
+
+      // Confirmación para grandes volúmenes
+      if (selectedItems.length > 1000) {
+        const confirmar = window.confirm(
+          `⚠️ Va a exportar ${selectedItems.length} registros. Esto puede tardar varios segundos.\n\n¿Desea continuar?`
+        );
+        if (!confirmar) return;
+      }
+
+      // Iniciar proceso de exportación
+      setIsExporting(true);
+      showToast(
+        `Generando archivo Excel con ${selectedItems.length} persona(s)...`,
+        'info'
+      );
+
+      // Filtrar personas seleccionadas
+      const personasSeleccionadas = items.filter(item =>
+        selectedItems.includes(item.id)
+      );
+
+      // Crear libro de trabajo
+      const workbook = XLSX.utils.book_new();
+
+      // ============================================
+      // HOJA 1: DATOS PERSONALES
+      // ============================================
+      const datosPersonales = personasSeleccionadas.map(p => ({
+        ID: p.id,
+        Apellido: p.apellido || '-',
+        Nombre: p.nombre || '-',
+        DNI: p.dni || 'Sin DNI',
+        'Fecha Nacimiento': formatearFecha(p.fecha_nacimiento, false),
+        Edad: p.edad || '-',
+        Género: p.genero || '-',
+        Nacionalidad: p.nacionalidad || '-',
+        Dirección: p.direccion || '-',
+        Teléfono: p.telefono || 'Sin teléfono',
+        Email: p.email || 'Sin email',
+        Comisaría: p.comisaria || '-',
+        'Comisaría del Hecho': p.comisaria_hecho || '-',
+        'Unidades Regionales': p.unidades_regionales || '-',
+        'Tipo de Delito': p.tipo_delito || '-',
+        Modalidad: p.modalidad || '-',
+        'Fecha de Carga': formatearFecha(p.fecha_carga, true),
+        Observaciones: p.observaciones || '-',
+        'Descripción Física': p.descripcion_fisica || '-',
+      }));
+
+      const wsDatosPersonales = XLSX.utils.json_to_sheet(datosPersonales);
+
+      // Ajustar ancho de columnas automáticamente
+      const colWidths = Object.keys(datosPersonales[0] || {}).map(key => ({
+        wch:
+          Math.max(
+            key.length,
+            ...datosPersonales.map(row => String(row[key] || '').length)
+          ) + 2, // +2 para padding
+      }));
+      wsDatosPersonales['!cols'] = colWidths;
+
+      XLSX.utils.book_append_sheet(
+        workbook,
+        wsDatosPersonales,
+        'Datos Personales'
+      );
+
+      // ============================================
+      // HOJA 2: UBICACIONES (solo si hay coordenadas)
+      // ============================================
+      const personasConUbicacion = personasSeleccionadas.filter(
+        p => (p.latitud && p.longitud) || (p.latitud_hecho && p.longitud_hecho)
+      );
+
+      if (personasConUbicacion.length > 0) {
+        const datosUbicaciones = personasConUbicacion.map(p => ({
+          'ID Persona': p.id,
+          Apellido: p.apellido || '-',
+          Nombre: p.nombre || '-',
+          'Domicilio - Latitud': p.latitud ? Number(p.latitud).toFixed(6) : '-',
+          'Domicilio - Longitud': p.longitud
+            ? Number(p.longitud).toFixed(6)
+            : '-',
+          'Domicilio - Dirección': p.direccion || '-',
+          'Hecho - Latitud': p.latitud_hecho
+            ? Number(p.latitud_hecho).toFixed(6)
+            : '-',
+          'Hecho - Longitud': p.longitud_hecho
+            ? Number(p.longitud_hecho).toFixed(6)
+            : '-',
+          'Hecho - Dirección': p.direccion_hecho || '-',
+        }));
+
+        const wsUbicaciones = XLSX.utils.json_to_sheet(datosUbicaciones);
+
+        // Ajustar ancho de columnas
+        const colWidthsUbic = Object.keys(datosUbicaciones[0] || {}).map(
+          key => ({
+            wch:
+              Math.max(
+                key.length,
+                ...datosUbicaciones.map(row => String(row[key] || '').length)
+              ) + 2,
+          })
+        );
+        wsUbicaciones['!cols'] = colWidthsUbic;
+
+        XLSX.utils.book_append_sheet(workbook, wsUbicaciones, 'Ubicaciones');
+      }
+
+      // ============================================
+      // GENERAR NOMBRE DE ARCHIVO
+      // ============================================
+      const criterio = (texto || 'Todos')
+        .replace(/[/\\:*?"<>|]/g, '') // Sanitizar caracteres especiales
+        .substring(0, 30); // Limitar longitud
+
+      const timestamp = new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace('T', '_')
+        .replace(/:/g, '-');
+
+      const filename = `SIMA_Busqueda_${criterio}_${selectedItems.length}personas_${timestamp}.xlsx`;
+
+      // ============================================
+      // DESCARGAR ARCHIVO
+      // ============================================
+      XLSX.writeFile(workbook, filename);
+
+      // Feedback de éxito
+      showToast(
+        `✅ Archivo Excel generado: ${selectedItems.length} persona${
+          selectedItems.length !== 1 ? 's' : ''
+        } exportada${selectedItems.length !== 1 ? 's' : ''}`,
+        'success'
+      );
+
+      // Limpiar selección
+      setSelectedItems([]);
+      setSelectAllChecked(false);
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error);
+      showToast(
+        '❌ Error al generar el archivo Excel. Intente nuevamente.',
+        'error'
+      );
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -418,6 +674,96 @@ export default function Buscar() {
                 )}
               </Grid>
             </Grid>
+            {/* Checkbox "Seleccionar todo" y botón de exportación */}
+            {items.length > 0 && (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: 2,
+                  border: '1px solid #e0e0e0',
+                  display: 'flex',
+                  flexDirection: { xs: 'column', md: 'row' },
+                  alignItems: { xs: 'stretch', md: 'center' },
+                  justifyContent: 'space-between',
+                  gap: 2,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selectAllChecked}
+                        indeterminate={
+                          selectedItems.length > 0 &&
+                          selectedItems.length < items.length
+                        }
+                        onChange={handleSelectAll}
+                        sx={{
+                          color: 'rgb(21, 77, 113)',
+                          '&.Mui-checked': { color: 'rgb(21, 77, 113)' },
+                          '&.MuiCheckbox-indeterminate': {
+                            color: 'rgb(21, 77, 113)',
+                          },
+                        }}
+                      />
+                    }
+                    label={
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        Seleccionar todos ({items.length} resultado
+                        {items.length !== 1 ? 's' : ''})
+                      </Typography>
+                    }
+                  />
+
+                  {selectedItems.length > 0 && (
+                    <Chip
+                      label={`${selectedItems.length} seleccionado${
+                        selectedItems.length !== 1 ? 's' : ''
+                      }`}
+                      sx={{
+                        backgroundColor: 'rgb(21, 77, 113)',
+                        color: '#fff',
+                        fontWeight: 600,
+                      }}
+                    />
+                  )}
+                </Box>
+
+                <Button
+                  variant="outlined"
+                  onClick={handleExportSelected}
+                  disabled={isExporting || selectedItems.length === 0}
+                  startIcon={
+                    isExporting ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <TableViewIcon />
+                    )
+                  }
+                  sx={{
+                    color: 'rgb(21, 77, 113)',
+                    borderColor: 'rgb(21, 77, 113)',
+                    whiteSpace: 'nowrap',
+                    minWidth: { xs: 'auto', md: '280px' },
+                    '&:hover': {
+                      backgroundColor: 'rgba(21, 77, 113, 0.08)',
+                      borderColor: 'rgb(21, 77, 113)',
+                    },
+                    '&:disabled': {
+                      borderColor: '#ccc',
+                      color: '#ccc',
+                    },
+                  }}
+                >
+                  {isExporting
+                    ? 'Generando...'
+                    : `Descargar Selección Excel (${selectedItems.length})`}
+                </Button>
+              </Box>
+            )}
+
             <Box
               data-grid="search-results"
               data-testid="search-results-grid"
@@ -506,12 +852,14 @@ export default function Buscar() {
                 </Box>
               )}
 
-              {/* Cards de resultados */}
+              {/* Cards de resultados con selección */}
               {items.map(it => (
                 <CardResult
                   key={it.id}
                   item={it}
                   onDetail={() => nav(`/personas/${it.id}`)}
+                  selected={isItemSelected(it.id)}
+                  onSelect={handleSelectItem}
                 />
               ))}
             </Box>

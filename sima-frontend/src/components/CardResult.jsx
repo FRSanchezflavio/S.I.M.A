@@ -5,9 +5,15 @@ import {
   Typography,
   Button,
   Box,
+  Checkbox,
 } from '@mui/material';
 
-export default function CardResult({ item, onDetail }) {
+export default function CardResult({
+  item,
+  onDetail,
+  selected = false,
+  onSelect = null,
+}) {
   return (
     <Card
       className="card"
@@ -23,7 +29,8 @@ export default function CardResult({ item, onDetail }) {
         transition: 'all 0.3s ease',
         borderRadius: 2,
         overflow: 'hidden',
-        border: '1px solid #e0e0e0',
+        border: selected ? '2px solid rgb(21, 77, 113)' : '1px solid #e0e0e0',
+        backgroundColor: selected ? 'rgba(21, 77, 113, 0.05)' : '#fff',
         position: 'relative',
 
         '&:hover': {
@@ -34,6 +41,34 @@ export default function CardResult({ item, onDetail }) {
       }}
       onClick={onDetail}
     >
+      {/* Checkbox en esquina superior derecha */}
+      {onSelect && (
+        <Checkbox
+          checked={selected}
+          onChange={e => onSelect(item.id, e)}
+          onClick={e => e.stopPropagation()}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 2,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: '4px',
+            padding: '4px',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            },
+            '& .MuiSvgIcon-root': {
+              fontSize: 28,
+            },
+            color: 'rgb(21, 77, 113)',
+            '&.Mui-checked': {
+              color: 'rgb(21, 77, 113)',
+            },
+          }}
+        />
+      )}
+
       {/* Imagen de la persona - CONTENEDOR FIJO */}
       <Box
         sx={{
