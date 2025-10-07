@@ -9,6 +9,8 @@ import Registros from './pages/Registros';
 import RegistroDetalle from './pages/RegistroDetalle';
 import RegistroNuevo from './pages/RegistroNuevo';
 import MapaGeneral from './pages/MapaGeneral';
+import MapaHechos from './pages/MapaHechos';
+import MapaDomicilios from './pages/MapaDomicilios';
 import ProtectedRoute from './components/ProtectedRoute';
 import PDFTestComponent from './components/PDFTestComponent';
 import InteligenciaCriminal from './pages/InteligenciaCriminal';
@@ -24,6 +26,8 @@ export default function RoutesApp() {
         <Route path="/agregar-delito" element={<AgregarDelito />} />
         <Route path="/buscar" element={<Buscar />} />
         <Route path="/mapa" element={<MapaGeneral />} />
+        <Route path="/mapa-hechos" element={<MapaHechos />} />
+        <Route path="/mapa-domicilios" element={<MapaDomicilios />} />
         <Route path="/inteligencia" element={<InteligenciaCriminal />} />
         <Route path="/redes-criminales" element={<RedesCriminales />} />
         <Route path="/registros" element={<Registros />} />

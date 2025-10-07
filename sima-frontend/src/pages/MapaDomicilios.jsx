@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
-  LocationOn as LocationOnIcon,
+  Home as HomeIcon,
   Person as PersonIcon,
   Map as MapIcon,
   Visibility as VisibilityIcon,
@@ -28,12 +28,9 @@ import Footer from '../components/Footer';
 import MapaInteractivo from '../components/MapaInteractivo';
 import api from '../services/api';
 import { useToast } from '../components/ToastProvider';
-import {
-  getConfiguracionIcono,
-  MODALIDADES_MAPA,
-} from '../utils/simbologiaPolicial';
+import { getConfiguracionIcono } from '../utils/simbologiaPolicial';
 
-export default function MapaGeneral() {
+export default function MapaDomicilios() {
   const [personas, setPersonas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPersona, setSelectedPersona] = useState(null);
@@ -43,25 +40,24 @@ export default function MapaGeneral() {
   const { showToast } = useToast();
 
   useEffect(() => {
-    loadPersonas();
+    loadDomicilios();
   }, []);
 
-  const loadPersonas = async () => {
+  const loadDomicilios = async () => {
     try {
       setLoading(true);
       setError('');
 
-      // Hacer petición con paginación grande para obtener muchos registros
       const response = await api.get('/personas', {
         params: {
           page: 1,
-          pageSize: 1000, // Cargar muchas para el mapa
-          busqueda: '', // Parámetro vacío para obtener todos
+          pageSize: 1000,
+          busqueda: '',
         },
       });
 
-      // Filtrar solo personas con coordenadas válidas
-      const personasConUbicacion = response.data.items
+      // Filtrar solo personas con ubicación del DOMICILIO
+      const personasConDomicilio = response.data.items
         .filter(
           persona =>
             persona.latitud &&
@@ -71,29 +67,27 @@ export default function MapaGeneral() {
         )
         .map(persona => ({
           ...persona,
-          // Preparar datos para el mapa
           latitud: parseFloat(persona.latitud),
           longitud: parseFloat(persona.longitud),
-          // Determinar tipo y estado basado en los antecedentes disponibles
           tipo_delito: persona.tipo_delito || 'general',
           estado: persona.estado || 'activo',
         }));
 
-      setPersonas(personasConUbicacion);
+      setPersonas(personasConDomicilio);
 
-      if (personasConUbicacion.length > 0) {
+      if (personasConDomicilio.length > 0) {
         showToast(
-          `${personasConUbicacion.length} ubicaciones cargadas en el mapa`,
+          `${personasConDomicilio.length} domicilios cargados en el mapa`,
           'success'
         );
       } else {
         showToast(
-          'No se encontraron personas con ubicación registrada',
+          'No se encontraron personas con domicilio registrado',
           'warning'
         );
       }
     } catch (error) {
-      console.error('Error al cargar personas:', error);
+      console.error('Error al cargar domicilios:', error);
       setError(
         'Error al cargar datos del mapa. Por favor, intente nuevamente.'
       );
@@ -117,10 +111,9 @@ export default function MapaGeneral() {
   // Calcular estadísticas
   const estadisticas = {
     total: personas.length,
-    resueltos: personas.filter(p => p.estado === 'resuelto').length,
-    enProceso: personas.filter(p => p.estado === 'en_proceso').length,
+    conDomicilio: personas.filter(p => p.direccion).length,
+    sinDomicilio: personas.filter(p => !p.direccion).length,
     activos: personas.filter(p => p.estado === 'activo').length,
-    archivados: personas.filter(p => p.estado === 'archivado').length,
   };
 
   if (loading) {
@@ -159,34 +152,20 @@ export default function MapaGeneral() {
 
       <Container maxWidth="xl" sx={{ py: 4, flexGrow: 1 }}>
         <Box sx={{ mb: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              mb: 2,
-              gap: 2,
-              flexWrap: 'wrap',
-            }}
-          >
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
             <Button
-              variant="contained"
+              variant="outlined"
               onClick={() => nav('/mapa-hechos')}
               sx={{
-                bgcolor: 'rgb(21, 77, 113)',
-                '&:hover': { bgcolor: 'rgb(16, 58, 85)' },
+                borderColor: 'rgb(21, 77, 113)',
+                color: 'rgb(21, 77, 113)',
+                '&:hover': {
+                  borderColor: 'rgb(16, 58, 85)',
+                  bgcolor: 'rgba(21, 77, 113, 0.04)',
+                },
               }}
             >
-              📍 Mapa de Hechos Delictivos
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => nav('/mapa-domicilios')}
-              sx={{
-                bgcolor: 'rgb(21, 77, 113)',
-                '&:hover': { bgcolor: 'rgb(16, 58, 85)' },
-              }}
-            >
-              🏠 Mapa de Domicilios
+              📍 Ver Mapa de Hechos
             </Button>
           </Box>
 
@@ -194,20 +173,19 @@ export default function MapaGeneral() {
             variant="h4"
             sx={{ mb: 1, fontWeight: 'bold', color: 'rgb(21, 77, 113)' }}
           >
-            🗺️ Mapa General S.I.M.A.
+            🏠 Mapa de Domicilios
           </Typography>
 
           <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            Visualización geográfica con simbología policial oficial de Tucumán.
-            Use los controles del mapa para filtrar y explorar los datos por
-            modalidad delictiva. También puede acceder a mapas específicos de
-            hechos delictivos o domicilios usando los botones superiores.
+            Visualización geográfica de los domicilios de las personas
+            registradas. Cada marcador representa la residencia o domicilio
+            declarado del sujeto.
           </Typography>
 
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
-              <Button onClick={loadPersonas} sx={{ ml: 2 }}>
+              <Button onClick={loadDomicilios} sx={{ ml: 2 }}>
                 Reintentar
               </Button>
             </Alert>
@@ -227,7 +205,7 @@ export default function MapaGeneral() {
                     mb: 1,
                   }}
                 >
-                  <LocationOnIcon
+                  <HomeIcon
                     sx={{ fontSize: 30, color: 'rgb(21, 77, 113)', mr: 1 }}
                   />
                   <Typography
@@ -238,7 +216,7 @@ export default function MapaGeneral() {
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Ubicaciones registradas
+                  Domicilios registrados
                 </Typography>
               </CardContent>
             </Card>
@@ -255,24 +233,16 @@ export default function MapaGeneral() {
                     mb: 1,
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: '50%',
-                      backgroundColor: '#4caf50',
-                      mr: 1,
-                    }}
-                  />
+                  <PersonIcon sx={{ fontSize: 30, color: '#4caf50', mr: 1 }} />
                   <Typography
                     variant="h4"
                     sx={{ fontWeight: 'bold', color: '#4caf50' }}
                   >
-                    {estadisticas.resueltos}
+                    {estadisticas.conDomicilio}
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Casos resueltos
+                  Con dirección completa
                 </Typography>
               </CardContent>
             </Card>
@@ -302,11 +272,11 @@ export default function MapaGeneral() {
                     variant="h4"
                     sx={{ fontWeight: 'bold', color: '#ff9800' }}
                   >
-                    {estadisticas.enProceso}
+                    {estadisticas.sinDomicilio}
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  En proceso
+                  Sin dirección
                 </Typography>
               </CardContent>
             </Card>
@@ -373,11 +343,11 @@ export default function MapaGeneral() {
               >
                 <MapIcon sx={{ fontSize: 80, mb: 2 }} />
                 <Typography variant="h6">
-                  No hay datos de ubicación para mostrar
+                  No hay domicilios con ubicación
                 </Typography>
                 <Typography variant="body2">
-                  Las personas deben tener coordenadas registradas para aparecer
-                  en el mapa
+                  Las personas deben tener coordenadas de su domicilio para
+                  aparecer en este mapa
                 </Typography>
               </Box>
             )}
@@ -388,110 +358,34 @@ export default function MapaGeneral() {
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              Información del Mapa
+              Información del Mapa de Domicilios
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Controles disponibles:</strong>
+                  <strong>Este mapa muestra:</strong>
                 </Typography>
                 <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-                  <li>Filtros por modalidad delictiva específica</li>
-                  <li>Leyenda de simbología policial oficial</li>
-                  <li>Búsqueda por radio de distancia</li>
-                  <li>Agrupación automática de marcadores</li>
-                  <li>Zonas de alta concentración</li>
-                  <li>Mi ubicación actual</li>
-                  <li>Búsqueda de direcciones</li>
+                  <li>
+                    Ubicaciones de residencia de personas con antecedentes
+                  </li>
+                  <li>Concentración de domicilios por zona</li>
+                  <li>Patrones de distribución geográfica de residencias</li>
+                  <li>Zonas con mayor presencia de sujetos registrados</li>
+                  <li>Análisis territorial de domicilios declarados</li>
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Simbología policial oficial:</strong>
+                  <strong>Utilidad operativa:</strong>
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '8px solid transparent',
-                        borderRight: '8px solid transparent',
-                        borderBottom: '12px solid #ff0000',
-                        mr: 1,
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Robos Agravados (Triángulos rojos)
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '8px solid transparent',
-                        borderRight: '8px solid transparent',
-                        borderBottom: '12px solid #0066ff',
-                        mr: 1,
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Robos Simples (Triángulos azules)
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        backgroundColor: '#00cc00',
-                        mr: 1,
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Hurtos (Círculos verdes)
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '8px solid transparent',
-                        borderRight: '8px solid transparent',
-                        borderTop: '8px solid transparent',
-                        borderBottom: '8px solid transparent',
-                        backgroundColor: '#0066cc',
-                        mr: 1,
-                        transform: 'rotate(45deg)',
-                        width: 12,
-                        height: 12,
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Estafas (Rombos azules)
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <Box
-                      sx={{
-                        width: 16,
-                        height: 2,
-                        backgroundColor: '#ff0000',
-                        mr: 1,
-                        borderStyle: 'dashed',
-                      }}
-                    />
-                    <Typography
-                      variant="body2"
-                      sx={{ fontSize: '0.8rem', fontStyle: 'italic' }}
-                    >
-                      Borde punteado rojo = Tentativas
-                    </Typography>
-                  </Box>
-                </Box>
+                <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+                  <li>Planificación de operativos y allanamientos</li>
+                  <li>Identificación de zonas de interés policial</li>
+                  <li>Análisis de concentración residencial</li>
+                  <li>Búsqueda por proximidad a un domicilio específico</li>
+                  <li>Cruce de datos con zonas de alta incidencia delictiva</li>
+                </Typography>
               </Grid>
             </Grid>
           </CardContent>
@@ -537,6 +431,12 @@ export default function MapaGeneral() {
               </Box>
 
               <Box sx={{ mb: 2 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 'bold', mb: 1, color: 'rgb(21, 77, 113)' }}
+                >
+                  🏠 Domicilio:
+                </Typography>
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   <strong>Dirección:</strong>{' '}
                   {selectedPersona.direccion || 'No especificada'}
@@ -545,6 +445,16 @@ export default function MapaGeneral() {
                   <strong>Coordenadas:</strong> {selectedPersona.latitud},{' '}
                   {selectedPersona.longitud}
                 </Typography>
+                {selectedPersona.localidad && (
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Localidad:</strong> {selectedPersona.localidad}
+                  </Typography>
+                )}
+                {selectedPersona.provincia && (
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Provincia:</strong> {selectedPersona.provincia}
+                  </Typography>
+                )}
                 {selectedPersona.comisaria && (
                   <Typography variant="body2" sx={{ mb: 1 }}>
                     <strong>Comisaría:</strong> {selectedPersona.comisaria}

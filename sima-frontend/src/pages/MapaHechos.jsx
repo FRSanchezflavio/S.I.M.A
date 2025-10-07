@@ -22,6 +22,7 @@ import {
   Person as PersonIcon,
   Map as MapIcon,
   Visibility as VisibilityIcon,
+  Gavel as GavelIcon,
 } from '@mui/icons-material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -33,67 +34,68 @@ import {
   MODALIDADES_MAPA,
 } from '../utils/simbologiaPolicial';
 
-export default function MapaGeneral() {
-  const [personas, setPersonas] = useState([]);
+export default function MapaHechos() {
+  const [registros, setRegistros] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPersona, setSelectedPersona] = useState(null);
+  const [selectedRegistro, setSelectedRegistro] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
   const [error, setError] = useState('');
   const nav = useNavigate();
   const { showToast } = useToast();
 
   useEffect(() => {
-    loadPersonas();
+    loadHechos();
   }, []);
 
-  const loadPersonas = async () => {
+  const loadHechos = async () => {
     try {
       setLoading(true);
       setError('');
 
-      // Hacer petición con paginación grande para obtener muchos registros
       const response = await api.get('/personas', {
         params: {
           page: 1,
-          pageSize: 1000, // Cargar muchas para el mapa
-          busqueda: '', // Parámetro vacío para obtener todos
+          pageSize: 1000,
+          busqueda: '',
         },
       });
 
-      // Filtrar solo personas con coordenadas válidas
-      const personasConUbicacion = response.data.items
+      // Filtrar solo registros con ubicación del HECHO
+      const hechosConUbicacion = response.data.items
         .filter(
-          persona =>
-            persona.latitud &&
-            persona.longitud &&
-            !isNaN(parseFloat(persona.latitud)) &&
-            !isNaN(parseFloat(persona.longitud))
+          registro =>
+            registro.latitud_hecho &&
+            registro.longitud_hecho &&
+            !isNaN(parseFloat(registro.latitud_hecho)) &&
+            !isNaN(parseFloat(registro.longitud_hecho))
         )
-        .map(persona => ({
-          ...persona,
-          // Preparar datos para el mapa
-          latitud: parseFloat(persona.latitud),
-          longitud: parseFloat(persona.longitud),
-          // Determinar tipo y estado basado en los antecedentes disponibles
-          tipo_delito: persona.tipo_delito || 'general',
-          estado: persona.estado || 'activo',
+        .map(registro => ({
+          ...registro,
+          // Usar coordenadas del hecho
+          latitud: parseFloat(registro.latitud_hecho),
+          longitud: parseFloat(registro.longitud_hecho),
+          // Guardar las coordenadas originales
+          latitud_original: registro.latitud,
+          longitud_original: registro.longitud,
+          tipo_delito: registro.tipo_delito || 'general',
+          estado: registro.estado || 'activo',
         }));
 
-      setPersonas(personasConUbicacion);
+      setRegistros(hechosConUbicacion);
 
-      if (personasConUbicacion.length > 0) {
+      if (hechosConUbicacion.length > 0) {
         showToast(
-          `${personasConUbicacion.length} ubicaciones cargadas en el mapa`,
+          `${hechosConUbicacion.length} hechos delictivos cargados en el mapa`,
           'success'
         );
       } else {
         showToast(
-          'No se encontraron personas con ubicación registrada',
+          'No se encontraron hechos con ubicación registrada',
           'warning'
         );
       }
     } catch (error) {
-      console.error('Error al cargar personas:', error);
+      console.error('Error al cargar hechos:', error);
       setError(
         'Error al cargar datos del mapa. Por favor, intente nuevamente.'
       );
@@ -103,24 +105,23 @@ export default function MapaGeneral() {
     }
   };
 
-  const handlePersonaSelect = persona => {
-    setSelectedPersona(persona);
+  const handleRegistroSelect = registro => {
+    setSelectedRegistro(registro);
     setShowDialog(true);
   };
 
   const handleVerDetalle = () => {
-    if (selectedPersona) {
-      nav(`/personas/${selectedPersona.id}`);
+    if (selectedRegistro) {
+      nav(`/personas/${selectedRegistro.id}`);
     }
   };
 
   // Calcular estadísticas
   const estadisticas = {
-    total: personas.length,
-    resueltos: personas.filter(p => p.estado === 'resuelto').length,
-    enProceso: personas.filter(p => p.estado === 'en_proceso').length,
-    activos: personas.filter(p => p.estado === 'activo').length,
-    archivados: personas.filter(p => p.estado === 'archivado').length,
+    total: registros.length,
+    resueltos: registros.filter(r => r.estado === 'resuelto').length,
+    enProceso: registros.filter(r => r.estado === 'en_proceso').length,
+    activos: registros.filter(r => r.estado === 'activo').length,
   };
 
   if (loading) {
@@ -159,34 +160,20 @@ export default function MapaGeneral() {
 
       <Container maxWidth="xl" sx={{ py: 4, flexGrow: 1 }}>
         <Box sx={{ mb: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              mb: 2,
-              gap: 2,
-              flexWrap: 'wrap',
-            }}
-          >
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
             <Button
-              variant="contained"
-              onClick={() => nav('/mapa-hechos')}
-              sx={{
-                bgcolor: 'rgb(21, 77, 113)',
-                '&:hover': { bgcolor: 'rgb(16, 58, 85)' },
-              }}
-            >
-              📍 Mapa de Hechos Delictivos
-            </Button>
-            <Button
-              variant="contained"
+              variant="outlined"
               onClick={() => nav('/mapa-domicilios')}
               sx={{
-                bgcolor: 'rgb(21, 77, 113)',
-                '&:hover': { bgcolor: 'rgb(16, 58, 85)' },
+                borderColor: 'rgb(21, 77, 113)',
+                color: 'rgb(21, 77, 113)',
+                '&:hover': {
+                  borderColor: 'rgb(16, 58, 85)',
+                  bgcolor: 'rgba(21, 77, 113, 0.04)',
+                },
               }}
             >
-              🏠 Mapa de Domicilios
+              👤 Ver Mapa de Domicilios
             </Button>
           </Box>
 
@@ -194,20 +181,19 @@ export default function MapaGeneral() {
             variant="h4"
             sx={{ mb: 1, fontWeight: 'bold', color: 'rgb(21, 77, 113)' }}
           >
-            🗺️ Mapa General S.I.M.A.
+            📍 Mapa de Hechos Delictivos
           </Typography>
 
           <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            Visualización geográfica con simbología policial oficial de Tucumán.
-            Use los controles del mapa para filtrar y explorar los datos por
-            modalidad delictiva. También puede acceder a mapas específicos de
-            hechos delictivos o domicilios usando los botones superiores.
+            Visualización geográfica de los lugares donde ocurrieron los hechos
+            delictivos. Cada marcador representa la ubicación exacta donde se
+            cometió el delito.
           </Typography>
 
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
-              <Button onClick={loadPersonas} sx={{ ml: 2 }}>
+              <Button onClick={loadHechos} sx={{ ml: 2 }}>
                 Reintentar
               </Button>
             </Alert>
@@ -227,7 +213,7 @@ export default function MapaGeneral() {
                     mb: 1,
                   }}
                 >
-                  <LocationOnIcon
+                  <GavelIcon
                     sx={{ fontSize: 30, color: 'rgb(21, 77, 113)', mr: 1 }}
                   />
                   <Typography
@@ -238,7 +224,7 @@ export default function MapaGeneral() {
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Ubicaciones registradas
+                  Hechos registrados
                 </Typography>
               </CardContent>
             </Card>
@@ -350,10 +336,10 @@ export default function MapaGeneral() {
         {/* Mapa principal */}
         <Card sx={{ mb: 3 }}>
           <CardContent sx={{ p: 0 }}>
-            {personas.length > 0 ? (
+            {registros.length > 0 ? (
               <MapaInteractivo
-                personas={personas}
-                onPersonaSelect={handlePersonaSelect}
+                personas={registros}
+                onPersonaSelect={handleRegistroSelect}
                 height="70vh"
                 showControls={true}
                 showHeatmap={true}
@@ -373,11 +359,11 @@ export default function MapaGeneral() {
               >
                 <MapIcon sx={{ fontSize: 80, mb: 2 }} />
                 <Typography variant="h6">
-                  No hay datos de ubicación para mostrar
+                  No hay hechos delictivos con ubicación
                 </Typography>
                 <Typography variant="body2">
-                  Las personas deben tener coordenadas registradas para aparecer
-                  en el mapa
+                  Los registros deben tener coordenadas del lugar del hecho para
+                  aparecer en este mapa
                 </Typography>
               </Box>
             )}
@@ -388,110 +374,34 @@ export default function MapaGeneral() {
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              Información del Mapa
+              Información del Mapa de Hechos
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Controles disponibles:</strong>
+                  <strong>Este mapa muestra:</strong>
                 </Typography>
                 <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-                  <li>Filtros por modalidad delictiva específica</li>
-                  <li>Leyenda de simbología policial oficial</li>
-                  <li>Búsqueda por radio de distancia</li>
-                  <li>Agrupación automática de marcadores</li>
-                  <li>Zonas de alta concentración</li>
-                  <li>Mi ubicación actual</li>
-                  <li>Búsqueda de direcciones</li>
+                  <li>
+                    Ubicaciones exactas donde ocurrieron los hechos delictivos
+                  </li>
+                  <li>Puntos de alta incidencia criminal</li>
+                  <li>Zonas calientes (hotspots) de criminalidad</li>
+                  <li>Patrones geográficos de delitos</li>
+                  <li>Distribución territorial de modalidades delictivas</li>
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Simbología policial oficial:</strong>
+                  <strong>Herramientas disponibles:</strong>
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '8px solid transparent',
-                        borderRight: '8px solid transparent',
-                        borderBottom: '12px solid #ff0000',
-                        mr: 1,
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Robos Agravados (Triángulos rojos)
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '8px solid transparent',
-                        borderRight: '8px solid transparent',
-                        borderBottom: '12px solid #0066ff',
-                        mr: 1,
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Robos Simples (Triángulos azules)
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        backgroundColor: '#00cc00',
-                        mr: 1,
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Hurtos (Círculos verdes)
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '8px solid transparent',
-                        borderRight: '8px solid transparent',
-                        borderTop: '8px solid transparent',
-                        borderBottom: '8px solid transparent',
-                        backgroundColor: '#0066cc',
-                        mr: 1,
-                        transform: 'rotate(45deg)',
-                        width: 12,
-                        height: 12,
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Estafas (Rombos azules)
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <Box
-                      sx={{
-                        width: 16,
-                        height: 2,
-                        backgroundColor: '#ff0000',
-                        mr: 1,
-                        borderStyle: 'dashed',
-                      }}
-                    />
-                    <Typography
-                      variant="body2"
-                      sx={{ fontSize: '0.8rem', fontStyle: 'italic' }}
-                    >
-                      Borde punteado rojo = Tentativas
-                    </Typography>
-                  </Box>
-                </Box>
+                <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+                  <li>Filtros por modalidad delictiva</li>
+                  <li>Búsqueda por radio de distancia</li>
+                  <li>Mapa de calor con concentración de hechos</li>
+                  <li>Agrupación inteligente de marcadores</li>
+                  <li>Simbología policial oficial de Tucumán</li>
+                </Typography>
               </Grid>
             </Grid>
           </CardContent>
@@ -513,41 +423,48 @@ export default function MapaGeneral() {
             alignItems: 'center',
           }}
         >
-          <PersonIcon sx={{ mr: 1 }} />
-          Detalle de Persona
+          <GavelIcon sx={{ mr: 1 }} />
+          Detalle del Hecho
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
-          {selectedPersona && (
+          {selectedRegistro && (
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Avatar
-                  src={selectedPersona.foto_principal}
+                  src={selectedRegistro.foto_principal}
                   sx={{ width: 60, height: 60, mr: 2 }}
                 >
                   <PersonIcon />
                 </Avatar>
                 <Box>
                   <Typography variant="h6">
-                    {selectedPersona.apellido}, {selectedPersona.nombre}
+                    {selectedRegistro.apellido}, {selectedRegistro.nombre}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    DNI: {selectedPersona.dni || 'No registrado'}
+                    DNI: {selectedRegistro.dni || 'No registrado'}
                   </Typography>
                 </Box>
               </Box>
 
               <Box sx={{ mb: 2 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 'bold', mb: 1, color: 'rgb(21, 77, 113)' }}
+                >
+                  📍 Lugar del Hecho:
+                </Typography>
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   <strong>Dirección:</strong>{' '}
-                  {selectedPersona.direccion || 'No especificada'}
+                  {selectedRegistro.direccion_hecho || 'No especificada'}
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Coordenadas:</strong> {selectedPersona.latitud},{' '}
-                  {selectedPersona.longitud}
+                  <strong>Coordenadas:</strong> {selectedRegistro.latitud},{' '}
+                  {selectedRegistro.longitud}
                 </Typography>
-                {selectedPersona.comisaria && (
+                {selectedRegistro.comisaria_hecho && (
                   <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Comisaría:</strong> {selectedPersona.comisaria}
+                    <strong>Comisaría del Hecho:</strong>{' '}
+                    {selectedRegistro.comisaria_hecho}
                   </Typography>
                 )}
               </Box>
@@ -556,18 +473,18 @@ export default function MapaGeneral() {
                 <Chip
                   label={
                     getConfiguracionIcono(
-                      selectedPersona.modalidad || selectedPersona.tipo_delito
+                      selectedRegistro.modalidad || selectedRegistro.tipo_delito
                     ).nombre
                   }
                   color="primary"
                   size="small"
                 />
                 <Chip
-                  label={selectedPersona.estado || 'Sin estado'}
+                  label={selectedRegistro.estado || 'Sin estado'}
                   color={
-                    selectedPersona.estado === 'resuelto'
+                    selectedRegistro.estado === 'resuelto'
                       ? 'success'
-                      : selectedPersona.estado === 'en_proceso'
+                      : selectedRegistro.estado === 'en_proceso'
                       ? 'warning'
                       : 'default'
                   }

@@ -55,7 +55,19 @@ export default function Header({ showSettings = false }) {
     { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
     { text: 'Buscar', icon: <Search />, path: '/buscar' },
     { text: 'Cargar', icon: <Add />, path: '/cargar' },
-    { text: 'Mapa', icon: <LocationOn />, path: '/mapa' },
+    { text: 'Mapa General', icon: <LocationOn />, path: '/mapa' },
+    {
+      text: 'Mapa de Hechos',
+      icon: <LocationOn />,
+      path: '/mapa-hechos',
+      secondary: true,
+    },
+    {
+      text: 'Mapa de Domicilios',
+      icon: <LocationOn />,
+      path: '/mapa-domicilios',
+      secondary: true,
+    },
     { text: 'Inteligencia', icon: <AccountTree />, path: '/inteligencia' },
     { text: 'Registros', icon: <ListIcon />, path: '/registros' },
   ];
