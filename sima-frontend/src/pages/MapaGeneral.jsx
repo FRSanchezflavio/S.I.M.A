@@ -244,7 +244,7 @@ export default function MapaGeneral() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          {/* <Grid item xs={12} sm={6} md={3}>
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ textAlign: 'center', py: 3 }}>
                 <Box
@@ -310,9 +310,9 @@ export default function MapaGeneral() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Grid> */}
 
-          <Grid item xs={12} sm={6} md={3}>
+          {/* <Grid item xs={12} sm={6} md={3}>
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ textAlign: 'center', py: 3 }}>
                 <Box
@@ -344,7 +344,7 @@ export default function MapaGeneral() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Grid> */}
         </Grid>
 
         {/* Mapa principal */}

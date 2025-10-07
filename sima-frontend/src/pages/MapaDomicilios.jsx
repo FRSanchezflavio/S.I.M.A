@@ -282,7 +282,7 @@ export default function MapaDomicilios() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          {/* <Grid item xs={12} sm={6} md={3}>
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ textAlign: 'center', py: 3 }}>
                 <Box
@@ -314,7 +314,7 @@ export default function MapaDomicilios() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Grid> */}
         </Grid>
 
         {/* Mapa principal */}
@@ -472,7 +472,7 @@ export default function MapaDomicilios() {
                   color="primary"
                   size="small"
                 />
-                <Chip
+                {/* <Chip
                   label={selectedPersona.estado || 'Sin estado'}
                   color={
                     selectedPersona.estado === 'resuelto'
@@ -482,7 +482,7 @@ export default function MapaDomicilios() {
                       : 'default'
                   }
                   size="small"
-                />
+                /> */}
               </Box>
             </Box>
           )}
