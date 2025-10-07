@@ -598,6 +598,11 @@ export default function MapaInteractivo({
             ── ESTAFAS ──
           </MenuItem>
           <MenuItem value="cuento_del_tio">♦️ Cuento del Tío</MenuItem>
+
+          <MenuItem disabled sx={{ fontWeight: 'bold', color: 'orange' }}>
+            ── TENTATIVAS ──
+          </MenuItem>
+          <MenuItem value="tentativa">⚠️ Tentativa</MenuItem>
         </Select>
       </FormControl>
 

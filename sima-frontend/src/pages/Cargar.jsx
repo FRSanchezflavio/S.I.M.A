@@ -743,6 +743,7 @@ export default function Cargar() {
                   <MenuItem value="">Seleccionar tipo</MenuItem>
                   <MenuItem value="robo">Robo</MenuItem>
                   <MenuItem value="hurto">Hurto</MenuItem>
+                  <MenuItem value="tentativa">Tentativa</MenuItem>
                   <MenuItem value="Portación de Arma de Fuego">
                     Portación de Arma de Fuego
                   </MenuItem>

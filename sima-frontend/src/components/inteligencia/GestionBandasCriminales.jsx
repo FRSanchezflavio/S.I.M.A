@@ -334,6 +334,7 @@ const GestionBandasCriminales = () => {
               <MenuItem value="narcotraficante">Narcotráfico</MenuItem>
               <MenuItem value="robo_automotor">Robo Automotor</MenuItem>
               <MenuItem value="asaltos_violentos">Asaltos Violentos</MenuItem>
+              <MenuItem value="tentativa">Tentativa</MenuItem>
               <MenuItem value="secuestros_extorsivos">
                 Secuestros/Extorsión
               </MenuItem>
@@ -501,6 +502,7 @@ const GestionBandasCriminales = () => {
                   <MenuItem value="asaltos_violentos">
                     Asaltos Violentos
                   </MenuItem>
+                  <MenuItem value="tentativa">Tentativa</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

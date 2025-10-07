@@ -133,6 +133,8 @@ export default function ListaAntecedentesPersonales({
         return '🔓';
       case 'hurto':
         return '👜';
+      case 'tentativa':
+        return '⚠️';
       case 'lesiones':
         return '🩹';
       case 'amenazas':

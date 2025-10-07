@@ -424,6 +424,7 @@ export default function ListaDelitosEspecificos({
               >
                 <MenuItem value="robo">Robo</MenuItem>
                 <MenuItem value="hurto">Hurto</MenuItem>
+                <MenuItem value="tentativa">Tentativa</MenuItem>
                 <MenuItem value="estafa">Estafa</MenuItem>
                 <MenuItem value="amenazas">Amenazas</MenuItem>
                 <MenuItem value="lesiones">Lesiones</MenuItem>

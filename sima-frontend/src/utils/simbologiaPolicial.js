@@ -240,6 +240,15 @@ export const MODALIDADES_MAPA = {
     color: '#0066cc',
   },
 
+  // TENTATIVAS
+  tentativa: {
+    tipo: 'tentativa',
+    nombre: 'Tentativa de Delito',
+    forma: 'triangle-up',
+    color: '#ff6600',
+    esTentativa: true,
+  },
+
   // Default para casos no mapeados
   default: {
     tipo: 'general',
