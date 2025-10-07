@@ -118,7 +118,7 @@ export default function PlanillaProntuariaPDF({
           </Box>
         </Box>
         <Typography
-          variant="body2"
+          variant="h6"
           sx={{
             color: '#666',
             fontStyle: 'italic',
@@ -138,7 +138,7 @@ export default function PlanillaProntuariaPDF({
           border: '3px solid #1a365d',
           borderRadius: 2,
           overflow: 'hidden',
-          minHeight: '250mm', // Reservar la mayor parte de la hoja A4
+          minHeight: '210mm', // Reservar la mayor parte de la hoja A4
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-start',
@@ -167,17 +167,19 @@ export default function PlanillaProntuariaPDF({
             <Grid item xs={12} md={3}>
               <Box
                 sx={{
-                  width: '100%',
-                  height: 280,
+                  width: 190,
+                  height: 480,
                   border: '3px solid #1a365d',
                   borderRadius: 2,
                   overflow: 'hidden',
                   bgcolor: '#e8eaf0',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  alignItems: 'flex-start',
+                  justifyContent: 'flex-start',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   position: 'relative',
+                  // asegurar que en pantallas pequeñas no quede centrado encima del contenido
+                  pl: 0,
                 }}
               >
                 {persona.foto_principal ? (
@@ -197,7 +199,7 @@ export default function PlanillaProntuariaPDF({
                     }}
                   />
                 ) : (
-                  <Box sx={{ textAlign: 'center', color: '#999' }}>
+                  <Box sx={{ textAlign: 'left', color: '#999', pl: 1, pt: 2 }}>
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                       SIN
                     </Typography>

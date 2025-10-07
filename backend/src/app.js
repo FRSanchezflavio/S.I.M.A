@@ -23,6 +23,11 @@ const apiSpec = require('../docs/openapi.json');
 
 const app = express();
 
+// Log de inicio
+console.log('🚀 Inicializando SIMA Backend API...');
+console.log('📍 NODE_ENV:', process.env.NODE_ENV);
+console.log('🔌 Puerto configurado:', process.env.PORT || '4000');
+
 // Seguridad básica
 app.use(helmet());
 app.use(hpp());
@@ -52,12 +57,14 @@ const uploadDir = path.resolve(process.env.UPLOAD_DIR || 'uploads');
 app.use('/uploads', express.static(uploadDir));
 
 // Rutas
+console.log('📋 Registrando rutas de la API...');
 app.use('/api/auth', loginLimiter, authRoutes);
 app.use('/api/usuarios', userRoutes);
 app.use('/api/personas', personasRoutes);
 app.use('/api/registros', registrosRoutes);
 // Inteligencia criminal (bandas, vinculaciones, análisis)
 app.use('/api/inteligencia', inteligenciaRoutes);
+console.log('✅ Rutas registradas correctamente');
 
 // API Docs (Swagger UI)
 app.use(
@@ -70,9 +77,19 @@ app.get('/api/openapi.json', (_req, res) => res.json(apiSpec));
 app.get('/api/health', async (_req, res) => {
   try {
     await db.raw('select 1');
-    return res.json({ ok: true, db: true });
+    return res.json({
+      ok: true,
+      db: true,
+      port: process.env.PORT || 4000,
+      env: process.env.NODE_ENV || 'development',
+    });
   } catch (e) {
-    return res.status(500).json({ ok: false, db: false });
+    console.error('❌ Health check DB error:', e.message);
+    return res.status(500).json({
+      ok: false,
+      db: false,
+      error: e.message,
+    });
   }
 });
 

@@ -13,7 +13,7 @@ Configuración
 
 Scripts
 
-- `npm run dev` -> inicia servidor con nodemon (http://localhost:4000)
+- `npm run dev` -> inicia servidor con nodemon (http://localhost:<PORT>)
 - `npm run migrate` -> aplica migraciones
 - `npm test` -> crea DB de test si hace falta, migra y ejecuta Jest
 - `npm run backup` -> genera dump de la DB y empaqueta uploads
@@ -33,7 +33,7 @@ Notas
 
 ## Documentación de API (Swagger)
 
-- Navegar a `http://localhost:4000/api/docs` para Swagger UI.
+- Navegar a `http://localhost:<PORT>/api/docs` para Swagger UI.
 - Especificación en `backend/docs/openapi.json`.
 
 ## Backups
@@ -63,6 +63,33 @@ Backups: programar `pg_dump` periódico de la base de datos y resguardo del dire
 ## Uso rápido en Windows
 
 1. PostgreSQL instalado y servicio activo. Crear DB `sima`.
-2. `cd backend && npm install && npm run migrate && npm start`.
+2. `cd backend && npm install && npm run migrate && npm start` (respeta la variable `PORT` definida en `.env`, por ejemplo 4003).
 3. `cd ../sima-frontend && npm install && npm start`.
 4. Abrir `http://localhost:3000` y loguear con `admin/admin123` (cambiar password).
+
+## Nota sobre binding y problemas de proxy (ECONNREFUSED)
+
+Si el frontend muestra "Could not proxy request ... ECONNREFUSED", suele ser porque el backend no acepta conexiones desde la interfaz que usa el dev server. Para evitarlo:
+
+- El servidor por defecto ahora respeta la variable `HOST`. Por defecto escucha en `0.0.0.0` (todas las interfaces).
+- Para forzar el binding a localhost (127.0.0.1):
+
+```bash
+cd backend
+HOST=127.0.0.1 npm run start
+```
+
+- Para arrancar en modo desarrollo con reinicio automático (nodemon):
+
+```bash
+cd backend
+HOST=0.0.0.0 npm run dev
+```
+
+- Verificar que el endpoint de auth responde:
+
+```bash
+curl -i http://localhost:${PORT:-4000}/api/auth/login || true
+```
+
+Si sigues viendo ECONNREFUSED desde `sima-frontend`, asegúrate que en `sima-frontend/package.json` la propiedad `proxy` apunta a `http://localhost:<PORT>` (por ejemplo `http://localhost:4003`) y que el frontend usa rutas relativas (por ejemplo `fetch('/api/auth/login')`).

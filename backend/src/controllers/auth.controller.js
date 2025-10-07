@@ -10,11 +10,20 @@ const loginSchema = Joi.object({
 
 exports.login = async (req, res, next) => {
   try {
+    console.log('🔐 Intento de login:', {
+      usuario: req.body.usuario,
+      ip: req.ip,
+    });
+
     const { value, error } = loginSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
+    if (error) {
+      console.log('❌ Validación fallida:', error.message);
+      return res.status(400).json({ message: error.message });
+    }
 
     // TEMPORAL: Usuario hardcodeado para pruebas
     if (value.usuario === 'admin' && value.password === 'admin123') {
+      console.log('✅ Login exitoso con usuario hardcodeado: admin');
       const payload = {
         id: 1,
         usuario: 'admin',
@@ -28,21 +37,30 @@ exports.login = async (req, res, next) => {
     }
 
     // Intentar autenticación normal con base de datos
+    console.log('🔍 Buscando usuario en base de datos...');
     let user;
     try {
       user = await db('usuarios')
         .where({ usuario: value.usuario, activo: true })
         .first();
     } catch (dbError) {
-      console.log('DB Error, usando autenticación temporal:', dbError.message);
+      console.error('❌ Error de DB al buscar usuario:', dbError.message);
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    if (!user)
+    if (!user) {
+      console.log('❌ Usuario no encontrado en DB:', value.usuario);
       return res.status(401).json({ message: 'Credenciales inválidas' });
-    const ok = await comparePassword(value.password, user.password_hash);
-    if (!ok) return res.status(401).json({ message: 'Credenciales inválidas' });
+    }
 
+    console.log('✓ Usuario encontrado, verificando contraseña...');
+    const ok = await comparePassword(value.password, user.password_hash);
+    if (!ok) {
+      console.log('❌ Contraseña incorrecta para usuario:', value.usuario);
+      return res.status(401).json({ message: 'Credenciales inválidas' });
+    }
+
+    console.log('✅ Login exitoso desde DB:', value.usuario);
     const payload = {
       id: user.id,
       usuario: user.usuario,
@@ -54,6 +72,7 @@ exports.login = async (req, res, next) => {
     const tokens = signTokens(payload);
     res.json(tokens);
   } catch (e) {
+    console.error('❌ Error no manejado en login:', e);
     next(e);
   }
 };
