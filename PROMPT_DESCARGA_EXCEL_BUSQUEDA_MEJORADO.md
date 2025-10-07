@@ -15,19 +15,23 @@ Debes mantener un tono profesional y técnico, proporcionando código limpio, bi
 ### Archivos relevantes del proyecto:
 
 **Frontend:**
+
 - `sima-frontend/src/pages/Buscar.jsx` - Página principal de búsqueda (líneas ~183-197 botones existentes)
 - `sima-frontend/src/components/CardResult.jsx` - Card individual de resultado
 - `sima-frontend/src/pages/PersonaDetalle.jsx` (línea ~386) - Referencia de función `downloadSubjectData`
 - `sima-frontend/src/components/TestExcelDownload.jsx` - Ejemplo de exportación Excel
 
 **Backend:**
+
 - `backend/src/controllers/personas.controller.js` - Endpoint de búsqueda con soporte CSV/XLSX
 
 ### Librería en uso:
+
 - **`xlsx` v0.18+** (SheetJS) para generación de archivos Excel **client-side**
 - Importar como: `import * as XLSX from 'xlsx';`
 
 ### Contexto del sistema:
+
 - **Frontend:** React 18.2.0 con Material-UI 5.x
 - **Backend:** Node.js 22.15.1 con Express 4.19.2
 - **Base de datos:** PostgreSQL con campos: `latitud`, `longitud`, `latitud_hecho`, `longitud_hecho`
@@ -72,6 +76,7 @@ Debes mantener un tono profesional y técnico, proporcionando código limpio, bi
 ## 4. Descripción detallada de la tarea y reglas
 
 ### Objetivo Principal:
+
 Agregar sistema completo de selección múltiple y botón de descarga Excel para exportar resultados de búsqueda **sin fotografías**, con generación **client-side** para evitar carga del servidor.
 
 ---
@@ -81,10 +86,12 @@ Agregar sistema completo de selección múltiple y botón de descarga Excel para
 #### 4.1. Ubicación y diseño del botón
 
 **Ubicación:**
+
 - Agregar en `Buscar.jsx` junto a los botones CSV/XLSX existentes (líneas ~183-197)
 - Posición: Después del botón "Descargar XLSX"
 
 **Diseño:**
+
 - Usar icono `<TableViewIcon />` de `@mui/icons-material`
 - Texto: `"Descargar Selección Excel ({cantidad})"`
 - Variante: `outlined`
@@ -92,6 +99,7 @@ Agregar sistema completo de selección múltiple y botón de descarga Excel para
 - Disabled cuando: `isExporting || selectedItems.length === 0`
 
 **Código esperado:**
+
 ```jsx
 <Button
   variant="outlined"
@@ -110,8 +118,8 @@ Agregar sistema completo de selección múltiple y botón de descarga Excel para
     },
   }}
 >
-  {isExporting 
-    ? 'Generando...' 
+  {isExporting
+    ? 'Generando...'
     : `Descargar Selección Excel (${selectedItems.length})`
   }
 </Button>
@@ -122,6 +130,7 @@ Agregar sistema completo de selección múltiple y botón de descarga Excel para
 #### 4.2. Funcionalidad de selección múltiple
 
 **Estados requeridos:**
+
 ```javascript
 const [selectedItems, setSelectedItems] = useState([]); // Array de IDs
 const [isExporting, setIsExporting] = useState(false);
@@ -129,6 +138,7 @@ const [selectAllChecked, setSelectAllChecked] = useState(false);
 ```
 
 **Checkbox "Seleccionar todo":**
+
 - Ubicación: Encima del grid de resultados, a la izquierda
 - Comportamiento:
   - Checked: Selecciona todos los `items` actuales (filtrados)
@@ -136,12 +146,14 @@ const [selectAllChecked, setSelectAllChecked] = useState(false);
   - Indeterminate: Cuando hay selección parcial
 
 **Checkbox individual en cada CardResult:**
+
 - Agregar prop `selected` y `onSelect` a `CardResult`
 - Posición: Esquina superior derecha del card
 - Click en checkbox NO debe navegar al detalle
 - Usar `event.stopPropagation()` en el checkbox
 
 **Código esperado para el checkbox "Seleccionar todo":**
+
 ```jsx
 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
   <FormControlLabel
@@ -175,6 +187,7 @@ const [selectAllChecked, setSelectAllChecked] = useState(false);
 **Hoja 1 - "Datos Personales":**
 
 Columnas (en este orden):
+
 1. ID
 2. Apellido
 3. Nombre
@@ -198,6 +211,7 @@ Columnas (en este orden):
 **Hoja 2 - "Ubicaciones" (solo si al menos 1 persona tiene coordenadas):**
 
 Columnas:
+
 1. ID Persona
 2. Apellido
 3. Nombre
@@ -209,11 +223,13 @@ Columnas:
 9. **Hecho:** Dirección
 
 **Reglas de la hoja "Ubicaciones":**
+
 - Incluir solo personas que tengan `latitud` Y `longitud` O `latitud_hecho` Y `longitud_hecho`
 - Si no hay coordenadas, mostrar "-" en la celda
 - Si hay coordenadas, formatear a 6 decimales: `latitud.toFixed(6)`
 
 **Formato de celdas:**
+
 - Headers: **Negrita**, fondo `#154d71` (azul institucional), texto blanco
 - Ancho de columnas: Automático basado en contenido (usar `wscols`)
 - Congelar primera fila (headers)
@@ -224,21 +240,25 @@ Columnas:
 #### 4.4. Formato del archivo y nombre
 
 **Nombre del archivo:**
+
 ```
 SIMA_Busqueda_[CRITERIO]_[CANTIDAD]personas_[TIMESTAMP].xlsx
 ```
 
 **Ejemplos:**
+
 - `SIMA_Busqueda_Juan_5personas_2025-10-07_14-30-45.xlsx`
 - `SIMA_Busqueda_DNI-12345678_1persona_2025-10-07_15-00-12.xlsx`
 - `SIMA_Busqueda_Todos_125personas_2025-10-07_16-45-30.xlsx`
 
 **Formato del TIMESTAMP:**
+
 - Formato: `YYYY-MM-DD_HH-mm-ss`
 - Usar zona horaria local de Argentina (UTC-3)
 - Código: `new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-')`
 
 **Criterio de búsqueda:**
+
 - Si hay `texto` de búsqueda: usar el texto (max 30 caracteres)
 - Si búsqueda por DNI: usar "DNI-[número]"
 - Si es búsqueda vacía: usar "Todos"
@@ -251,6 +271,7 @@ SIMA_Busqueda_[CRITERIO]_[CANTIDAD]personas_[TIMESTAMP].xlsx
 **Validaciones obligatorias:**
 
 1. **Sin selección:**
+
    ```javascript
    if (selectedItems.length === 0) {
      showToast('⚠️ Seleccione al menos una persona para exportar', 'warning');
@@ -259,6 +280,7 @@ SIMA_Busqueda_[CRITERIO]_[CANTIDAD]personas_[TIMESTAMP].xlsx
    ```
 
 2. **Items no existe:**
+
    ```javascript
    if (!items || items.length === 0) {
      showToast('❌ No hay resultados de búsqueda para exportar', 'error');
@@ -267,6 +289,7 @@ SIMA_Busqueda_[CRITERIO]_[CANTIDAD]personas_[TIMESTAMP].xlsx
    ```
 
 3. **Datos faltantes:**
+
    - Usar valores por defecto: `|| 'Sin datos'`
    - No romper la exportación si faltan campos
 
@@ -279,6 +302,7 @@ SIMA_Busqueda_[CRITERIO]_[CANTIDAD]personas_[TIMESTAMP].xlsx
    ```
 
 **Estados del botón:**
+
 - **Disabled:** `isExporting || selectedItems.length === 0`
 - **Loading:** Mostrar `CircularProgress` mientras exporta
 - **Texto dinámico:** "Generando..." durante exportación
@@ -288,6 +312,7 @@ SIMA_Busqueda_[CRITERIO]_[CANTIDAD]personas_[TIMESTAMP].xlsx
 #### 4.6. Comportamiento post-exportación
 
 **Al completar exitosamente:**
+
 1. Mostrar toast: `✅ Archivo Excel generado: X personas exportadas`
 2. Limpiar selección: `setSelectedItems([])`
 3. Desmarcar "Seleccionar todo": `setSelectAllChecked(false)`
@@ -295,6 +320,7 @@ SIMA_Busqueda_[CRITERIO]_[CANTIDAD]personas_[TIMESTAMP].xlsx
 5. **NO** cerrar o navegar a otra página
 
 **Código esperado:**
+
 ```javascript
 showToast(`✅ Archivo Excel generado: ${selectedItems.length} persona${selectedItems.length !== 1 ? 's' : ''} exportada${selectedItems.length !== 1 ? 's' : ''}`, 'success');
 setSelectedItems([]);
@@ -308,6 +334,7 @@ setSelectAllChecked(false);
 **Límite recomendado: 1000 registros**
 
 Si `selectedItems.length > 1000`:
+
 ```javascript
 const confirmar = window.confirm(
   `⚠️ Va a exportar ${selectedItems.length} registros. Esto puede tardar varios segundos.\n\n¿Desea continuar?`
@@ -316,6 +343,7 @@ if (!confirmar) return;
 ```
 
 **Optimización:**
+
 - Procesar en lotes de 100 registros
 - Mostrar progreso en toast: "Procesando... (300/1500)"
 - Usar `requestIdleCallback` si es posible
@@ -326,12 +354,14 @@ if (!confirmar) return;
 #### 4.8. Formato de fechas y localización
 
 **Fechas:**
+
 - Formato: `DD/MM/YYYY` para fechas
 - Formato: `DD/MM/YYYY HH:mm` para fecha-hora
 - Zona horaria: Argentina (UTC-3)
 - Si fecha es null: mostrar "-"
 
 **Función auxiliar requerida:**
+
 ```javascript
 /**
  * Formatea una fecha ISO a formato DD/MM/YYYY
@@ -341,19 +371,19 @@ if (!confirmar) return;
  */
 const formatearFecha = (fecha, incluirHora = false) => {
   if (!fecha) return '-';
-  
+
   try {
     const date = new Date(fecha);
     const dia = String(date.getDate()).padStart(2, '0');
     const mes = String(date.getMonth() + 1).padStart(2, '0');
     const anio = date.getFullYear();
-    
+
     if (incluirHora) {
       const hora = String(date.getHours()).padStart(2, '0');
       const min = String(date.getMinutes()).padStart(2, '0');
       return `${dia}/${mes}/${anio} ${hora}:${min}`;
     }
-    
+
     return `${dia}/${mes}/${anio}`;
   } catch (error) {
     return '-';
@@ -366,6 +396,7 @@ const formatearFecha = (fecha, incluirHora = false) => {
 #### 4.9. Campos a EXCLUIR del Excel
 
 **IMPORTANTE - NO incluir:**
+
 - `foto_principal` (URL de foto)
 - `fotos_adicionales` (array de URLs)
 - `created_at` (timestamp interno)
@@ -376,6 +407,7 @@ const formatearFecha = (fecha, incluirHora = false) => {
 - `password` (si existiera)
 
 **Campos sensibles (incluir pero sanitizar):**
+
 - `dni`: Mostrar completo (no ofuscar en esta versión)
 - `telefono`: Mostrar completo
 - `direccion`: Mostrar completo
@@ -385,16 +417,19 @@ const formatearFecha = (fecha, incluirHora = false) => {
 #### 4.10. Estilo de código y convenciones
 
 **Nombres de variables:**
+
 - Usar español: `personasSeleccionadas`, `datosPersonales`, `hojaUbicaciones`
 - Funciones: camelCase en español: `handleExportSelected`, `formatearFecha`
 - Constantes: UPPER_SNAKE_CASE: `MAX_REGISTROS_SIN_CONFIRMACION`
 
 **Comentarios:**
+
 - JSDoc para funciones exportadas
 - Comentarios inline en español para lógica compleja
 - TODO/FIXME si hay mejoras pendientes
 
 **Manejo de errores:**
+
 - Try-catch en función principal
 - Console.error con contexto
 - Toast para feedback al usuario
@@ -576,13 +611,13 @@ const handleExportSelected = async () => {
     const criterio = (texto || 'Todos')
       .replace(/[/\\:*?"<>|]/g, '') // Sanitizar caracteres especiales
       .substring(0, 30); // Limitar longitud
-    
+
     const timestamp = new Date()
       .toISOString()
       .slice(0, 19)
       .replace('T', '_')
       .replace(/:/g, '-');
-    
+
     const filename = `SIMA_Busqueda_${criterio}_${selectedItems.length}personas_${timestamp}.xlsx`;
 
     // ============================================
@@ -614,21 +649,21 @@ const handleExportSelected = async () => {
  */
 const formatearFecha = (fecha, incluirHora = false) => {
   if (!fecha) return '-';
-  
+
   try {
     const date = new Date(fecha);
     if (isNaN(date.getTime())) return '-';
-    
+
     const dia = String(date.getDate()).padStart(2, '0');
     const mes = String(date.getMonth() + 1).padStart(2, '0');
     const anio = date.getFullYear();
-    
+
     if (incluirHora) {
       const hora = String(date.getHours()).padStart(2, '0');
       const min = String(date.getMinutes()).padStart(2, '0');
       return `${dia}/${mes}/${anio} ${hora}:${min}`;
     }
-    
+
     return `${dia}/${mes}/${anio}`;
   } catch (error) {
     console.error('Error al formatear fecha:', error);
@@ -694,8 +729,8 @@ const isItemSelected = (id) => {
 
 ```jsx
 // En CardResult.jsx - Agregar estas props
-export default function CardResult({ 
-  persona, 
+export default function CardResult({
+  persona,
   onClick,
   selected = false,    // Nueva prop
   onSelect = null      // Nueva prop
@@ -758,10 +793,10 @@ export default function CardResult({
 ```jsx
 {/* Checkbox "Seleccionar todo" antes del grid */}
 {items.length > 0 && (
-  <Box 
-    sx={{ 
-      display: 'flex', 
-      alignItems: 'center', 
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
       justifyContent: 'space-between',
       mb: 2,
       p: 2,
@@ -774,7 +809,7 @@ export default function CardResult({
         <Checkbox
           checked={selectAllChecked}
           indeterminate={
-            selectedItems.length > 0 && 
+            selectedItems.length > 0 &&
             selectedItems.length < items.length
           }
           onChange={handleSelectAll}
@@ -791,7 +826,7 @@ export default function CardResult({
         </Typography>
       }
     />
-    
+
     {selectedItems.length > 0 && (
       <Chip
         label={`${selectedItems.length} seleccionado${selectedItems.length !== 1 ? 's' : ''}`}
@@ -825,7 +860,7 @@ export default function CardResult({
 
 ## 6. Historial de la conversación
 
-*No hay historial previo. Esta es la solicitud inicial.*
+_No hay historial previo. Esta es la solicitud inicial._
 
 ---
 
@@ -855,6 +890,7 @@ Necesito que implementes la funcionalidad completa de **selección múltiple y e
 Antes de comenzar a escribir código, analiza cuidadosamente:
 
 ### Paso 1: Análisis de archivos existentes
+
 - [ ] Lee `Buscar.jsx` completo para entender estructura actual
 - [ ] Identifica dónde están los botones CSV/XLSX (líneas ~183-197)
 - [ ] Localiza el estado `items` donde se almacenan los resultados
@@ -862,34 +898,40 @@ Antes de comenzar a escribir código, analiza cuidadosamente:
 - [ ] Revisa el componente `CardResult` actual
 
 ### Paso 2: Planificación de estados
+
 - [ ] Determina dónde declarar `selectedItems`, `isExporting`, `selectAllChecked`
 - [ ] Planifica el flujo de actualización de estados
 - [ ] Considera efectos secundarios (useEffect si es necesario)
 
 ### Paso 3: Diseño de UI
+
 - [ ] Decide ubicación exacta del checkbox "Seleccionar todo"
 - [ ] Planifica modificación de `CardResult` (prop drilling vs context)
 - [ ] Diseña feedback visual para items seleccionados (borde azul)
 - [ ] Planifica posición del botón de exportación
 
 ### Paso 4: Lógica de exportación
+
 - [ ] Revisa función `downloadSubjectData` en `PersonaDetalle.jsx` (línea 386)
 - [ ] Planifica mapeo de campos: persona → fila Excel
 - [ ] Define lógica para hoja "Ubicaciones" (filtro de coordenadas)
 - [ ] Implementa función `formatearFecha` auxiliar
 
 ### Paso 5: Validaciones y edge cases
+
 - [ ] Lista todos los casos de error posibles
 - [ ] Planifica mensajes de toast para cada caso
 - [ ] Considera: items vacío, sin selección, error de librería, datos null
 
 ### Paso 6: Testing mental
+
 - [ ] Simula flujo: buscar → seleccionar → exportar → limpiar
 - [ ] Verifica que no hay memory leaks (limpieza de estados)
 - [ ] Confirma que exportación no afecta resultados de búsqueda
 - [ ] Valida que navegación al detalle sigue funcionando
 
 ### Paso 7: Consideraciones UX
+
 - [ ] Mensajes claros y en español
 - [ ] Estados de carga visibles (spinner en botón)
 - [ ] Feedback inmediato (toast al exportar)
@@ -1105,11 +1147,11 @@ const [selectAllChecked, setSelectAllChecked] = useState(false);
 // 1. IMPORTS (agregar al inicio del archivo)
 import * as XLSX from 'xlsx';
 import { TableView as TableViewIcon } from '@mui/icons-material';
-import { 
-  Checkbox, 
-  FormControlLabel, 
-  Chip, 
-  CircularProgress 
+import {
+  Checkbox,
+  FormControlLabel,
+  Chip,
+  CircularProgress
 } from '@mui/material';
 
 // 2. ESTADOS (agregar junto a los estados existentes, línea ~33)
@@ -1169,7 +1211,7 @@ const handleExportSelected = async () => {
       showToast('⚠️ Seleccione al menos una persona para exportar', 'warning');
       return;
     }
-    
+
     if (!items || items.length === 0) {
       showToast('❌ No hay resultados de búsqueda para exportar', 'error');
       return;
@@ -1186,7 +1228,7 @@ const handleExportSelected = async () => {
     showToast(`Generando archivo Excel con ${selectedItems.length} persona(s)...`, 'info');
 
     // ... (completar con el resto de la lógica del ejemplo 2)
-    
+
   } catch (error) {
     console.error('Error al exportar a Excel:', error);
     showToast('❌ Error al generar el archivo Excel. Intente nuevamente.', 'error');
@@ -1251,8 +1293,8 @@ const handleExportSelected = async () => {
 // ============================================
 
 // Modificar firma de función
-export default function CardResult({ 
-  persona, 
+export default function CardResult({
+  persona,
   onClick,
   selected = false,
   onSelect = null
@@ -1294,6 +1336,7 @@ export default function CardResult({
 Antes de entregar el código, asegúrate de:
 
 ✅ **Estilo y convenciones:**
+
 - [ ] Nombres de variables en español
 - [ ] Colores institucionales: `rgb(21, 77, 113)`
 - [ ] Imports ordenados alfabéticamente
@@ -1301,6 +1344,7 @@ Antes de entregar el código, asegúrate de:
 - [ ] Comentarios en español
 
 ✅ **Funcionalidad:**
+
 - [ ] Validar que `items` existe antes de filtrar
 - [ ] No incluir campos de fotos (`foto_principal`, `fotos_adicionales`)
 - [ ] Limpiar selección después de exportación exitosa
@@ -1308,11 +1352,13 @@ Antes de entregar el código, asegúrate de:
 - [ ] Mantener resultados de búsqueda visibles
 
 ✅ **Performance:**
+
 - [ ] No re-renderizar innecesariamente
 - [ ] Confirmación para > 1000 registros
 - [ ] Función `formatearFecha` con try-catch
 
 ✅ **UX:**
+
 - [ ] Botón disabled apropiadamente
 - [ ] Feedback visual de selección (border azul)
 - [ ] Estados de carga claros
@@ -1320,6 +1366,7 @@ Antes de entregar el código, asegúrate de:
 - [ ] Checkbox "Seleccionar todo" con estado indeterminado
 
 ✅ **Excel:**
+
 - [ ] Formato de fechas: DD/MM/YYYY
 - [ ] Headers en negrita
 - [ ] Ancho de columnas automático
@@ -1331,6 +1378,7 @@ Antes de entregar el código, asegúrate de:
 ## 📚 Referencias adicionales
 
 **Documentación de SheetJS:**
+
 - https://docs.sheetjs.com/docs/api/utilities/
 - `XLSX.utils.book_new()` - Crear libro
 - `XLSX.utils.json_to_sheet()` - Convertir JSON a hoja
@@ -1338,6 +1386,7 @@ Antes de entregar el código, asegúrate de:
 - `XLSX.writeFile()` - Descargar archivo
 
 **Material-UI:**
+
 - Checkbox: https://mui.com/material-ui/react-checkbox/
 - FormControlLabel: https://mui.com/material-ui/api/form-control-label/
 - Chip: https://mui.com/material-ui/react-chip/
