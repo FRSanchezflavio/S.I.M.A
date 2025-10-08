@@ -1430,7 +1430,7 @@ export default function PersonaDetalle() {
               >
                 Editar
               </Button>
-              <Button
+              {/* <Button
                 variant="contained"
                 startIcon={<DownloadIcon />}
                 onClick={downloadSubjectData}
@@ -1457,8 +1457,8 @@ export default function PersonaDetalle() {
                 }}
               >
                 Descargar Excel
-              </Button>
-              <Button
+              </Button> */}
+              {/* <Button
                 variant="contained"
                 startIcon={<PictureAsPdfIcon />}
                 onClick={handleDownloadPDF}
@@ -1490,14 +1490,14 @@ export default function PersonaDetalle() {
                 }}
               >
                 {isGeneratingPDF ? 'Generando...' : 'PDF Completo'}
-              </Button>
+              </Button> */}
               <Button
                 variant="contained"
                 startIcon={<PictureAsPdfIcon />}
                 onClick={handleDescargarPlanillaOficial}
                 disabled={isGeneratingPDF || saving}
                 sx={{
-                  bgcolor: isGeneratingPDF ? '#999' : '#d32f2f',
+                  bgcolor: isGeneratingPDF ? '#999' : '#rgb(51, 161, 224)',
                   color: '#fff',
                   fontSize: 20,
                   fontWeight: 700,
@@ -1509,9 +1509,9 @@ export default function PersonaDetalle() {
                     ? 'none'
                     : '0 4px 16px rgba(211, 47, 47, 0.4)',
                   border: '2px solid',
-                  borderColor: isGeneratingPDF ? '#999' : '#b71c1c',
+                  borderColor: isGeneratingPDF ? '#999' : 'rgb(51, 161, 224)',
                   '&:hover': {
-                    bgcolor: isGeneratingPDF ? '#999' : '#b71c1c',
+                    bgcolor: isGeneratingPDF ? '#999' : 'rgb(51, 161, 224)',
                     transform: isGeneratingPDF ? 'none' : 'translateY(-2px)',
                     boxShadow: isGeneratingPDF
                       ? 'none'
@@ -1541,10 +1541,15 @@ export default function PersonaDetalle() {
                   borderRadius: 2,
                   boxShadow: '0 2px 8px rgba(211, 47, 47, 0.2)',
                   '&:hover': {
-                    borderWidth: 2,
-                    bgcolor: 'rgba(211, 47, 47, 0.08)',
+                    // Nuevo: fondo rojo sólido y texto/ícono en blanco
+                    bgcolor: 'rgb(211, 47, 47)',
+                    color: '#fff',
+                    borderColor: 'rgb(211, 47, 47)',
                     transform: 'translateY(-2px)',
                     boxShadow: '0 4px 12px rgba(211, 47, 47, 0.3)',
+                    '& .MuiSvgIcon-root': {
+                      color: '#fff',
+                    },
                   },
                   transition: 'all 0.3s ease',
                 }}
