@@ -54,7 +54,8 @@ export default function Header({ showSettings = false }) {
   const menuItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
     { text: 'Buscar', icon: <Search />, path: '/buscar' },
-    { text: 'Cargar', icon: <Add />, path: '/cargar' },
+    { text: 'Cargar Mencionado', icon: <Add />, path: '/cargar-mencionado' },
+    { text: 'Cargar Aprehendido', icon: <Add />, path: '/cargar-aprehendido' },
     { text: 'Mapa General', icon: <LocationOn />, path: '/mapa' },
     {
       text: 'Mapa de Hechos',
