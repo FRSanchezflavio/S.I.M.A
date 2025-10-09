@@ -67,7 +67,9 @@ export default function Dashboard() {
       subtitle: 'Nueva mención',
       description: 'Registrar persona mencionada',
       icon: (
-        <PersonAdd sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }} />
+        <PersonAdd
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
+        />
       ),
       path: '/cargar-mencionado',
       color: 'var(--secondary)',
@@ -79,7 +81,9 @@ export default function Dashboard() {
       subtitle: 'Nueva detención',
       description: 'Registrar persona detenida',
       icon: (
-        <PersonAdd sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }} />
+        <PersonAdd
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
+        />
       ),
       path: '/cargar-aprehendido',
       color: 'var(--secondary)',
@@ -103,7 +107,9 @@ export default function Dashboard() {
       subtitle: 'Vista geográfica',
       description: 'Mapa interactivo',
       icon: (
-        <LocationOn sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }} />
+        <LocationOn
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
+        />
       ),
       path: '/mapa',
       color: 'var(--secondary)',
@@ -115,7 +121,9 @@ export default function Dashboard() {
       subtitle: 'Ver historial',
       description: 'Registros delictuales',
       icon: (
-        <Assignment sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }} />
+        <Assignment
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
+        />
       ),
       path: '/registros',
       color: 'var(--secondary)',
@@ -127,7 +135,9 @@ export default function Dashboard() {
       subtitle: 'Análisis de vínculos',
       description: 'Vincular personas y analizar organizaciones',
       icon: (
-        <AccountTree sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }} />
+        <AccountTree
+          sx={{ fontSize: { xs: '2rem', sm: '2.5rem', md: '6rem' } }}
+        />
       ),
       path: '/redes-criminales',
       color: 'var(--primary)',

@@ -23,8 +23,8 @@ export default function RoutesApp() {
       <Route path="/login" element={<Login />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
-  <Route path="/cargar-mencionado" element={<CargarMencionado />} />
-  <Route path="/cargar-aprehendido" element={<CargarAprehendido />} />
+        <Route path="/cargar-mencionado" element={<CargarMencionado />} />
+        <Route path="/cargar-aprehendido" element={<CargarAprehendido />} />
         <Route path="/agregar-delito" element={<AgregarDelito />} />
         <Route path="/buscar" element={<Buscar />} />
         <Route path="/mapa" element={<MapaGeneral />} />
