@@ -1430,7 +1430,7 @@ export default function PersonaDetalle() {
               >
                 Editar
               </Button>
-              <Button
+              {/* <Button
                 variant="contained"
                 startIcon={<DownloadIcon />}
                 onClick={downloadSubjectData}
@@ -1457,8 +1457,8 @@ export default function PersonaDetalle() {
                 }}
               >
                 Descargar Excel
-              </Button>
-              <Button
+              </Button> */}
+              {/* <Button
                 variant="contained"
                 startIcon={<PictureAsPdfIcon />}
                 onClick={handleDownloadPDF}
@@ -1490,14 +1490,14 @@ export default function PersonaDetalle() {
                 }}
               >
                 {isGeneratingPDF ? 'Generando...' : 'PDF Completo'}
-              </Button>
+              </Button> */}
               <Button
                 variant="contained"
                 startIcon={<PictureAsPdfIcon />}
                 onClick={handleDescargarPlanillaOficial}
                 disabled={isGeneratingPDF || saving}
                 sx={{
-                  bgcolor: isGeneratingPDF ? '#999' : '#d32f2f',
+                  bgcolor: isGeneratingPDF ? '#999' : 'rgb(51, 161, 224)',
                   color: '#fff',
                   fontSize: 20,
                   fontWeight: 700,
@@ -1509,9 +1509,9 @@ export default function PersonaDetalle() {
                     ? 'none'
                     : '0 4px 16px rgba(211, 47, 47, 0.4)',
                   border: '2px solid',
-                  borderColor: isGeneratingPDF ? '#999' : '#b71c1c',
+                  borderColor: isGeneratingPDF ? '#999' : 'rgb(21, 77, 113)',
                   '&:hover': {
-                    bgcolor: isGeneratingPDF ? '#999' : '#b71c1c',
+                    bgcolor: isGeneratingPDF ? '#999' : 'rgb(21, 77, 113)',
                     transform: isGeneratingPDF ? 'none' : 'translateY(-2px)',
                     boxShadow: isGeneratingPDF
                       ? 'none'
@@ -1533,6 +1533,8 @@ export default function PersonaDetalle() {
                 startIcon={<DeleteIcon />}
                 onClick={onDelete}
                 sx={{
+                  color: '#fff',
+                  bgcolor: '#d32f2f',
                   borderWidth: 2,
                   fontSize: 19,
                   fontWeight: 600,
@@ -1542,7 +1544,7 @@ export default function PersonaDetalle() {
                   boxShadow: '0 2px 8px rgba(211, 47, 47, 0.2)',
                   '&:hover': {
                     borderWidth: 2,
-                    bgcolor: 'rgba(211, 47, 47, 0.08)',
+                    bgcolor: '#b71c1c',
                     transform: 'translateY(-2px)',
                     boxShadow: '0 4px 12px rgba(211, 47, 47, 0.3)',
                   },
