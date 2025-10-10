@@ -1497,7 +1497,11 @@ export default function PersonaDetalle() {
                 onClick={handleDescargarPlanillaOficial}
                 disabled={isGeneratingPDF || saving}
                 sx={{
+<<<<<<< HEAD
                   bgcolor: isGeneratingPDF ? '#999' : 'rgb(51, 161, 224)',
+=======
+                  bgcolor: isGeneratingPDF ? '#999' : '#rgb(51, 161, 224)',
+>>>>>>> 5f259d5f575c1284fd420c40314d269c649c7843
                   color: '#fff',
                   fontSize: 20,
                   fontWeight: 700,
@@ -1509,9 +1513,15 @@ export default function PersonaDetalle() {
                     ? 'none'
                     : '0 4px 16px rgba(211, 47, 47, 0.4)',
                   border: '2px solid',
+<<<<<<< HEAD
                   borderColor: isGeneratingPDF ? '#999' : 'rgb(21, 77, 113)',
                   '&:hover': {
                     bgcolor: isGeneratingPDF ? '#999' : 'rgb(21, 77, 113)',
+=======
+                  borderColor: isGeneratingPDF ? '#999' : 'rgb(51, 161, 224)',
+                  '&:hover': {
+                    bgcolor: isGeneratingPDF ? '#999' : 'rgb(51, 161, 224)',
+>>>>>>> 5f259d5f575c1284fd420c40314d269c649c7843
                     transform: isGeneratingPDF ? 'none' : 'translateY(-2px)',
                     boxShadow: isGeneratingPDF
                       ? 'none'
@@ -1543,10 +1553,20 @@ export default function PersonaDetalle() {
                   borderRadius: 2,
                   boxShadow: '0 2px 8px rgba(211, 47, 47, 0.2)',
                   '&:hover': {
+<<<<<<< HEAD
                     borderWidth: 2,
                     bgcolor: '#b71c1c',
+=======
+                    // Nuevo: fondo rojo sólido y texto/ícono en blanco
+                    bgcolor: 'rgb(211, 47, 47)',
+                    color: '#fff',
+                    borderColor: 'rgb(211, 47, 47)',
+>>>>>>> 5f259d5f575c1284fd420c40314d269c649c7843
                     transform: 'translateY(-2px)',
                     boxShadow: '0 4px 12px rgba(211, 47, 47, 0.3)',
+                    '& .MuiSvgIcon-root': {
+                      color: '#fff',
+                    },
                   },
                   transition: 'all 0.3s ease',
                 }}
