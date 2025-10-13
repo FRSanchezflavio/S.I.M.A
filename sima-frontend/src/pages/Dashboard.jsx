@@ -37,18 +37,6 @@ export default function Dashboard() {
   const [visibleCards, setVisibleCards] = useState([]);
 
   // Animación escalonada de las tarjetas
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      [0, 1, 2, 3, 4].forEach(index => {
-        setTimeout(() => {
-          setVisibleCards(prev => [...prev, index]);
-        }, index * 200);
-      });
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   const fadeInUp = keyframes`
     from {
       opacity: 0;
@@ -76,7 +64,7 @@ export default function Dashboard() {
       hoverColor: 'var(--accent)',
     },
     {
-      id: 0.5,
+      id: 1,
       title: 'CARGAR APREHENDIDO',
       subtitle: 'Nueva detención',
       description: 'Registrar persona detenida',
@@ -90,7 +78,7 @@ export default function Dashboard() {
       hoverColor: 'var(--accent)',
     },
     {
-      id: 1,
+      id: 2,
       title: 'BUSCAR',
       subtitle: 'Consultar datos',
       description: 'Buscar mencionado/aprehendido',
@@ -102,7 +90,7 @@ export default function Dashboard() {
       hoverColor: 'var(--accent)',
     },
     {
-      id: 2,
+      id: 3,
       title: 'MAPA',
       subtitle: 'Vista geográfica',
       description: 'Mapa interactivo',
@@ -116,7 +104,7 @@ export default function Dashboard() {
       hoverColor: 'var(--accent)',
     },
     {
-      id: 3,
+      id: 4,
       title: 'REGISTROS',
       subtitle: 'Ver historial',
       description: 'Registros delictuales',
@@ -130,7 +118,7 @@ export default function Dashboard() {
       hoverColor: 'var(--accent)',
     },
     {
-      id: 4,
+      id: 5,
       title: 'REDES CRIMINALES',
       subtitle: 'Análisis de vínculos',
       description: 'Vincular personas y analizar organizaciones',
@@ -144,6 +132,20 @@ export default function Dashboard() {
       hoverColor: 'var(--secondary)',
     },
   ];
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      menuItems.forEach((item, index) => {
+        setTimeout(() => {
+          setVisibleCards(prev =>
+            prev.includes(item.id) ? prev : [...prev, item.id]
+          );
+        }, index * 200);
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [menuItems.length]);
 
   return (
     <Box
